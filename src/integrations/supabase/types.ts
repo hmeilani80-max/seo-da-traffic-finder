@@ -39,6 +39,7 @@ export type Database = {
       traffic_nol: {
         Row: { checked_at: string; created_at: string; domain: string; dr: number | null; id: string; notes: string | null; status: string; traffic: number; user_id: string | null }
         Insert: { checked_at?: string; created_at?: string; domain: string; dr?: number | null; id?: string; notes?: string | null; status?: string; traffic?: number | null; user_id?: string | null }
+        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; notes?: string | null; status?: string; traffic?: number | null; user_id?: string | null }
         Relationships: []
       }
       search_history: {
@@ -72,7 +73,9 @@ export type TablesUpdate<DefaultSchemaTableNameOrOptions extends keyof DefaultSc
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Update: infer U } ? U : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Update: infer U } ? U : never : never
 
-export type Enums<DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals }, EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof (DatabaseWithoutInternals[DefaultSchemaWithoutInternals["public"]]["Enums"]) : never = never> = never
+export type Enums<DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals }, EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof (DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]) : never = never> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"])[EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions] : never
 
 export type CompositeTypes<PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals }, CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof (DatabaseWithoutInternals[DefaultSchemaWithoutInternals["public"]]["CompositeTypes"]) : never = never> = never
 
