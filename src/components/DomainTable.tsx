@@ -46,9 +46,15 @@ export function DomainTable({ table }: { table: TableKey }) {
     onError: () => toast.error("Gagal menghapus baris"),
   });
 
+  const detail = table === "domain_sudah_pernah";
+
   const rows = useMemo(() => {
-    const filtered = data.filter((r: DomainRow) =>
-      r.domain.toLowerCase().includes(q.trim().toLowerCase()),
+    const term = q.trim().toLowerCase();
+    const filtered = data.filter(
+      (r: DomainRow) =>
+        r.domain.toLowerCase().includes(term) ||
+        (r.keyword ?? "").toLowerCase().includes(term) ||
+        (r.target_page ?? "").toLowerCase().includes(term),
     );
     const sorted = [...filtered].sort((a, b) => {
       const va = a[sortKey] ?? "";
