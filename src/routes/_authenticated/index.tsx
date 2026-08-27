@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DomainTable } from "@/components/DomainTable";
+import { TambahDomainDibeli } from "@/components/TambahDomainDibeli";
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import { fetchAhrefsMetrics } from "@/lib/ahrefs.functions";
 import {
@@ -239,6 +240,8 @@ function Dashboard() {
           </ul>
         </div>
       </section>
+
+      <TambahDomainDibeli />
 
       <section>
         <Tabs defaultValue="sudah_dibeli">
