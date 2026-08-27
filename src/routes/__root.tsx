@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
+
 
 
 function NotFoundComponent() {
@@ -150,7 +152,18 @@ function AppNav() {
           >
             Pengaturan
           </Link>
+          <button
+            type="button"
+            className={linkClass}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/auth";
+            }}
+          >
+            Keluar
+          </button>
         </div>
+
       </nav>
     </header>
   );

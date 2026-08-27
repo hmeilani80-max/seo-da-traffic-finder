@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { clearApiKey, getApiKey, setApiKey } from "@/lib/domains";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
       { title: "Pengaturan Ahrefs API — Dashboard Riset Backlink" },
