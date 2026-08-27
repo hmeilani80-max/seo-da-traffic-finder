@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Download, Trash2 } from "lucide-react";
+import { ArrowUpDown, Download, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EditDomainDialog } from "@/components/EditDomainDialog";
 import {
   Table,
   TableBody,
@@ -36,6 +37,7 @@ export function DomainTable({
 }) {
   const qc = useQueryClient();
 
+  const [editRow, setEditRow] = useState<DomainRow | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("checked_at");
   const [asc, setAsc] = useState(false);
 
@@ -401,6 +403,15 @@ export function DomainTable({
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => setEditRow(r)}
+                    aria-label={`Edit ${r.domain}`}
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() =>
                       hapus.mutate(r.id)
                     }
@@ -437,6 +448,17 @@ export function DomainTable({
           )}
         </Table>
       </div>
+
+      {editRow && (
+        <EditDomainDialog
+          table={table}
+          row={editRow}
+          open={editRow !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditRow(null);
+          }}
+        />
+      )}
     </div>
   );
 }
