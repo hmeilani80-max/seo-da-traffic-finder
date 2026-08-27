@@ -143,14 +143,14 @@ export function DomainTable({ table }: { table: TableKey }) {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={detail ? 10 : 6} className="py-10 text-center text-muted-foreground">
                   Memuat data...
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={detail ? 10 : 6} className="py-10 text-center text-muted-foreground">
                   Belum ada data pada tabel ini.
                 </TableCell>
               </TableRow>
