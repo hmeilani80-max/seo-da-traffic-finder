@@ -436,32 +436,48 @@ export async function updateDomainRow(
   id: string,
   patch: DomainPatch,
 ) {
-  const allowed: string[] = [
-    ...COMMON_FIELDS,
-    ...(table === "traffic_nol" ? [] : DETAIL_FIELDS),
-  ];
+  const checkedAt = new Date().toISOString();
 
-  const payload: DomainPatch = {};
+  const common: {
+    domain?: string;
+    dr?: number | null;
+    notes?: string | null;
+    research_status?: string;
+    checked_at: string;
+  } = { checked_at: checkedAt };
 
-  for (const key of allowed) {
-    if (key in patch) {
-      (payload as Record<string, unknown>)[key] = (
-        patch as Record<string, unknown>
-      )[key];
-    }
-  }
+  if (patch.domain !== undefined) common.domain = patch.domain;
+  if (patch.dr !== undefined) common.dr = patch.dr;
+  if (patch.notes !== undefined) common.notes = patch.notes;
+  if (patch.research_status !== undefined)
+    common.research_status = patch.research_status;
 
-  payload.checked_at = new Date().toISOString();
+  const detail: {
+    keyword?: string | null;
+    target_page?: string | null;
+    purchase_date?: string | null;
+    price?: number | null;
+  } = {};
+
+  if (patch.keyword !== undefined) detail.keyword = patch.keyword;
+  if (patch.target_page !== undefined) detail.target_page = patch.target_page;
+  if (patch.purchase_date !== undefined)
+    detail.purchase_date = patch.purchase_date;
+  if (patch.price !== undefined) detail.price = patch.price;
 
   const query =
     table === "traffic_nol"
-      ? supabase.from("traffic_nol").update({
-          ...payload,
-          traffic: payload.traffic ?? 0,
-        })
+      ? supabase
+          .from("traffic_nol")
+          .update({ ...common, traffic: patch.traffic ?? 0 })
       : table === "sudah_dibeli"
-        ? supabase.from("sudah_dibeli").update(payload)
-        : supabase.from("domain_sudah_pernah").update(payload);
+        ? supabase
+            .from("sudah_dibeli")
+            .update({ ...common, ...detail, traffic: patch.traffic ?? null })
+        : supabase
+            .from("domain_sudah_pernah")
+            .update({ ...common, ...detail, traffic: patch.traffic ?? null });
+
 
 
   const { data, error } = await query
