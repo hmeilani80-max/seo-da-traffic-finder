@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Database, Search, ShoppingCart, TrendingDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DomainTable } from "@/components/DomainTable";
 import { TambahDomainDibeli } from "@/components/TambahDomainDibeli";
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
-import { fetchLogs, fetchTable } from "@/lib/domains";
+import { fetchTable } from "@/lib/domains";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -31,7 +31,6 @@ export const Route = createFileRoute("/_authenticated/")({
 });
 
 function Dashboard() {
-  const qc = useQueryClient();
   useRealtimeDomains();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -51,9 +50,7 @@ function Dashboard() {
     },
   });
 
-  const logs = useQuery({ queryKey: ["logs"], queryFn: fetchLogs });
   const c = counts.data ?? { domain_sudah_pernah: 0, traffic_nol: 0, sudah_dibeli: 0 };
-  const total = c.domain_sudah_pernah + c.traffic_nol + c.sudah_dibeli;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
@@ -64,13 +61,6 @@ function Dashboard() {
           traffic lalu dirutekan ke tabel yang sesuai.
         </p>
       </header>
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<Database className="size-4" />} label="Total Domain Dicek" value={total} />
-        <StatCard icon={<Activity className="size-4" />} label="Domain Sudah Pernah" value={c.domain_sudah_pernah} />
-        <StatCard icon={<TrendingDown className="size-4" />} label="Traffic 0" value={c.traffic_nol} />
-        <StatCard icon={<ShoppingCart className="size-4" />} label="Sudah Dibeli" value={c.sudah_dibeli} />
-      </section>
 
       <TambahDomainDibeli />
 
@@ -111,26 +101,6 @@ function Dashboard() {
           </TabsContent>
         </Tabs>
       </section>
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <p className="mt-2 text-3xl font-bold tracking-tight">{value}</p>
     </div>
   );
 }
