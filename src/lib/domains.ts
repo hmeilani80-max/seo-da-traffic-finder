@@ -371,19 +371,3 @@ export function downloadCSV(filename: string, csv: string) {
 
   URL.revokeObjectURL(url);
 }
-
-const API_KEY_STORAGE = "ahrefs_api_key";
-
-export function getApiKey() {
-  if (typeof window === "undefined") return "";
-
-  return window.localStorage.getItem(API_KEY_STORAGE) ?? "";
-}
-
-export function setApiKey(key: string) {
-  window.localStorage.setItem(API_KEY_STORAGE, key);
-}
-
-export function clearApiKey() {
-  window.localStorage.removeItem(API_KEY_STORAGE);
-}
