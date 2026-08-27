@@ -371,3 +371,94 @@ export function downloadCSV(filename: string, csv: string) {
 
   URL.revokeObjectURL(url);
 }
+
+export type DomainPatch = {
+  domain?: string;
+  dr?: number | null;
+  traffic?: number | null;
+  notes?: string | null;
+  research_status?: "belum_diriset" | "sedang_diriset" | "selesai" | "gagal";
+  keyword?: string | null;
+  target_page?: string | null;
+  purchase_date?: string | null;
+  price?: number | null;
+  checked_at?: string;
+};
+
+/** Cari domain duplikat di seluruh tabel, kecuali baris yang sedang diedit. */
+export async function findDuplicateDomain(
+  domain: string,
+  excludeId: string,
+): Promise<TableKey | null> {
+  const normalized = normalizeDomain(domain);
+
+  const tables: TableKey[] = [
+    "sudah_dibeli",
+    "domain_sudah_pernah",
+    "traffic_nol",
+  ];
+
+  for (const table of tables) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("id")
+      .ilike("domain", normalized)
+      .neq("id", excludeId)
+      .limit(1);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) return table;
+  }
+
+  return null;
+}
+
+const COMMON_FIELDS = [
+  "domain",
+  "dr",
+  "traffic",
+  "notes",
+  "research_status",
+  "checked_at",
+] as const;
+
+const DETAIL_FIELDS = [
+  "keyword",
+  "target_page",
+  "purchase_date",
+  "price",
+] as const;
+
+/** Update baris existing tanpa memindahkan tabel. */
+export async function updateDomainRow(
+  table: TableKey,
+  id: string,
+  patch: DomainPatch,
+) {
+  const allowed: string[] = [
+    ...COMMON_FIELDS,
+    ...(table === "traffic_nol" ? [] : DETAIL_FIELDS),
+  ];
+
+  const payload: Record<string, unknown> = {};
+
+  for (const key of allowed) {
+    if (key in patch) {
+      payload[key] = (patch as Record<string, unknown>)[key];
+    }
+  }
+
+  payload.checked_at = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from(table)
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data as DomainRow | null;
+}
