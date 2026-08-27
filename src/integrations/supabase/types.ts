@@ -58,6 +58,7 @@ export type Database = {
           notes: string | null
           price: number | null
           purchase_date: string | null
+          research_status: string
           status: string
           target_page: string | null
           traffic: number | null
@@ -73,6 +74,7 @@ export type Database = {
           notes?: string | null
           price?: number | null
           purchase_date?: string | null
+          research_status?: string
           status?: string
           target_page?: string | null
           traffic?: number | null
@@ -88,6 +90,7 @@ export type Database = {
           notes?: string | null
           price?: number | null
           purchase_date?: string | null
+          research_status?: string
           status?: string
           target_page?: string | null
           traffic?: number | null
@@ -139,6 +142,7 @@ export type Database = {
           notes: string | null
           price: number | null
           purchase_date: string | null
+          research_status: string
           status: string
           target_page: string | null
           traffic: number | null
@@ -154,6 +158,7 @@ export type Database = {
           notes?: string | null
           price?: number | null
           purchase_date?: string | null
+          research_status?: string
           status?: string
           target_page?: string | null
           traffic?: number | null
@@ -169,6 +174,7 @@ export type Database = {
           notes?: string | null
           price?: number | null
           purchase_date?: string | null
+          research_status?: string
           status?: string
           target_page?: string | null
           traffic?: number | null
@@ -184,6 +190,7 @@ export type Database = {
           dr: number | null
           id: string
           notes: string | null
+          research_status: string
           status: string
           traffic: number
           user_id: string | null
@@ -195,6 +202,7 @@ export type Database = {
           dr?: number | null
           id?: string
           notes?: string | null
+          research_status?: string
           status?: string
           traffic?: number
           user_id?: string | null
@@ -206,6 +214,7 @@ export type Database = {
           dr?: number | null
           id?: string
           notes?: string | null
+          research_status?: string
           status?: string
           traffic?: number
           user_id?: string | null
