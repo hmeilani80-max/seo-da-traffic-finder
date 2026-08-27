@@ -11,8 +11,10 @@ import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import {
   fetchSearchHistory,
   fetchTable,
+  getSearchMatchType,
   normalizeSearchQuery,
   saveSearchQuery,
+  type SearchMatchType,
 } from "@/lib/domains";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -24,7 +26,10 @@ export const Route = createFileRoute("/_authenticated/")({
         content:
           "Tool internal untuk cek, riset, dan mengelola pembelian backlink domain dengan data DR dan traffic dari Ahrefs.",
       },
-      { property: "og:title", content: "Dashboard Riset Backlink — Manajemen Domain" },
+      {
+        property: "og:title",
+        content: "Dashboard Riset Backlink — Manajemen Domain",
+      },
       {
         property: "og:description",
         content:
@@ -35,8 +40,25 @@ export const Route = createFileRoute("/_authenticated/")({
   component: Dashboard,
 });
 
+function matchLabel(matchType: SearchMatchType) {
+  switch (matchType) {
+    case "sama":
+      return "✓ Sama";
+
+    case "mengandung":
+      return "↳ Mengandung query aktif";
+
+    case "terkandung":
+      return "↳ Terkandung dalam query aktif";
+
+    default:
+      return "Tersimpan";
+  }
+}
+
 function Dashboard() {
   useRealtimeDomains();
+
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -48,6 +70,7 @@ function Dashboard() {
         fetchTable("traffic_nol"),
         fetchTable("sudah_dibeli"),
       ]);
+
       return {
         domain_sudah_pernah: a.length,
         traffic_nol: b.length,
@@ -63,12 +86,16 @@ function Dashboard() {
 
   useEffect(() => {
     const normalized = normalizeSearchQuery(searchQuery);
+
     if (normalized.length < 2) return;
 
     const timer = window.setTimeout(async () => {
       try {
         await saveSearchQuery(searchQuery);
-        await queryClient.invalidateQueries({ queryKey: ["search-history"] });
+
+        await queryClient.invalidateQueries({
+          queryKey: ["search-history"],
+        });
       } catch (error) {
         console.error("Gagal menyimpan riwayat search:", error);
       }
@@ -82,16 +109,26 @@ function Dashboard() {
     traffic_nol: 0,
     sudah_dibeli: 0,
   };
+
   const normalizedCurrent = normalizeSearchQuery(searchQuery);
   const history = searchHistory.data ?? [];
+
+  const relatedHistory = history.filter(
+    (item) =>
+      normalizedCurrent.length > 0 &&
+      getSearchMatchType(searchQuery, item.query) !== "tidak_terkait",
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Riset Backlink</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Dashboard Riset Backlink
+        </h1>
+
         <p className="text-sm text-muted-foreground">
-          Cek domain rajabacklink.com untuk client arsjadrasjid.com — otomatis riset DR &amp;
-          traffic lalu dirutekan ke tabel yang sesuai.
+          Cek domain rajabacklink.com untuk client arsjadrasjid.com — otomatis
+          riset DR &amp; traffic lalu dirutekan ke tabel yang sesuai.
         </p>
       </header>
 
@@ -101,13 +138,19 @@ function Dashboard() {
         <div className="mb-4 rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold">Pencarian Domain</h2>
+              <h2 className="text-base font-semibold">
+                Pencarian Domain
+              </h2>
+
               <p className="text-sm text-muted-foreground">
-                Search berlaku untuk semua tabel dan setiap query disimpan ke database.
+                Search berlaku untuk semua tabel dan setiap query disimpan ke
+                database.
               </p>
             </div>
+
             <div className="relative w-full max-w-sm">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -120,15 +163,12 @@ function Dashboard() {
 
           {normalizedCurrent && (
             <div className="mt-3 rounded-md bg-muted/50 px-3 py-2 text-sm">
-              <span className="font-medium">Query aktif:</span> {searchQuery}
-              {history.some(
-                (item) =>
-                  item.normalized_query === normalizedCurrent ||
-                  item.normalized_query.includes(normalizedCurrent) ||
-                  normalizedCurrent.includes(item.normalized_query),
-              ) && (
+              <span className="font-medium">Query aktif:</span>{" "}
+              {searchQuery}
+
+              {relatedHistory.length > 0 && (
                 <span className="ml-2 font-medium text-primary">
-                  • Pernah dicari / query terkait ditemukan
+                  • {relatedHistory.length} query terkait ditemukan
                 </span>
               )}
             </div>
@@ -137,65 +177,125 @@ function Dashboard() {
 
         <Tabs defaultValue="sudah_dibeli">
           <TabsList>
-            <TabsTrigger value="sudah_dibeli">Sudah Dibeli ({c.sudah_dibeli})</TabsTrigger>
+            <TabsTrigger value="sudah_dibeli">
+              Sudah Dibeli ({c.sudah_dibeli})
+            </TabsTrigger>
+
             <TabsTrigger value="domain_sudah_pernah">
               Domain Sudah Pernah ({c.domain_sudah_pernah})
             </TabsTrigger>
-            <TabsTrigger value="traffic_nol">Traffic 0 ({c.traffic_nol})</TabsTrigger>
+
+            <TabsTrigger value="traffic_nol">
+              Traffic 0 ({c.traffic_nol})
+            </TabsTrigger>
           </TabsList>
+
           <TabsContent value="sudah_dibeli" className="mt-4">
-            <DomainTable table="sudah_dibeli" searchQuery={searchQuery} />
+            <DomainTable
+              table="sudah_dibeli"
+              searchQuery={searchQuery}
+            />
           </TabsContent>
+
           <TabsContent value="domain_sudah_pernah" className="mt-4">
-            <DomainTable table="domain_sudah_pernah" searchQuery={searchQuery} />
+            <DomainTable
+              table="domain_sudah_pernah"
+              searchQuery={searchQuery}
+            />
           </TabsContent>
+
           <TabsContent value="traffic_nol" className="mt-4">
-            <DomainTable table="traffic_nol" searchQuery={searchQuery} />
+            <DomainTable
+              table="traffic_nol"
+              searchQuery={searchQuery}
+            />
           </TabsContent>
         </Tabs>
       </section>
 
       <section className="rounded-xl border bg-card shadow-[var(--shadow-card)]">
         <div className="border-b p-4">
-          <h2 className="text-base font-semibold">Tabel Riwayat Search</h2>
+          <h2 className="text-base font-semibold">
+            Tabel Riwayat Search
+          </h2>
+
           <p className="text-sm text-muted-foreground">
-            Query yang sama atau saling mengandung query aktif akan ditandai otomatis.
+            Riwayat pencarian dicocokkan dengan query aktif berdasarkan query
+            yang sama atau saling mengandung.
           </p>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/30">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Query</th>
-                <th className="px-4 py-3 text-left font-medium">Jumlah Dicari</th>
-                <th className="px-4 py-3 text-left font-medium">Terakhir Dicari</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  Query
+                </th>
+
+                <th className="px-4 py-3 text-left font-medium">
+                  Jumlah Dicari
+                </th>
+
+                <th className="px-4 py-3 text-left font-medium">
+                  Terakhir Dicari
+                </th>
+
+                <th className="px-4 py-3 text-left font-medium">
+                  Status
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                  <td
+                    colSpan={4}
+                    className="px-4 py-8 text-center text-muted-foreground"
+                  >
                     Belum ada riwayat pencarian.
                   </td>
                 </tr>
               ) : (
                 history.map((item) => {
+                  const matchType = getSearchMatchType(
+                    searchQuery,
+                    item.query,
+                  );
+
                   const isRelated =
-                    normalizedCurrent.length > 0 &&
-                    (item.normalized_query === normalizedCurrent ||
-                      item.normalized_query.includes(normalizedCurrent) ||
-                      normalizedCurrent.includes(item.normalized_query));
+                    matchType !== "tidak_terkait";
 
                   return (
-                    <tr key={item.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-medium">{item.query}</td>
-                      <td className="px-4 py-3">{item.search_count}×</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(item.last_searched_at).toLocaleString("id-ID")}
+                    <tr
+                      key={item.id}
+                      className={`border-b last:border-0 ${
+                        isRelated ? "bg-primary/5" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {item.query}
                       </td>
+
                       <td className="px-4 py-3">
-                        {isRelated ? "✓ Sama / mengandung query aktif" : "Tersimpan"}
+                        {item.search_count}×
+                      </td>
+
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {new Date(
+                          item.last_searched_at,
+                        ).toLocaleString("id-ID")}
+                      </td>
+
+                      <td
+                        className={`px-4 py-3 ${
+                          isRelated
+                            ? "font-medium text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {matchLabel(matchType)}
                       </td>
                     </tr>
                   );
