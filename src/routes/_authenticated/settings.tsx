@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Info, Server } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { CheckCircle2, Globe, Info, Server } from "lucide-react";
+
+import { checkOpenSEOConfig } from "@/lib/openseo.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
