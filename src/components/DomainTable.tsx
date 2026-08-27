@@ -163,6 +163,39 @@ export function DomainTable({ table }: { table: TableKey }) {
                 <TableCell className="text-muted-foreground">
                   {new Date(r.checked_at).toLocaleString("id-ID")}
                 </TableCell>
+                {detail && (
+                  <>
+                    <TableCell className="max-w-[220px] truncate">{r.keyword || "-"}</TableCell>
+                    <TableCell className="max-w-[260px] truncate">
+                      {r.target_page ? (
+                        <a
+                          href={r.target_page}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {r.target_page.replace(/^https?:\/\/(www\.)?arsjadrasjid\.com/, "") || "/"}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {r.purchase_date
+                        ? new Date(r.purchase_date).toLocaleDateString("id-ID")
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {r.price != null
+                        ? new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            maximumFractionDigits: 0,
+                          }).format(Number(r.price))
+                        : "-"}
+                    </TableCell>
+                  </>
+                )}
                 <TableCell className="max-w-[240px] truncate text-muted-foreground">
                   {r.notes ?? "-"}
                 </TableCell>
