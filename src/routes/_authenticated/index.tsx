@@ -59,7 +59,7 @@ function matchLabel(matchType: SearchMatchType) {
 function Dashboard() {
   useRealtimeDomains();
 
-  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TableKey>("sudah_dibeli");
   const [searchQuery, setSearchQuery] = useState("");
 
   const counts = useQuery({
