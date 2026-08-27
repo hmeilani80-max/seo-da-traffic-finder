@@ -46,9 +46,15 @@ export function DomainTable({ table }: { table: TableKey }) {
     onError: () => toast.error("Gagal menghapus baris"),
   });
 
+  const detail = table === "domain_sudah_pernah";
+
   const rows = useMemo(() => {
-    const filtered = data.filter((r: DomainRow) =>
-      r.domain.toLowerCase().includes(q.trim().toLowerCase()),
+    const term = q.trim().toLowerCase();
+    const filtered = data.filter(
+      (r: DomainRow) =>
+        r.domain.toLowerCase().includes(term) ||
+        (r.keyword ?? "").toLowerCase().includes(term) ||
+        (r.target_page ?? "").toLowerCase().includes(term),
     );
     const sorted = [...filtered].sort((a, b) => {
       const va = a[sortKey] ?? "";
@@ -122,6 +128,14 @@ export function DomainTable({ table }: { table: TableKey }) {
               <Th label="DA / DR" k="dr" />
               <Th label="Traffic" k="traffic" />
               <Th label="Tanggal Dicek" k="checked_at" />
+              {detail && (
+                <>
+                  <TableHead>Keyword</TableHead>
+                  <TableHead>Halaman Target</TableHead>
+                  <TableHead>Tgl. Dibeli</TableHead>
+                  <TableHead>Harga</TableHead>
+                </>
+              )}
               <TableHead>Catatan</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
@@ -129,14 +143,14 @@ export function DomainTable({ table }: { table: TableKey }) {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={detail ? 10 : 6} className="py-10 text-center text-muted-foreground">
                   Memuat data...
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={detail ? 10 : 6} className="py-10 text-center text-muted-foreground">
                   Belum ada data pada tabel ini.
                 </TableCell>
               </TableRow>
@@ -149,6 +163,39 @@ export function DomainTable({ table }: { table: TableKey }) {
                 <TableCell className="text-muted-foreground">
                   {new Date(r.checked_at).toLocaleString("id-ID")}
                 </TableCell>
+                {detail && (
+                  <>
+                    <TableCell className="max-w-[220px] truncate">{r.keyword || "-"}</TableCell>
+                    <TableCell className="max-w-[260px] truncate">
+                      {r.target_page ? (
+                        <a
+                          href={r.target_page}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          {r.target_page.replace(/^https?:\/\/(www\.)?arsjadrasjid\.com/, "") || "/"}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {r.purchase_date
+                        ? new Date(r.purchase_date).toLocaleDateString("id-ID")
+                        : "-"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {r.price != null
+                        ? new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            maximumFractionDigits: 0,
+                          }).format(Number(r.price))
+                        : "-"}
+                    </TableCell>
+                  </>
+                )}
                 <TableCell className="max-w-[240px] truncate text-muted-foreground">
                   {r.notes ?? "-"}
                 </TableCell>

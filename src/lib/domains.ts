@@ -26,6 +26,10 @@ export type DomainRow = {
   status: string;
   notes: string | null;
   created_at: string;
+  keyword?: string | null;
+  target_page?: string | null;
+  purchase_date?: string | null;
+  price?: number | null;
 };
 
 export type LogRow = {

@@ -54,8 +54,12 @@ export type Database = {
           domain: string
           dr: number | null
           id: string
+          keyword: string | null
           notes: string | null
+          price: number | null
+          purchase_date: string | null
           status: string
+          target_page: string | null
           traffic: number | null
           user_id: string | null
         }
@@ -65,8 +69,12 @@ export type Database = {
           domain: string
           dr?: number | null
           id?: string
+          keyword?: string | null
           notes?: string | null
+          price?: number | null
+          purchase_date?: string | null
           status?: string
+          target_page?: string | null
           traffic?: number | null
           user_id?: string | null
         }
@@ -76,8 +84,12 @@ export type Database = {
           domain?: string
           dr?: number | null
           id?: string
+          keyword?: string | null
           notes?: string | null
+          price?: number | null
+          purchase_date?: string | null
           status?: string
+          target_page?: string | null
           traffic?: number | null
           user_id?: string | null
         }
