@@ -225,6 +225,19 @@ export function normalizeDomain(input: string) {
 export async function findExisting(
   domain: string,
 ): Promise<TableKey | null> {
+  const found = await findExistingRow(domain);
+  return found ? found.table : null;
+}
+
+/**
+ * Cari domain (exact, hasil normalisasi) di seluruh tabel riwayat.
+ * Mengembalikan baris pertama yang cocok beserta tabel asalnya.
+ */
+export async function findExistingRow(
+  domain: string,
+): Promise<{ table: TableKey; row: DomainRow } | null> {
+  const normalized = normalizeDomain(domain);
+
   const tables: TableKey[] = [
     "sudah_dibeli",
     "domain_sudah_pernah",
@@ -234,19 +247,45 @@ export async function findExisting(
   for (const table of tables) {
     const { data, error } = await supabase
       .from(table)
-      .select("id")
-      .ilike("domain", domain)
+      .select("*")
+      .ilike("domain", normalized)
+      .order("checked_at", { ascending: false })
       .limit(1);
 
     if (error) throw error;
 
     if (data && data.length > 0) {
-      return table;
+      return { table, row: data[0] as DomainRow };
     }
   }
 
   return null;
 }
+
+/** Simpan hasil riset Apify (DR + traffic) dengan research_status "selesai". */
+export async function insertResearchedRow(
+  table: TableKey,
+  row: {
+    domain: string;
+    dr: number | null;
+    traffic: number | null;
+    checked_at: string;
+    notes?: string | null;
+  },
+) {
+  const { error } = await supabase.from(table).insert({
+    domain: row.domain,
+    dr: row.dr,
+    traffic: row.traffic,
+    checked_at: row.checked_at,
+    status: table,
+    research_status: "selesai",
+    notes: row.notes ?? null,
+  });
+
+  if (error) throw error;
+}
+
 
 export async function insertRow(
   table: TableKey,
@@ -331,20 +370,4 @@ export function downloadCSV(filename: string, csv: string) {
   a.click();
 
   URL.revokeObjectURL(url);
-}
-
-const API_KEY_STORAGE = "ahrefs_api_key";
-
-export function getApiKey() {
-  if (typeof window === "undefined") return "";
-
-  return window.localStorage.getItem(API_KEY_STORAGE) ?? "";
-}
-
-export function setApiKey(key: string) {
-  window.localStorage.setItem(API_KEY_STORAGE, key);
-}
-
-export function clearApiKey() {
-  window.localStorage.removeItem(API_KEY_STORAGE);
 }

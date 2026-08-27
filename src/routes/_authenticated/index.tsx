@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DomainTable } from "@/components/DomainTable";
+import { DomainSearchResearch } from "@/components/DomainSearchResearch";
 import { TambahDomainDibeli } from "@/components/TambahDomainDibeli";
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import {
@@ -13,9 +12,10 @@ import {
   fetchTable,
   getSearchMatchType,
   normalizeSearchQuery,
-  saveSearchQuery,
   type SearchMatchType,
+  type TableKey,
 } from "@/lib/domains";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -59,7 +59,7 @@ function matchLabel(matchType: SearchMatchType) {
 function Dashboard() {
   useRealtimeDomains();
 
-  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TableKey>("sudah_dibeli");
   const [searchQuery, setSearchQuery] = useState("");
 
   const counts = useQuery({
@@ -84,25 +84,8 @@ function Dashboard() {
     queryFn: fetchSearchHistory,
   });
 
-  useEffect(() => {
-    const normalized = normalizeSearchQuery(searchQuery);
 
-    if (normalized.length < 2) return;
 
-    const timer = window.setTimeout(async () => {
-      try {
-        await saveSearchQuery(searchQuery);
-
-        await queryClient.invalidateQueries({
-          queryKey: ["search-history"],
-        });
-      } catch (error) {
-        console.error("Gagal menyimpan riwayat search:", error);
-      }
-    }, 600);
-
-    return () => window.clearTimeout(timer);
-  }, [searchQuery, queryClient]);
 
   const c = counts.data ?? {
     domain_sudah_pernah: 0,
@@ -135,47 +118,23 @@ function Dashboard() {
       <TambahDomainDibeli />
 
       <section>
-        <div className="mb-4 rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-semibold">
-                Pencarian Domain
-              </h2>
+        <DomainSearchResearch
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onFound={setActiveTab}
+        />
 
-              <p className="text-sm text-muted-foreground">
-                Search berlaku untuk semua tabel dan setiap query disimpan ke
-                database.
-              </p>
-            </div>
-
-            <div className="relative w-full max-w-sm">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari di semua tabel..."
-                className="pl-8"
-                aria-label="Cari di semua tabel"
-              />
-            </div>
+        {normalizedCurrent && relatedHistory.length > 0 && (
+          <div className="mb-4 rounded-md bg-muted/50 px-3 py-2 text-sm">
+            <span className="font-medium">Query aktif:</span> {searchQuery}
+            <span className="ml-2 font-medium text-primary">
+              • {relatedHistory.length} query terkait ditemukan
+            </span>
           </div>
+        )}
 
-          {normalizedCurrent && (
-            <div className="mt-3 rounded-md bg-muted/50 px-3 py-2 text-sm">
-              <span className="font-medium">Query aktif:</span>{" "}
-              {searchQuery}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableKey)}>
 
-              {relatedHistory.length > 0 && (
-                <span className="ml-2 font-medium text-primary">
-                  • {relatedHistory.length} query terkait ditemukan
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <Tabs defaultValue="sudah_dibeli">
           <TabsList>
             <TabsTrigger value="sudah_dibeli">
               Sudah Dibeli ({c.sudah_dibeli})
