@@ -46,7 +46,7 @@ export function DomainTable({ table }: { table: TableKey }) {
     onError: () => toast.error("Gagal menghapus baris"),
   });
 
-  const detail = table === "domain_sudah_pernah";
+  const detail = table !== "traffic_nol";
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
