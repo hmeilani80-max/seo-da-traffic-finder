@@ -1,10 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Download, Trash2, Search } from "lucide-react";
+import { ArrowUpDown, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -25,9 +24,8 @@ import {
 
 type SortKey = "domain" | "dr" | "traffic" | "checked_at";
 
-export function DomainTable({ table }: { table: TableKey }) {
+export function DomainTable({ table, searchQuery = "" }: { table: TableKey; searchQuery?: string }) {
   const qc = useQueryClient();
-  const [q, setQ] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("checked_at");
   const [asc, setAsc] = useState(false);
 
@@ -49,7 +47,7 @@ export function DomainTable({ table }: { table: TableKey }) {
   const detail = table !== "traffic_nol";
 
   const rows = useMemo(() => {
-    const term = q.trim().toLowerCase();
+    const term = searchQuery.trim().toLowerCase();
     const filtered = data.filter(
       (r: DomainRow) =>
         r.domain.toLowerCase().includes(term) ||
@@ -65,7 +63,7 @@ export function DomainTable({ table }: { table: TableKey }) {
         : String(vb).localeCompare(String(va));
     });
     return sorted;
-  }, [data, q, sortKey, asc]);
+  }, [data, searchQuery, sortKey, asc]);
 
   function sortBy(key: SortKey) {
     if (key === sortKey) setAsc((v) => !v);
@@ -94,30 +92,18 @@ export function DomainTable({ table }: { table: TableKey }) {
           <h2 className="text-base font-semibold">{TABLE_META[table].label}</h2>
           <p className="text-sm text-muted-foreground">{TABLE_META[table].deskripsi}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari domain..."
-              className="w-56 pl-8"
-            />
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (rows.length === 0) {
-                toast.info("Tidak ada data untuk diekspor");
-                return;
-              }
-              downloadCSV(`${table}-${Date.now()}.csv`, toCSV(rows));
-            }}
-
-          >
-            <Download className="size-4" /> Export CSV
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (rows.length === 0) {
+              toast.info("Tidak ada data untuk diekspor");
+              return;
+            }
+            downloadCSV(`${table}-${Date.now()}.csv`, toCSV(rows));
+          }}
+        >
+          <Download className="size-4" /> Export CSV
+        </Button>
       </div>
 
       <div className="overflow-x-auto">
@@ -151,7 +137,7 @@ export function DomainTable({ table }: { table: TableKey }) {
             {!isLoading && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={detail ? 10 : 6} className="py-10 text-center text-muted-foreground">
-                  Belum ada data pada tabel ini.
+                  {searchQuery.trim() ? "Tidak ada data yang cocok dengan pencarian." : "Belum ada data pada tabel ini."}
                 </TableCell>
               </TableRow>
             )}
@@ -168,44 +154,24 @@ export function DomainTable({ table }: { table: TableKey }) {
                     <TableCell className="max-w-[220px] truncate">{r.keyword || "-"}</TableCell>
                     <TableCell className="max-w-[260px] truncate">
                       {r.target_page ? (
-                        <a
-                          href={r.target_page}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
+                        <a href={r.target_page} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                           {r.target_page.replace(/^https?:\/\/(www\.)?arsjadrasjid\.com/, "") || "/"}
                         </a>
-                      ) : (
-                        "-"
-                      )}
+                      ) : "-"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {r.purchase_date
-                        ? new Date(r.purchase_date).toLocaleDateString("id-ID")
-                        : "-"}
+                      {r.purchase_date ? new Date(r.purchase_date).toLocaleDateString("id-ID") : "-"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {r.price != null
-                        ? new Intl.NumberFormat("id-ID", {
-                            style: "currency",
-                            currency: "IDR",
-                            maximumFractionDigits: 0,
-                          }).format(Number(r.price))
+                        ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(r.price))
                         : "-"}
                     </TableCell>
                   </>
                 )}
-                <TableCell className="max-w-[240px] truncate text-muted-foreground">
-                  {r.notes ?? "-"}
-                </TableCell>
+                <TableCell className="max-w-[240px] truncate text-muted-foreground">{r.notes ?? "-"}</TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => hapus.mutate(r.id)}
-                    aria-label={`Hapus ${r.domain}`}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => hapus.mutate(r.id)} aria-label={`Hapus ${r.domain}`}>
                     <Trash2 className="size-4 text-destructive" />
                   </Button>
                 </TableCell>
