@@ -21,19 +21,25 @@ export type Database = {
       domain_sudah_pernah: {
         Row: { checked_at: string; created_at: string; domain: string; dr: number | null; id: string; keyword: string | null; notes: string | null; price: number | null; purchase_date: string | null; status: string; target_page: string | null; traffic: number | null; user_id: string | null }
         Insert: { checked_at?: string; created_at?: string; domain: string; dr?: number | null; id?: string; keyword?: string | null; notes?: string | null; price?: number | null; purchase_date?: string | null; status?: string; target_page?: string | null; traffic?: number | null; user_id?: string | null }
-        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; keyword?: string | null; notes?: string | null; price?: number | null; purchase_date?: string | null; status?: string; target_page?: string | null; traffic?: number | null; user_id?: string | null }
+        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; keyword?: string | null; notes?: string | null; price?: number | null; purchase_date?: string | null; status?: string; target_page?: string | null; target_page?: string | null; traffic?: number | null; user_id?: string | null }
+        Relationships: []
+      }
+      domain_price_totals: {
+        Row: { table_name: "sudah_dibeli" | "domain_sudah_pernah"; total_price: number; updated_at: string }
+        Insert: { table_name: "sudah_dibeli" | "domain_sudah_pernah"; total_price?: number; updated_at?: string }
+        Update: { table_name?: "sudah_dibeli" | "domain_sudah_pernah"; total_price?: number; updated_at?: string }
         Relationships: []
       }
       sudah_dibeli: {
         Row: { checked_at: string; created_at: string; domain: string; dr: number | null; id: string; keyword: string | null; notes: string | null; price: number | null; purchase_date: string | null; status: string; target_page: string | null; traffic: number | null; user_id: string | null }
         Insert: { checked_at?: string; created_at?: string; domain: string; dr?: number | null; id?: string; keyword?: string | null; notes?: string | null; price?: number | null; purchase_date?: string | null; status?: string; target_page?: string | null; traffic?: number | null; user_id?: string | null }
-        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; keyword?: string | null; notes?: string | null; price?: number | null; purchase_date?: string | null; status?: string; target_page?: string | null; traffic?: number | null; user_id?: string | null }
+        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; keyword?: string | null; notes?: string | null; price?: number | null; purchase_date?: string | null; status?: string; target_page?: string | null; target_page?: string | null; traffic?: number | null; user_id?: string | null }
         Relationships: []
       }
       traffic_nol: {
         Row: { checked_at: string; created_at: string; domain: string; dr: number | null; id: string; notes: string | null; status: string; traffic: number; user_id: string | null }
         Insert: { checked_at?: string; created_at?: string; domain: string; dr?: number | null; id?: string; notes?: string | null; status?: string; traffic?: number; user_id?: string | null }
-        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; notes?: string | null; status?: string; traffic?: number; user_id?: string | null }
+        Update: { checked_at?: string; created_at?: string; domain?: string; dr?: number | null; id?: string; notes?: string | null; status?: string; traffic?: number | null; user_id?: string | null }
         Relationships: []
       }
       search_history: {
@@ -67,12 +73,10 @@ export type TablesUpdate<DefaultSchemaTableNameOrOptions extends keyof DefaultSc
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Update: infer U } ? U : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Update: infer U } ? U : never : never
 
-export type Enums<DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals }, EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"] : never = never> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions] : never
+export type Enums<DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals }, EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof DatabaseWithoutInternals[DefaultSchemaWithoutInternals["public"]]["Enums"] : never = never> = never
 
 export type CompositeTypes<PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals }, CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"] : never = never> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions] : never
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] ? DefaultSchema["CompositeTypes"][DefaultSchema["public"] extends never ? never : PublicCompositeTypeNameOrOptions] : never
 
 export const Constants = { public: { Enums: {} } } as const
