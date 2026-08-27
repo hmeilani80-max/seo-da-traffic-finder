@@ -101,9 +101,13 @@ export function DomainTable({ table }: { table: TableKey }) {
           <Button
             variant="outline"
             onClick={() => {
-              if (rows.length === 0) return toast.info("Tidak ada data untuk diekspor");
+              if (rows.length === 0) {
+                toast.info("Tidak ada data untuk diekspor");
+                return;
+              }
               downloadCSV(`${table}-${Date.now()}.csv`, toCSV(rows));
             }}
+
           >
             <Download className="size-4" /> Export CSV
           </Button>
