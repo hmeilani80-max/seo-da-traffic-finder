@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.claim_unowned_rows() TO authenticated;
