@@ -453,19 +453,15 @@ export async function updateDomainRow(
 
   payload.checked_at = new Date().toISOString();
 
-  const { data, error } = await (
-    supabase.from(table) as unknown as {
-      update: (values: DomainPatch) => ReturnType<
-        ReturnType<typeof supabase.from<"traffic_nol">>["update"]
-      >;
-    }
-  )
-    .update(payload)
-
-
+  const { data, error } = await supabase
+    .from("sudah_dibeli")
+    .update(payload as { domain?: string })
+    .eq("id", id)
     .eq("id", id)
     .select("*")
-    .maybeSingle();
+    .maybeSingle()
+    .setHeader?.("x-noop", "1") ?? { data: null, error: null };
+
 
   if (error) throw error;
 
