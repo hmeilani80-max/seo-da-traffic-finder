@@ -23,6 +23,7 @@ export type Database = {
           id: string
           pesan: string | null
           traffic: number | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           pesan?: string | null
           traffic?: number | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           id?: string
           pesan?: string | null
           traffic?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -54,6 +57,7 @@ export type Database = {
           notes: string | null
           status: string
           traffic: number | null
+          user_id: string | null
         }
         Insert: {
           checked_at?: string
@@ -64,6 +68,7 @@ export type Database = {
           notes?: string | null
           status?: string
           traffic?: number | null
+          user_id?: string | null
         }
         Update: {
           checked_at?: string
@@ -74,6 +79,7 @@ export type Database = {
           notes?: string | null
           status?: string
           traffic?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -87,6 +93,7 @@ export type Database = {
           notes: string | null
           status: string
           traffic: number | null
+          user_id: string | null
         }
         Insert: {
           checked_at?: string
@@ -97,6 +104,7 @@ export type Database = {
           notes?: string | null
           status?: string
           traffic?: number | null
+          user_id?: string | null
         }
         Update: {
           checked_at?: string
@@ -107,6 +115,7 @@ export type Database = {
           notes?: string | null
           status?: string
           traffic?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -120,6 +129,7 @@ export type Database = {
           notes: string | null
           status: string
           traffic: number
+          user_id: string | null
         }
         Insert: {
           checked_at?: string
@@ -130,6 +140,7 @@ export type Database = {
           notes?: string | null
           status?: string
           traffic?: number
+          user_id?: string | null
         }
         Update: {
           checked_at?: string
@@ -140,6 +151,7 @@ export type Database = {
           notes?: string | null
           status?: string
           traffic?: number
+          user_id?: string | null
         }
         Relationships: []
       }
