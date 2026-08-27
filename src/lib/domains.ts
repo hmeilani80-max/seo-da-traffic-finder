@@ -414,22 +414,6 @@ export async function findDuplicateDomain(
   return null;
 }
 
-const COMMON_FIELDS = [
-  "domain",
-  "dr",
-  "traffic",
-  "notes",
-  "research_status",
-  "checked_at",
-] as const;
-
-const DETAIL_FIELDS = [
-  "keyword",
-  "target_page",
-  "purchase_date",
-  "price",
-] as const;
-
 /** Update baris existing tanpa memindahkan tabel. */
 export async function updateDomainRow(
   table: TableKey,
