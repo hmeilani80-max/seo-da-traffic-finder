@@ -77,19 +77,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Dashboard Riset Backlink" },
+      { name: "description", content: "Tool internal manajemen riset & pembelian backlink domain." },
+      { property: "og:title", content: "Dashboard Riset Backlink" },
+      {
+        property: "og:description",
+        content: "Tool internal manajemen riset & pembelian backlink domain.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
@@ -102,7 +106,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <HeadContent />
       </head>
@@ -114,13 +118,54 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AppNav() {
+  const linkClass =
+    "rounded-md px-3 py-1.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground";
+  return (
+    <header className="border-b border-sidebar-border bg-sidebar">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-2">
+          <span className="grid size-8 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
+            BL
+          </span>
+          <span className="text-sm font-semibold text-sidebar-foreground">
+            Backlink Research Tool
+          </span>
+        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            to="/"
+            className={linkClass}
+            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm font-medium bg-sidebar-accent text-sidebar-foreground" }}
+            activeOptions={{ exact: true }}
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/settings"
+            className={linkClass}
+            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm font-medium bg-sidebar-accent text-sidebar-foreground" }}
+          >
+            Pengaturan
+          </Link>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="min-h-screen bg-background font-sans">
+        <AppNav />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </div>
+      <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
 }
+
