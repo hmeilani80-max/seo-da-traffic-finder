@@ -167,8 +167,10 @@ function parseSseOrJson(text: string): JsonRpcEnvelope {
       .filter(Boolean);
 
     for (let index = frames.length - 1; index >= 0; index -= 1) {
+      const frame = frames[index];
+      if (!frame) continue;
       try {
-        return JSON.parse(frames[index]) as JsonRpcEnvelope;
+        return JSON.parse(frame) as JsonRpcEnvelope;
       } catch {
         // Keep looking for a valid JSON-RPC data frame.
       }
@@ -296,7 +298,7 @@ async function getRankedKeywords(
     limit,
   });
 
-  const raw = toolResult.structuredContent?.keywords;
+  const raw = toolResult.structuredContent?.['keywords'];
   if (!Array.isArray(raw)) return [];
   return raw
     .map(mapRankedKeyword)
