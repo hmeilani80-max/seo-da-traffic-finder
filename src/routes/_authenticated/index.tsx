@@ -84,25 +84,8 @@ function Dashboard() {
     queryFn: fetchSearchHistory,
   });
 
-  useEffect(() => {
-    const normalized = normalizeSearchQuery(searchQuery);
 
-    if (normalized.length < 2) return;
 
-    const timer = window.setTimeout(async () => {
-      try {
-        await saveSearchQuery(searchQuery);
-
-        await queryClient.invalidateQueries({
-          queryKey: ["search-history"],
-        });
-      } catch (error) {
-        console.error("Gagal menyimpan riwayat search:", error);
-      }
-    }, 600);
-
-    return () => window.clearTimeout(timer);
-  }, [searchQuery, queryClient]);
 
   const c = counts.data ?? {
     domain_sudah_pernah: 0,
