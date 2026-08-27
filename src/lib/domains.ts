@@ -441,11 +441,13 @@ export async function updateDomainRow(
     ...(table === "traffic_nol" ? [] : DETAIL_FIELDS),
   ];
 
-  const payload: Record<string, unknown> = {};
+  const payload: DomainPatch = {};
 
   for (const key of allowed) {
     if (key in patch) {
-      payload[key] = (patch as Record<string, unknown>)[key];
+      (payload as Record<string, unknown>)[key] = (
+        patch as Record<string, unknown>
+      )[key];
     }
   }
 
@@ -454,6 +456,7 @@ export async function updateDomainRow(
   const { data, error } = await supabase
     .from(table)
     .update(payload)
+
     .eq("id", id)
     .select("*")
     .maybeSingle();
