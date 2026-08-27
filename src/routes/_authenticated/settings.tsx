@@ -27,6 +27,13 @@ export const Route = createFileRoute("/_authenticated/settings")({
 });
 
 function SettingsPage() {
+  const checkOpenSEO = useServerFn(checkOpenSEOConfig);
+  const [openSeo, setOpenSeo] = useState<{ configured: boolean; message: string } | null>(null);
+
+  useEffect(() => {
+    checkOpenSEO({ data: undefined }).then((res) => setOpenSeo(res));
+  }, [checkOpenSEO]);
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
       <header>
@@ -62,6 +69,44 @@ function SettingsPage() {
           <span>
             Jika riset gagal dengan pesan koneksi Apify belum tersedia, hubungkan kembali
             connector Apify melalui Project Settings → Connectors.
+          </span>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-card p-6 shadow-[var(--shadow-card)]">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <Globe className="size-4 text-primary" /> Integrasi OpenSEO
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          OpenSEO API key disimpan di server sebagai environment variable{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">OPENSEO_API_KEY</code>.
+          Key ini dapat dipakai untuk membangun fitur riset SEO tambahan di sisi server.
+        </p>
+
+        {openSeo && (
+          <div
+            className={`mt-4 flex items-start gap-2 rounded-md border p-3 text-sm ${
+              openSeo.configured
+                ? "border-primary/30 bg-primary/5"
+                : "border-destructive/30 bg-destructive/5"
+            }`}
+          >
+            <CheckCircle2
+              className={`mt-0.5 size-4 shrink-0 ${
+                openSeo.configured ? "text-primary" : "text-destructive"
+              }`}
+            />
+            <span>{openSeo.message}</span>
+          </div>
+        )}
+
+        <div className="mt-3 flex items-start gap-2 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+          <Info className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Saat ini OpenSEO tersedia sebagai tool riset untuk agent/builder. Jika ingin memakai
+            data OpenSEO di aplikasi publik, tambahkan endpoint/integrasi spesifik yang dibutuhkan
+            (misal: keyword research, SERP, rank tracker).
           </span>
         </div>
       </div>
