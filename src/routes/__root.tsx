@@ -150,7 +150,18 @@ function AppNav() {
           >
             Pengaturan
           </Link>
+          <button
+            type="button"
+            className={linkClass}
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.href = "/auth";
+            }}
+          >
+            Keluar
+          </button>
         </div>
+
       </nav>
     </header>
   );
