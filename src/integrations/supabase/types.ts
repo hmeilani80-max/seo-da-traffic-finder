@@ -14,7 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      check_logs: {
+        Row: {
+          created_at: string
+          domain: string
+          dr: number | null
+          hasil: string
+          id: string
+          pesan: string | null
+          traffic: number | null
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          dr?: number | null
+          hasil: string
+          id?: string
+          pesan?: string | null
+          traffic?: number | null
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          dr?: number | null
+          hasil?: string
+          id?: string
+          pesan?: string | null
+          traffic?: number | null
+        }
+        Relationships: []
+      }
+      domain_sudah_pernah: {
+        Row: {
+          checked_at: string
+          created_at: string
+          domain: string
+          dr: number | null
+          id: string
+          notes: string | null
+          status: string
+          traffic: number | null
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          domain: string
+          dr?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          traffic?: number | null
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          domain?: string
+          dr?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          traffic?: number | null
+        }
+        Relationships: []
+      }
+      sudah_dibeli: {
+        Row: {
+          checked_at: string
+          created_at: string
+          domain: string
+          dr: number | null
+          id: string
+          notes: string | null
+          status: string
+          traffic: number | null
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          domain: string
+          dr?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          traffic?: number | null
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          domain?: string
+          dr?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          traffic?: number | null
+        }
+        Relationships: []
+      }
+      traffic_nol: {
+        Row: {
+          checked_at: string
+          created_at: string
+          domain: string
+          dr: number | null
+          id: string
+          notes: string | null
+          status: string
+          traffic: number
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          domain: string
+          dr?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          traffic?: number
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          domain?: string
+          dr?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          traffic?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
