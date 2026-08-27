@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,16 +73,6 @@ function AuthPage() {
     }
   }
 
-  async function handleGoogle() {
-    try {
-      await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal masuk dengan Google");
-    }
-  }
-
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
@@ -94,12 +83,6 @@ function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline" className="w-full" onClick={handleGoogle}>
-            Lanjutkan dengan Google
-          </Button>
-          <div className="relative text-center text-xs text-muted-foreground">
-            <span className="bg-card px-2">atau gunakan email</span>
-          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
