@@ -30,6 +30,7 @@ export type DomainRow = {
   target_page?: string | null;
   purchase_date?: string | null;
   price?: number | null;
+  research_status?: "belum_diriset" | "sedang_diriset" | "selesai" | "gagal" | null;
 };
 
 export type LogRow = {
@@ -135,7 +136,6 @@ export function normalizeDomain(input: string) {
     .replace(/\/.*$/, "");
 }
 
-/** Cek apakah domain sudah pernah ada di salah satu dari 3 tabel. */
 export async function findExisting(domain: string): Promise<TableKey | null> {
   const tables: TableKey[] = ["sudah_dibeli", "domain_sudah_pernah", "traffic_nol"];
   for (const t of tables) {
@@ -182,7 +182,7 @@ export async function insertLog(row: {
 }
 
 export function toCSV(rows: DomainRow[]) {
-  const header = ["Domain", "DR/DA", "Traffic", "Tanggal Dicek", "Status", "Catatan"];
+  const header = ["Domain", "DR/DA", "Traffic", "Tanggal Dicek", "Status", "Status Riset", "Catatan"];
   const escape = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = rows.map((r) =>
     [
@@ -191,6 +191,7 @@ export function toCSV(rows: DomainRow[]) {
       r.traffic ?? "",
       new Date(r.checked_at).toLocaleString("id-ID"),
       r.status,
+      r.research_status ?? "",
       r.notes ?? "",
     ]
       .map(escape)
