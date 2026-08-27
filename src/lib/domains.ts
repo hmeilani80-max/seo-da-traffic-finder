@@ -455,10 +455,14 @@ export async function updateDomainRow(
 
   const query =
     table === "traffic_nol"
-      ? supabase.from("traffic_nol").update(payload)
+      ? supabase.from("traffic_nol").update({
+          ...payload,
+          traffic: payload.traffic ?? 0,
+        })
       : table === "sudah_dibeli"
         ? supabase.from("sudah_dibeli").update(payload)
         : supabase.from("domain_sudah_pernah").update(payload);
+
 
   const { data, error } = await query
     .eq("id", id)
