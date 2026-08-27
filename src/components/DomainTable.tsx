@@ -9,6 +9,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -16,6 +17,7 @@ import {
 import {
   deleteRow,
   downloadCSV,
+  fetchDomainPriceTotal,
   fetchTable,
   TABLE_META,
   toCSV,
@@ -29,10 +31,17 @@ export function DomainTable({ table, searchQuery = "" }: { table: TableKey; sear
   const qc = useQueryClient();
   const [sortKey, setSortKey] = useState<SortKey>("checked_at");
   const [asc, setAsc] = useState(false);
+  const detail = table !== "traffic_nol";
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["table", table],
     queryFn: () => fetchTable(table),
+  });
+
+  const { data: priceTotal } = useQuery({
+    queryKey: ["domain-price-total", table],
+    queryFn: () => fetchDomainPriceTotal(table as "sudah_dibeli" | "domain_sudah_pernah"),
+    enabled: detail,
   });
 
   const hapus = useMutation({
@@ -40,12 +49,11 @@ export function DomainTable({ table, searchQuery = "" }: { table: TableKey; sear
     onSuccess: () => {
       toast.success("Baris dihapus");
       qc.invalidateQueries({ queryKey: ["table", table] });
+      qc.invalidateQueries({ queryKey: ["domain-price-total", table] });
       qc.invalidateQueries({ queryKey: ["ringkasan"] });
     },
     onError: () => toast.error("Gagal menghapus baris"),
   });
-
-  const detail = table !== "traffic_nol";
 
   const rows = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
@@ -91,6 +99,9 @@ export function DomainTable({ table, searchQuery = "" }: { table: TableKey; sear
     return <Badge variant={status === "gagal" ? "destructive" : status === "selesai" ? "default" : "secondary"}>{labels[status]}</Badge>;
   }
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+
   return (
     <div className="rounded-xl border bg-card shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
@@ -134,13 +145,22 @@ export function DomainTable({ table, searchQuery = "" }: { table: TableKey; sear
                   <TableCell className="max-w-[220px] truncate">{r.keyword || "-"}</TableCell>
                   <TableCell className="max-w-[260px] truncate">{r.target_page ? <a href={r.target_page} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.target_page.replace(/^https?:\/\/(www\.)?arsjadrasjid\.com/, "") || "/"}</a> : "-"}</TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">{r.purchase_date ? new Date(r.purchase_date).toLocaleDateString("id-ID") : "-"}</TableCell>
-                  <TableCell className="whitespace-nowrap">{r.price != null ? new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(r.price)) : "-"}</TableCell>
+                  <TableCell className="whitespace-nowrap">{r.price != null ? formatCurrency(Number(r.price)) : "-"}</TableCell>
                 </>}
                 <TableCell className="max-w-[240px] truncate text-muted-foreground">{r.notes ?? "-"}</TableCell>
                 <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => hapus.mutate(r.id)} aria-label={`Hapus ${r.domain}`}><Trash2 className="size-4 text-destructive" /></Button></TableCell>
               </TableRow>
             ))}
           </TableBody>
+          {detail && (
+            <TableFooter>
+              <TableRow className="font-semibold">
+                <TableCell colSpan={8} className="text-right">TOTAL HARGA</TableCell>
+                <TableCell>{formatCurrency(Number(priceTotal?.total_price ?? 0))}</TableCell>
+                <TableCell colSpan={2}></TableCell>
+              </TableRow>
+            </TableFooter>
+          )}
         </Table>
       </div>
     </div>
