@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DomainTable } from "@/components/DomainTable";
+import { DomainSearchResearch } from "@/components/DomainSearchResearch";
 import { TambahDomainDibeli } from "@/components/TambahDomainDibeli";
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import {
@@ -13,9 +12,10 @@ import {
   fetchTable,
   getSearchMatchType,
   normalizeSearchQuery,
-  saveSearchQuery,
   type SearchMatchType,
+  type TableKey,
 } from "@/lib/domains";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
