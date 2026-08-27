@@ -371,3 +371,106 @@ export function downloadCSV(filename: string, csv: string) {
 
   URL.revokeObjectURL(url);
 }
+
+export type DomainPatch = {
+  domain?: string;
+  dr?: number | null;
+  traffic?: number | null;
+  notes?: string | null;
+  research_status?: "belum_diriset" | "sedang_diriset" | "selesai" | "gagal";
+  keyword?: string | null;
+  target_page?: string | null;
+  purchase_date?: string | null;
+  price?: number | null;
+  checked_at?: string;
+};
+
+/** Cari domain duplikat di seluruh tabel, kecuali baris yang sedang diedit. */
+export async function findDuplicateDomain(
+  domain: string,
+  excludeId: string,
+): Promise<TableKey | null> {
+  const normalized = normalizeDomain(domain);
+
+  const tables: TableKey[] = [
+    "sudah_dibeli",
+    "domain_sudah_pernah",
+    "traffic_nol",
+  ];
+
+  for (const table of tables) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("id")
+      .ilike("domain", normalized)
+      .neq("id", excludeId)
+      .limit(1);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) return table;
+  }
+
+  return null;
+}
+
+/** Update baris existing tanpa memindahkan tabel. */
+export async function updateDomainRow(
+  table: TableKey,
+  id: string,
+  patch: DomainPatch,
+) {
+  const checkedAt = new Date().toISOString();
+
+  const common: {
+    domain?: string;
+    dr?: number | null;
+    notes?: string | null;
+    research_status?: string;
+    checked_at: string;
+  } = { checked_at: checkedAt };
+
+  if (patch.domain !== undefined) common.domain = patch.domain;
+  if (patch.dr !== undefined) common.dr = patch.dr;
+  if (patch.notes !== undefined) common.notes = patch.notes;
+  if (patch.research_status !== undefined)
+    common.research_status = patch.research_status;
+
+  const detail: {
+    keyword?: string | null;
+    target_page?: string | null;
+    purchase_date?: string | null;
+    price?: number | null;
+  } = {};
+
+  if (patch.keyword !== undefined) detail.keyword = patch.keyword;
+  if (patch.target_page !== undefined) detail.target_page = patch.target_page;
+  if (patch.purchase_date !== undefined)
+    detail.purchase_date = patch.purchase_date;
+  if (patch.price !== undefined) detail.price = patch.price;
+
+  const query =
+    table === "traffic_nol"
+      ? supabase
+          .from("traffic_nol")
+          .update({ ...common, traffic: patch.traffic ?? 0 })
+      : table === "sudah_dibeli"
+        ? supabase
+            .from("sudah_dibeli")
+            .update({ ...common, ...detail, traffic: patch.traffic ?? null })
+        : supabase
+            .from("domain_sudah_pernah")
+            .update({ ...common, ...detail, traffic: patch.traffic ?? null });
+
+
+
+  const { data, error } = await query
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data as DomainRow | null;
+
+}
