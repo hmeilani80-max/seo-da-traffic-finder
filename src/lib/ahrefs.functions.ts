@@ -17,7 +17,7 @@ export type AhrefsResult = {
  */
 export const fetchAhrefsMetrics = createServerFn({ method: "POST" })
   .inputValidator((data: { domain: string; apiKey: string }) => {
-    const domain = normalize(String(data?.domain ?? ""));
+    const domain = normalizeDomainInput(String(data?.domain ?? ""));
     const apiKey = String(data?.apiKey ?? "").trim();
     if (!domain) throw new Error("Domain tidak valid");
     if (!apiKey) throw new Error("Ahrefs API Key belum diisi");
