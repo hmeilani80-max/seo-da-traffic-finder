@@ -118,47 +118,23 @@ function Dashboard() {
       <TambahDomainDibeli />
 
       <section>
-        <div className="mb-4 rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-semibold">
-                Pencarian Domain
-              </h2>
+        <DomainSearchResearch
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          onFound={setActiveTab}
+        />
 
-              <p className="text-sm text-muted-foreground">
-                Search berlaku untuk semua tabel dan setiap query disimpan ke
-                database.
-              </p>
-            </div>
-
-            <div className="relative w-full max-w-sm">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari di semua tabel..."
-                className="pl-8"
-                aria-label="Cari di semua tabel"
-              />
-            </div>
+        {normalizedCurrent && relatedHistory.length > 0 && (
+          <div className="mb-4 rounded-md bg-muted/50 px-3 py-2 text-sm">
+            <span className="font-medium">Query aktif:</span> {searchQuery}
+            <span className="ml-2 font-medium text-primary">
+              • {relatedHistory.length} query terkait ditemukan
+            </span>
           </div>
+        )}
 
-          {normalizedCurrent && (
-            <div className="mt-3 rounded-md bg-muted/50 px-3 py-2 text-sm">
-              <span className="font-medium">Query aktif:</span>{" "}
-              {searchQuery}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableKey)}>
 
-              {relatedHistory.length > 0 && (
-                <span className="ml-2 font-medium text-primary">
-                  • {relatedHistory.length} query terkait ditemukan
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <Tabs defaultValue="sudah_dibeli">
           <TabsList>
             <TabsTrigger value="sudah_dibeli">
               Sudah Dibeli ({c.sudah_dibeli})
