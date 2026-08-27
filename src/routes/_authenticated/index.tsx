@@ -15,6 +15,7 @@ import {
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DomainTable } from "@/components/DomainTable";
@@ -60,6 +61,7 @@ function Dashboard() {
   useRealtimeDomains();
   const [input, setInput] = useState("");
   const [hasil, setHasil] = useState<HasilCek[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const ahrefs = useServerFn(fetchAhrefsMetrics);
 
   const counts = useQuery({
@@ -244,6 +246,21 @@ function Dashboard() {
       <TambahDomainDibeli />
 
       <section>
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold">Data Domain</h2>
+            <p className="text-sm text-muted-foreground">Satu pencarian berlaku untuk semua tabel.</p>
+          </div>
+          <div className="relative w-full max-w-sm">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari di semua tabel..."
+              className="pl-8"
+            />
+          </div>
+        </div>
         <Tabs defaultValue="sudah_dibeli">
           <TabsList>
             <TabsTrigger value="sudah_dibeli">Sudah Dibeli ({c.sudah_dibeli})</TabsTrigger>
@@ -253,13 +270,13 @@ function Dashboard() {
             <TabsTrigger value="traffic_nol">Traffic 0 ({c.traffic_nol})</TabsTrigger>
           </TabsList>
           <TabsContent value="sudah_dibeli" className="mt-4">
-            <DomainTable table="sudah_dibeli" />
+            <DomainTable table="sudah_dibeli" searchQuery={searchQuery} />
           </TabsContent>
           <TabsContent value="domain_sudah_pernah" className="mt-4">
-            <DomainTable table="domain_sudah_pernah" />
+            <DomainTable table="domain_sudah_pernah" searchQuery={searchQuery} />
           </TabsContent>
           <TabsContent value="traffic_nol" className="mt-4">
-            <DomainTable table="traffic_nol" />
+            <DomainTable table="traffic_nol" searchQuery={searchQuery} />
           </TabsContent>
         </Tabs>
       </section>
