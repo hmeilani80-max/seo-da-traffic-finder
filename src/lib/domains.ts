@@ -52,6 +52,12 @@ export type SearchHistoryRow = {
   last_searched_at: string;
 };
 
+export type SearchMatchType =
+  | "sama"
+  | "mengandung"
+  | "terkandung"
+  | "tidak_terkait";
+
 export type DomainPriceTotal = {
   table_name: "sudah_dibeli" | "domain_sudah_pernah";
   total_price: number;
@@ -119,6 +125,32 @@ export function normalizeSearchQuery(input: string) {
   return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+export function getSearchMatchType(
+  activeQuery: string,
+  historyQuery: string,
+): SearchMatchType {
+  const active = normalizeSearchQuery(activeQuery);
+  const history = normalizeSearchQuery(historyQuery);
+
+  if (!active || !history) {
+    return "tidak_terkait";
+  }
+
+  if (active === history) {
+    return "sama";
+  }
+
+  if (history.includes(active)) {
+    return "mengandung";
+  }
+
+  if (active.includes(history)) {
+    return "terkandung";
+  }
+
+  return "tidak_terkait";
+}
+
 export async function saveSearchQuery(input: string) {
   const query = input.trim();
   const normalizedQuery = normalizeSearchQuery(query);
@@ -149,12 +181,14 @@ export async function saveSearchQuery(input: string) {
     return;
   }
 
+  const now = new Date().toISOString();
+
   const { error } = await supabase.from("search_history").insert({
     query,
     normalized_query: normalizedQuery,
     search_count: 1,
-    first_searched_at: new Date().toISOString(),
-    last_searched_at: new Date().toISOString(),
+    first_searched_at: now,
+    last_searched_at: now,
   });
 
   if (error) throw error;
