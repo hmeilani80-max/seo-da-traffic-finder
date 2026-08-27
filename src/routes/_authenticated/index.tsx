@@ -31,7 +31,7 @@ import {
   type TableKey,
 } from "@/lib/domains";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Dashboard Riset Backlink — Manajemen Domain" },
