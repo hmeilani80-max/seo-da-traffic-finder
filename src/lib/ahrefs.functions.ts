@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
+import { normalizeDomainInput, todayISO } from "./ahrefs-utils";
+
 export type AhrefsResult = {
   domain: string;
   dr: number | null;
@@ -7,18 +9,7 @@ export type AhrefsResult = {
   error: string | null;
 };
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
-function normalize(input: string) {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "")
-    .replace(/\/.*$/, "");
-}
 
 /**
  * Mengambil Domain Rating & Organic Traffic dari Ahrefs API v3.
