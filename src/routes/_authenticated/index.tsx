@@ -69,15 +69,19 @@ function Dashboard() {
       try {
         await saveSearchQuery(searchQuery);
         await queryClient.invalidateQueries({ queryKey: ["search-history"] });
-      } catch {
-        // Pencarian tetap berjalan walaupun pencatatan riwayat gagal.
+      } catch (error) {
+        console.error("Gagal menyimpan riwayat search:", error);
       }
     }, 600);
 
     return () => window.clearTimeout(timer);
   }, [searchQuery, queryClient]);
 
-  const c = counts.data ?? { domain_sudah_pernah: 0, traffic_nol: 0, sudah_dibeli: 0 };
+  const c = counts.data ?? {
+    domain_sudah_pernah: 0,
+    traffic_nol: 0,
+    sudah_dibeli: 0,
+  };
   const normalizedCurrent = normalizeSearchQuery(searchQuery);
   const history = searchHistory.data ?? [];
 
@@ -123,7 +127,9 @@ function Dashboard() {
                   item.normalized_query.includes(normalizedCurrent) ||
                   normalizedCurrent.includes(item.normalized_query),
               ) && (
-                <span className="ml-2 font-medium text-primary">• Pernah dicari / query terkait ditemukan</span>
+                <span className="ml-2 font-medium text-primary">
+                  • Pernah dicari / query terkait ditemukan
+                </span>
               )}
             </div>
           )}
