@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function Dashboard() {
   useRealtimeDomains();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
 
   const counts = useQuery({
@@ -67,14 +68,14 @@ function Dashboard() {
     const timer = window.setTimeout(async () => {
       try {
         await saveSearchQuery(searchQuery);
-        await searchHistory.refetch();
+        await queryClient.invalidateQueries({ queryKey: ["search-history"] });
       } catch {
         // Pencarian tetap berjalan walaupun pencatatan riwayat gagal.
       }
     }, 600);
 
     return () => window.clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, queryClient]);
 
   const c = counts.data ?? { domain_sudah_pernah: 0, traffic_nol: 0, sudah_dibeli: 0 };
   const normalizedCurrent = normalizeSearchQuery(searchQuery);
@@ -152,7 +153,7 @@ function Dashboard() {
         <div className="border-b p-4">
           <h2 className="text-base font-semibold">Tabel Riwayat Search</h2>
           <p className="text-sm text-muted-foreground">
-            Query yang sama, merupakan bagian dari query lain, atau mengandung query sebelumnya akan ditandai.
+            Query yang sama atau saling mengandung query aktif akan ditandai otomatis.
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -188,7 +189,7 @@ function Dashboard() {
                         {new Date(item.last_searched_at).toLocaleString("id-ID")}
                       </td>
                       <td className="px-4 py-3">
-                        {isRelated ? "✓ Sama / mengandung karakter query aktif" : "Tersimpan"}
+                        {isRelated ? "✓ Sama / mengandung query aktif" : "Tersimpan"}
                       </td>
                     </tr>
                   );
