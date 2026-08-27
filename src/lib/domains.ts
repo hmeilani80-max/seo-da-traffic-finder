@@ -42,6 +42,15 @@ export type LogRow = {
   created_at: string;
 };
 
+export type SearchHistoryRow = {
+  id: string;
+  query: string;
+  normalized_query: string;
+  search_count: number;
+  first_searched_at: string;
+  last_searched_at: string;
+};
+
 export async function fetchTable(table: TableKey): Promise<DomainRow[]> {
   const { data, error } = await supabase
     .from(table)
@@ -59,6 +68,52 @@ export async function fetchLogs(): Promise<LogRow[]> {
     .limit(20);
   if (error) throw error;
   return (data ?? []) as LogRow[];
+}
+
+export async function fetchSearchHistory(): Promise<SearchHistoryRow[]> {
+  const { data, error } = await supabase
+    .from("search_history")
+    .select("id, query, normalized_query, search_count, first_searched_at, last_searched_at")
+    .order("last_searched_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []) as SearchHistoryRow[];
+}
+
+export function normalizeSearchQuery(input: string) {
+  return input.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export async function saveSearchQuery(input: string) {
+  const query = input.trim();
+  const normalizedQuery = normalizeSearchQuery(query);
+  if (!normalizedQuery) return;
+
+  const { data: existing, error: findError } = await supabase
+    .from("search_history")
+    .select("id, search_count")
+    .eq("normalized_query", normalizedQuery)
+    .maybeSingle();
+  if (findError) throw findError;
+
+  if (existing) {
+    const { error } = await supabase
+      .from("search_history")
+      .update({
+        query,
+        search_count: existing.search_count + 1,
+        last_searched_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await supabase.from("search_history").insert({
+    query,
+    normalized_query: normalizedQuery,
+  });
+  if (error) throw error;
 }
 
 export async function deleteRow(table: TableKey, id: string) {
