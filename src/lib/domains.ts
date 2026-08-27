@@ -52,6 +52,12 @@ export type SearchHistoryRow = {
   last_searched_at: string;
 };
 
+export type DomainPriceTotal = {
+  table_name: "sudah_dibeli" | "domain_sudah_pernah";
+  total_price: number;
+  updated_at: string;
+};
+
 export async function fetchTable(table: TableKey): Promise<DomainRow[]> {
   const { data, error } = await supabase
     .from(table)
@@ -59,6 +65,16 @@ export async function fetchTable(table: TableKey): Promise<DomainRow[]> {
     .order("checked_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as DomainRow[];
+}
+
+export async function fetchDomainPriceTotal(table: "sudah_dibeli" | "domain_sudah_pernah") {
+  const { data, error } = await supabase
+    .from("domain_price_totals")
+    .select("table_name, total_price, updated_at")
+    .eq("table_name", table)
+    .maybeSingle();
+  if (error) throw error;
+  return (data ?? { table_name: table, total_price: 0, updated_at: new Date(0).toISOString() }) as DomainPriceTotal;
 }
 
 export async function fetchLogs(): Promise<LogRow[]> {
