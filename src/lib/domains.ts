@@ -453,17 +453,20 @@ export async function updateDomainRow(
 
   payload.checked_at = new Date().toISOString();
 
-  const { data, error } = await supabase
-    .from("sudah_dibeli")
-    .update(payload as { domain?: string })
-    .eq("id", id)
+  const query =
+    table === "traffic_nol"
+      ? supabase.from("traffic_nol").update(payload)
+      : table === "sudah_dibeli"
+        ? supabase.from("sudah_dibeli").update(payload)
+        : supabase.from("domain_sudah_pernah").update(payload);
+
+  const { data, error } = await query
     .eq("id", id)
     .select("*")
-    .maybeSingle()
-    .setHeader?.("x-noop", "1") ?? { data: null, error: null };
-
+    .maybeSingle();
 
   if (error) throw error;
 
   return data as DomainRow | null;
+
 }
