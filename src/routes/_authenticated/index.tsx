@@ -55,6 +55,7 @@ type HasilCek = { domain: string; tabel: TableKey | "error"; pesan: string };
 
 function Dashboard() {
   const qc = useQueryClient();
+  useRealtimeDomains();
   const [input, setInput] = useState("");
   const [hasil, setHasil] = useState<HasilCek[]>([]);
   const ahrefs = useServerFn(fetchAhrefsMetrics);
