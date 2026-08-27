@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DomainTable } from "@/components/DomainTable";
+import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import { fetchAhrefsMetrics } from "@/lib/ahrefs.functions";
 import {
   fetchLogs,
@@ -55,6 +56,7 @@ type HasilCek = { domain: string; tabel: TableKey | "error"; pesan: string };
 
 function Dashboard() {
   const qc = useQueryClient();
+  useRealtimeDomains();
   const [input, setInput] = useState("");
   const [hasil, setHasil] = useState<HasilCek[]>([]);
   const ahrefs = useServerFn(fetchAhrefsMetrics);
