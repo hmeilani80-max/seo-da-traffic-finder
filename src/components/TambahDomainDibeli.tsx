@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { BacklinkSuggestionPanel } from "@/components/BacklinkSuggestionPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,7 +108,8 @@ export function TambahDomainDibeli() {
       <div className="mb-4">
         <h2 className="text-base font-semibold">Tambah Domain ke "Sudah Dibeli"</h2>
         <p className="text-sm text-muted-foreground">
-          Input manual domain beserta detail pembeliannya. Data langsung tersinkron realtime.
+          Input domain lalu gunakan saran OpenSEO untuk memilih keyword dan target page yang paling
+          masuk akal. Semua field tetap bisa diubah manual sebelum disimpan.
         </p>
       </div>
 
@@ -116,7 +118,20 @@ export function TambahDomainDibeli() {
         <F id="dr" label="DA / DR" type="number" placeholder="0" />
         <F id="traffic" label="Traffic" type="number" placeholder="0" />
         <F id="purchase_date" label="Tanggal Dibeli" type="date" />
-        <F id="keyword" label="Keyword" placeholder="anchor text" />
+
+        <BacklinkSuggestionPanel
+          domain={form.domain}
+          sourceDr={form.dr}
+          onUse={(suggestion) =>
+            setForm((current) => ({
+              ...current,
+              keyword: suggestion.keyword,
+              target_page: suggestion.targetPage,
+            }))
+          }
+        />
+
+        <F id="keyword" label="Keyword / Anchor" placeholder="anchor text" />
         <F id="target_page" label="Halaman Target" placeholder="https://arsjadrasjid.com/..." />
         <F id="price" label="Harga (Rp)" type="number" placeholder="150000" />
         <div className="space-y-1.5">
