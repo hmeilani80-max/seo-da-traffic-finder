@@ -128,6 +128,14 @@ export function DomainTable({ table }: { table: TableKey }) {
               <Th label="DA / DR" k="dr" />
               <Th label="Traffic" k="traffic" />
               <Th label="Tanggal Dicek" k="checked_at" />
+              {detail && (
+                <>
+                  <TableHead>Keyword</TableHead>
+                  <TableHead>Halaman Target</TableHead>
+                  <TableHead>Tgl. Dibeli</TableHead>
+                  <TableHead>Harga</TableHead>
+                </>
+              )}
               <TableHead>Catatan</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
