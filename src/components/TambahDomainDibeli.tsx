@@ -17,6 +17,7 @@ const kosong = {
   traffic: "",
   keyword: "",
   target_page: "",
+  search_volume: "",
   purchase_date: "",
   price: "",
   notes: "",
@@ -47,6 +48,7 @@ export function TambahDomainDibeli() {
         traffic: form.traffic === "" ? null : Number(form.traffic),
         keyword: form.keyword.trim() || null,
         target_page: form.target_page.trim() || null,
+        search_volume: form.search_volume === "" ? null : Number(form.search_volume),
         purchase_date: form.purchase_date || null,
         price: form.price === "" ? null : Number(form.price),
         notes: form.notes.trim() || null,
@@ -127,12 +129,17 @@ export function TambahDomainDibeli() {
               ...current,
               keyword: suggestion.keyword,
               target_page: suggestion.targetPage,
+              search_volume:
+                suggestion.searchVolume != null
+                  ? String(suggestion.searchVolume)
+                  : current.search_volume,
             }))
           }
         />
 
         <F id="keyword" label="Keyword / Anchor" placeholder="anchor text" />
         <F id="target_page" label="Halaman Target" placeholder="https://arsjadrasjid.com/..." />
+        <F id="search_volume" label="Search Volume" type="number" placeholder="0" />
         <F id="price" label="Harga (Rp)" type="number" placeholder="150000" />
         <div className="space-y-1.5">
           <Label htmlFor="notes">Catatan</Label>
