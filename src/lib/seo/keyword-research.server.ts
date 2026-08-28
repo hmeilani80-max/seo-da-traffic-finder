@@ -181,7 +181,7 @@ export async function researchKeywords(input: {
   const results: KeywordMetricsResult[] = [];
   for (const keyword of unique.slice(0, MAX_SHORTLIST)) {
     results.push(
-      await researchKeyword({ keyword, country, forceRefresh: input.forceRefresh }),
+      await researchKeyword({ keyword, country, forceRefresh: Boolean(input.forceRefresh) }),
     );
   }
   return results;
