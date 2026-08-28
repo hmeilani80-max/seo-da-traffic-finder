@@ -59,6 +59,9 @@ export function EditDomainDialog({
   const qc = useQueryClient();
   const detail = table !== "traffic_nol";
 
+  // Search Volume hanya berlaku untuk tabel "sudah_dibeli".
+  const showSearchVolume = table === "sudah_dibeli";
+
   const [domain, setDomain] = useState(row.domain);
   const [dr, setDr] = useState(row.dr?.toString() ?? "");
   const [traffic, setTraffic] = useState(row.traffic?.toString() ?? "");
@@ -70,6 +73,9 @@ export function EditDomainDialog({
   const [targetPage, setTargetPage] = useState(row.target_page ?? "");
   const [purchaseDate, setPurchaseDate] = useState(row.purchase_date ?? "");
   const [price, setPrice] = useState(row.price?.toString() ?? "");
+  const [searchVolume, setSearchVolume] = useState(
+    row.search_volume?.toString() ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,6 +90,7 @@ export function EditDomainDialog({
     setTargetPage(row.target_page ?? "");
     setPurchaseDate(row.purchase_date ?? "");
     setPrice(row.price?.toString() ?? "");
+    setSearchVolume(row.search_volume?.toString() ?? "");
     setError(null);
   }, [open, row]);
 
@@ -147,6 +154,10 @@ export function EditDomainDialog({
         patch.target_page = targetPage.trim() ? targetPage.trim() : null;
         patch.purchase_date = purchaseDate.trim() ? purchaseDate.trim() : null;
         patch.price = priceValue;
+      }
+
+      if (showSearchVolume) {
+        patch.search_volume = parseNumber(searchVolume, "Search Volume");
       }
 
       await updateDomainRow(table, row.id, patch);
@@ -273,6 +284,20 @@ export function EditDomainDialog({
                   placeholder="https://arsjadrasjid.com/..."
                 />
               </div>
+
+              {showSearchVolume && (
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-search-volume">Search Volume</Label>
+
+                  <Input
+                    id="edit-search-volume"
+                    inputMode="numeric"
+                    value={searchVolume}
+                    onChange={(e) => setSearchVolume(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
