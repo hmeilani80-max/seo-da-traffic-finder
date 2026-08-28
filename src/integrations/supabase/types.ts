@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      backlinks: {
+        Row: {
+          anchor_text: string | null
+          created_at: string
+          dr: number | null
+          first_seen_at: string | null
+          id: string
+          keyword: string | null
+          last_checked_at: string | null
+          link_type: string
+          placement_order_id: string | null
+          project_id: string | null
+          source_domain: string
+          source_url: string | null
+          status: string
+          target_url: string | null
+          traffic: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anchor_text?: string | null
+          created_at?: string
+          dr?: number | null
+          first_seen_at?: string | null
+          id?: string
+          keyword?: string | null
+          last_checked_at?: string | null
+          link_type?: string
+          placement_order_id?: string | null
+          project_id?: string | null
+          source_domain: string
+          source_url?: string | null
+          status?: string
+          target_url?: string | null
+          traffic?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          anchor_text?: string | null
+          created_at?: string
+          dr?: number | null
+          first_seen_at?: string | null
+          id?: string
+          keyword?: string | null
+          last_checked_at?: string | null
+          link_type?: string
+          placement_order_id?: string | null
+          project_id?: string | null
+          source_domain?: string
+          source_url?: string | null
+          status?: string
+          target_url?: string | null
+          traffic?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backlinks_placement_order_id_fkey"
+            columns: ["placement_order_id"]
+            isOneToOne: false
+            referencedRelation: "placement_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlinks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       check_logs: {
         Row: {
           created_at: string
@@ -251,6 +326,104 @@ export type Database = {
           traffic?: number | null
           updated_at?: string
           ur?: number | null
+        }
+        Relationships: []
+      }
+      placement_orders: {
+        Row: {
+          anchor_text: string | null
+          created_at: string
+          dr: number | null
+          id: string
+          keyword: string | null
+          notes: string | null
+          placed_at: string | null
+          price: number | null
+          project_id: string | null
+          search_volume: number | null
+          source_domain: string
+          status: string
+          target_url: string | null
+          traffic: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anchor_text?: string | null
+          created_at?: string
+          dr?: number | null
+          id?: string
+          keyword?: string | null
+          notes?: string | null
+          placed_at?: string | null
+          price?: number | null
+          project_id?: string | null
+          search_volume?: number | null
+          source_domain: string
+          status?: string
+          target_url?: string | null
+          traffic?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          anchor_text?: string | null
+          created_at?: string
+          dr?: number | null
+          id?: string
+          keyword?: string | null
+          notes?: string | null
+          placed_at?: string | null
+          price?: number | null
+          project_id?: string | null
+          search_volume?: number | null
+          source_domain?: string
+          status?: string
+          target_url?: string | null
+          traffic?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placement_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          client_domain: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_domain?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          client_domain?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
