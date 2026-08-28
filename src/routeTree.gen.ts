@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTestSearchVolumeRouteImport } from './routes/_authenticated/test-search-volume'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -33,15 +34,23 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTestSearchVolumeRoute =
+  AuthenticatedTestSearchVolumeRouteImport.update({
+    id: '/test-search-volume',
+    path: '/test-search-volume',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -49,18 +58,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/settings'
+  fullPaths: '/' | '/auth' | '/settings' | '/test-search-volume'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/settings' | '/'
+  to: '/auth' | '/settings' | '/test-search-volume' | '/'
   id:
     | '__root__'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/settings'
+    | '/_authenticated/test-search-volume'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
@@ -99,16 +110,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/test-search-volume': {
+      id: '/_authenticated/test-search-volume'
+      path: '/test-search-volume'
+      fullPath: '/test-search-volume'
+      preLoaderRoute: typeof AuthenticatedTestSearchVolumeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTestSearchVolumeRoute: typeof AuthenticatedTestSearchVolumeRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTestSearchVolumeRoute: AuthenticatedTestSearchVolumeRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
