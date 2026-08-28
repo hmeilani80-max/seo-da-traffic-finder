@@ -46,7 +46,7 @@ export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<ApifyKeywordVolumeResult> => {
     const { keyword, country } = data;
-    const apifyKey = process.env["APIFY_API_KEY"];
+    const apifyKey = process.env["APIFY_TOKEN"] ?? process.env["APIFY_API_KEY"];
 
     const empty = (error: string): ApifyKeywordVolumeResult => ({
       keyword,
