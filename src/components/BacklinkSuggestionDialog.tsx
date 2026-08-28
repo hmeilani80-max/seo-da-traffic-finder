@@ -41,6 +41,10 @@ export function BacklinkSuggestionDialog({
     row.target_page ?? "",
   );
 
+  const [searchVolume, setSearchVolume] = useState<number | null>(
+    row.search_volume ?? null,
+  );
+
   /**
    * Setiap dialog dibuka,
    * isi field dari data row terbaru.
@@ -50,6 +54,7 @@ export function BacklinkSuggestionDialog({
 
     setKeyword(row.keyword ?? "");
     setTargetPage(row.target_page ?? "");
+    setSearchVolume(row.search_volume ?? null);
   }, [open, row]);
 
   /**
@@ -108,7 +113,7 @@ export function BacklinkSuggestionDialog({
         {
           keyword: cleanKeyword,
           target_page: cleanTargetPage,
-
+          search_volume: searchVolume,
           traffic: row.traffic,
         },
       );
@@ -132,7 +137,7 @@ export function BacklinkSuggestionDialog({
 
     onSuccess: async () => {
       toast.success(
-        "Keyword dan Halaman Target berhasil disimpan",
+        "Keyword, Halaman Target, dan Search Volume berhasil disimpan",
       );
 
       await queryClient.invalidateQueries({
@@ -241,6 +246,10 @@ export function BacklinkSuggestionDialog({
               setTargetPage(
                 suggestion.targetPage,
               );
+
+              setSearchVolume(
+                suggestion.searchVolume,
+              );
             }}
           />
 
@@ -259,7 +268,7 @@ export function BacklinkSuggestionDialog({
               </p>
             </div>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="backlink-keyword">
                   Keyword / Anchor
@@ -291,6 +300,26 @@ export function BacklinkSuggestionDialog({
                     )
                   }
                   placeholder="https://arsjadrasjid.com/..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="backlink-search-volume">
+                  Search Volume
+                </Label>
+
+                <Input
+                  id="backlink-search-volume"
+                  type="number"
+                  value={searchVolume ?? ""}
+                  onChange={(event) =>
+                    setSearchVolume(
+                      event.target.value === ""
+                        ? null
+                        : Number(event.target.value),
+                    )
+                  }
+                  placeholder="0"
                 />
               </div>
             </div>
