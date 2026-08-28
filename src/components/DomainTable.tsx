@@ -72,6 +72,15 @@ export function DomainTable({
   const detail =
     table !== "traffic_nol";
 
+  // Kolom Search Volume hanya ada di tabel "sudah_dibeli".
+  const showSearchVolume =
+    table === "sudah_dibeli";
+
+  const totalCols =
+    7 +
+    (detail ? 4 : 0) +
+    (showSearchVolume ? 1 : 0);
+
   const {
     data = [],
     isLoading,
@@ -154,6 +163,7 @@ export function DomainTable({
    * - Catatan
    * - DA / DR
    * - Traffic
+   * - Search Volume
    * - Harga
    * - Tanggal
    */
@@ -183,6 +193,7 @@ export function DomainTable({
                 r.notes,
                 r.dr,
                 r.traffic,
+                r.search_volume,
                 r.price,
                 r.checked_at,
                 r.purchase_date,
@@ -370,6 +381,13 @@ export function DomainTable({
       },
     ).format(value);
 
+  const formatNumber = (
+    value: number,
+  ) =>
+    value.toLocaleString(
+      "id-ID",
+    );
+
   const searchActive =
     searchQuery
       .trim()
@@ -483,6 +501,13 @@ export function DomainTable({
                     Target
                   </TableHead>
 
+                  {showSearchVolume && (
+                    <TableHead>
+                      Search
+                      Volume
+                    </TableHead>
+                  )}
+
                   <TableHead>
                     Tgl. Dibeli
                   </TableHead>
@@ -508,9 +533,7 @@ export function DomainTable({
               <TableRow>
                 <TableCell
                   colSpan={
-                    detail
-                      ? 11
-                      : 7
+                    totalCols
                   }
                   className="py-10 text-center text-muted-foreground"
                 >
@@ -526,9 +549,7 @@ export function DomainTable({
                 <TableRow>
                   <TableCell
                     colSpan={
-                      detail
-                        ? 11
-                        : 7
+                      totalCols
                     }
                     className="py-10 text-center text-muted-foreground"
                   >
@@ -609,6 +630,20 @@ export function DomainTable({
                           "-"
                         )}
                       </TableCell>
+
+                      {/* SEARCH VOLUME */}
+                      {showSearchVolume && (
+                        <TableCell>
+                          {r.search_volume !=
+                          null
+                            ? formatNumber(
+                                Number(
+                                  r.search_volume,
+                                ),
+                              )
+                            : "-"}
+                        </TableCell>
+                      )}
 
                       {/* PURCHASE DATE */}
                       <TableCell className="whitespace-nowrap text-muted-foreground">
@@ -703,7 +738,10 @@ export function DomainTable({
             <TableFooter>
               <TableRow className="font-semibold">
                 <TableCell
-                  colSpan={8}
+                  colSpan={
+                    totalCols -
+                    3
+                  }
                   className="text-right"
                 >
                   TOTAL
