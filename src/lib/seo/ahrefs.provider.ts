@@ -196,6 +196,8 @@ export function normalizeDomainResearch(
   ]);
 
   const traffic = pickNumber(items, [
+    "trafficMonthlyAvg",
+    "searchTraffic",
     "organic_traffic",
     "organicTraffic",
     "traffic",
@@ -214,6 +216,7 @@ export function normalizeDomainResearch(
   ]);
 
   const referringDomains = pickNumber(items, [
+    "refdomains",
     "referring_domains",
     "referringDomains",
     "linkingWebsites",
