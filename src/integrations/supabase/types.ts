@@ -98,6 +98,162 @@ export type Database = {
         }
         Relationships: []
       }
+      global_domain_cache: {
+        Row: {
+          authority_checked_at: string | null
+          backlinks: number | null
+          created_at: string
+          dr: number | null
+          id: string
+          normalized_domain: string
+          provider: string
+          raw_data: Json | null
+          referring_domains: number | null
+          top_keywords: Json | null
+          top_pages: Json | null
+          traffic: number | null
+          traffic_checked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          authority_checked_at?: string | null
+          backlinks?: number | null
+          created_at?: string
+          dr?: number | null
+          id?: string
+          normalized_domain: string
+          provider?: string
+          raw_data?: Json | null
+          referring_domains?: number | null
+          top_keywords?: Json | null
+          top_pages?: Json | null
+          traffic?: number | null
+          traffic_checked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          authority_checked_at?: string | null
+          backlinks?: number | null
+          created_at?: string
+          dr?: number | null
+          id?: string
+          normalized_domain?: string
+          provider?: string
+          raw_data?: Json | null
+          referring_domains?: number | null
+          top_keywords?: Json | null
+          top_pages?: Json | null
+          traffic?: number | null
+          traffic_checked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      keyword_metrics_cache: {
+        Row: {
+          checked_at: string
+          country: string
+          cpc: number | null
+          created_at: string
+          id: string
+          keyword: string
+          keyword_difficulty: number | null
+          normalized_keyword: string
+          provider: string
+          raw_data: Json | null
+          search_volume: number | null
+          traffic_potential: number | null
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string
+          country?: string
+          cpc?: number | null
+          created_at?: string
+          id?: string
+          keyword: string
+          keyword_difficulty?: number | null
+          normalized_keyword: string
+          provider?: string
+          raw_data?: Json | null
+          search_volume?: number | null
+          traffic_potential?: number | null
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string
+          country?: string
+          cpc?: number | null
+          created_at?: string
+          id?: string
+          keyword?: string
+          keyword_difficulty?: number | null
+          normalized_keyword?: string
+          provider?: string
+          raw_data?: Json | null
+          search_volume?: number | null
+          traffic_potential?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      keyword_rank_cache: {
+        Row: {
+          checked_at: string
+          country: string
+          created_at: string
+          dr: number | null
+          id: string
+          keyword: string
+          normalized_keyword: string
+          position: number | null
+          provider: string
+          ranking_title: string | null
+          ranking_url: string | null
+          raw_data: Json | null
+          target_domain: string
+          traffic: number | null
+          updated_at: string
+          ur: number | null
+        }
+        Insert: {
+          checked_at?: string
+          country?: string
+          created_at?: string
+          dr?: number | null
+          id?: string
+          keyword: string
+          normalized_keyword: string
+          position?: number | null
+          provider?: string
+          ranking_title?: string | null
+          ranking_url?: string | null
+          raw_data?: Json | null
+          target_domain: string
+          traffic?: number | null
+          updated_at?: string
+          ur?: number | null
+        }
+        Update: {
+          checked_at?: string
+          country?: string
+          created_at?: string
+          dr?: number | null
+          id?: string
+          keyword?: string
+          normalized_keyword?: string
+          position?: number | null
+          provider?: string
+          ranking_title?: string | null
+          ranking_url?: string | null
+          raw_data?: Json | null
+          target_domain?: string
+          traffic?: number | null
+          updated_at?: string
+          ur?: number | null
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
@@ -128,6 +284,45 @@ export type Database = {
           query?: string
           search_count?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      seo_research_runs: {
+        Row: {
+          cache_hit: boolean
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          provider: string
+          query: string | null
+          result_count: number | null
+          search_type: string
+          status: string
+        }
+        Insert: {
+          cache_hit?: boolean
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          provider?: string
+          query?: string | null
+          result_count?: number | null
+          search_type: string
+          status?: string
+        }
+        Update: {
+          cache_hit?: boolean
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          provider?: string
+          query?: string | null
+          result_count?: number | null
+          search_type?: string
+          status?: string
         }
         Relationships: []
       }
