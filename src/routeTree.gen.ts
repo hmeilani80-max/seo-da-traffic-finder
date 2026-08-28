@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSeoPhase2TestRouteImport } from './routes/_authenticated/seo-phase2-test'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTestSearchVolumeRouteImport } from './routes/_authenticated/test-search-volume'
 
@@ -29,6 +30,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSeoPhase2TestRoute =
+  AuthenticatedSeoPhase2TestRouteImport.update({
+    id: '/seo-phase2-test',
+    path: '/seo-phase2-test',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -44,11 +51,13 @@ const AuthenticatedTestSearchVolumeRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/': typeof AuthenticatedIndexRoute
@@ -57,19 +66,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/settings' | '/test-search-volume'
+  fullPaths:
+    '/' | '/auth' | '/seo-phase2-test' | '/settings' | '/test-search-volume'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/settings' | '/test-search-volume' | '/'
+  to: '/auth' | '/seo-phase2-test' | '/settings' | '/test-search-volume' | '/'
   id:
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/seo-phase2-test'
     | '/_authenticated/settings'
     | '/_authenticated/test-search-volume'
     | '/_authenticated/'
@@ -103,6 +115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/seo-phase2-test': {
+      id: '/_authenticated/seo-phase2-test'
+      path: '/seo-phase2-test'
+      fullPath: '/seo-phase2-test'
+      preLoaderRoute: typeof AuthenticatedSeoPhase2TestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -121,12 +140,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedSeoPhase2TestRoute: typeof AuthenticatedSeoPhase2TestRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTestSearchVolumeRoute: typeof AuthenticatedTestSearchVolumeRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedSeoPhase2TestRoute: AuthenticatedSeoPhase2TestRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTestSearchVolumeRoute: AuthenticatedTestSearchVolumeRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
