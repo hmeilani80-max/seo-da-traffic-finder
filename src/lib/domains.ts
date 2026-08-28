@@ -30,6 +30,7 @@ export type DomainRow = {
   target_page?: string | null;
   purchase_date?: string | null;
   price?: number | null;
+  search_volume?: number | null;
   research_status?: "belum_diriset" | "sedang_diriset" | "selesai" | "gagal" | null;
 };
 
@@ -331,6 +332,7 @@ export function toCSV(rows: DomainRow[]) {
     "Domain",
     "DR/DA",
     "Traffic",
+    "Search Volume",
     "Tanggal Dicek",
     "Status",
     "Status Riset",
@@ -345,6 +347,7 @@ export function toCSV(rows: DomainRow[]) {
       row.domain,
       row.dr ?? "",
       row.traffic ?? "",
+      row.search_volume ?? "",
       new Date(row.checked_at).toLocaleString("id-ID"),
       row.status,
       row.research_status ?? "",
@@ -382,6 +385,7 @@ export type DomainPatch = {
   target_page?: string | null;
   purchase_date?: string | null;
   price?: number | null;
+  search_volume?: number | null;
   checked_at?: string;
 };
 
@@ -449,6 +453,13 @@ export async function updateDomainRow(
     detail.purchase_date = patch.purchase_date;
   if (patch.price !== undefined) detail.price = patch.price;
 
+  // search_volume hanya ada di kolom tabel "sudah_dibeli".
+  const sudahDibeliExtra: { search_volume?: number | null } = {};
+
+  if (patch.search_volume !== undefined) {
+    sudahDibeliExtra.search_volume = patch.search_volume;
+  }
+
   const query =
     table === "traffic_nol"
       ? supabase
@@ -457,7 +468,12 @@ export async function updateDomainRow(
       : table === "sudah_dibeli"
         ? supabase
             .from("sudah_dibeli")
-            .update({ ...common, ...detail, traffic: patch.traffic ?? null })
+            .update({
+              ...common,
+              ...detail,
+              ...sudahDibeliExtra,
+              traffic: patch.traffic ?? null,
+            })
         : supabase
             .from("domain_sudah_pernah")
             .update({ ...common, ...detail, traffic: patch.traffic ?? null });
