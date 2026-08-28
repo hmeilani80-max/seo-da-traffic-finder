@@ -14,6 +14,7 @@ import {
   SEO_PROVIDER_AHREFS_ALL_IN_ONE,
   type AhrefsSearchType,
   type DomainResearchResult,
+  type KeywordIdea,
   type KeywordMetricsResult,
   type KeywordRankResult,
   type SeoTopKeyword,
@@ -357,4 +358,55 @@ export function normalizeKeywordRank(
     checkedAt: new Date().toISOString(),
     error,
   };
+}
+
+/**
+ * Normalisasi hasil searchType `keyword_ideas` menjadi daftar ide keyword.
+ * Bentuk mentah Actor bisa berupa array flat atau nested (keywordIdeas/ideas/keywords).
+ */
+export function normalizeKeywordIdeas(items: RawAhrefsItem[]): KeywordIdea[] {
+  const rows: Record<string, unknown>[] = [];
+
+  for (const item of items) {
+    const nested = pick(item, [
+      "keywordIdeas",
+      "keyword_ideas",
+      "ideas",
+      "keywords",
+      "results",
+      "data",
+    ]);
+    if (Array.isArray(nested)) {
+      for (const row of nested) {
+        if (isRecord(row)) rows.push(row);
+        else if (typeof row === "string") rows.push({ keyword: row });
+      }
+    } else if (isRecord(item)) {
+      rows.push(item);
+    }
+  }
+
+  const seen = new Set<string>();
+  const ideas: KeywordIdea[] = [];
+
+  for (const row of rows) {
+    const keyword = toText(pick(row, ["keyword", "query", "term", "name", "phrase"]));
+    if (!keyword) continue;
+    const normalizedKeyword = normalizeKeyword(keyword);
+    if (!normalizedKeyword || seen.has(normalizedKeyword)) continue;
+    seen.add(normalizedKeyword);
+
+    ideas.push({
+      keyword,
+      normalizedKeyword,
+      searchVolume: toNumber(pick(row, ["searchVolume", "search_volume", "volume"])),
+      keywordDifficulty: toNumber(
+        pick(row, ["keywordDifficulty", "keyword_difficulty", "difficulty", "kd"]),
+      ),
+      cpc: toNumber(pick(row, ["estimatedCpcUsd", "cpc"])),
+      trafficPotential: toNumber(pick(row, ["trafficPotential", "traffic_potential", "traffic"])),
+    });
+  }
+
+  return ideas;
 }

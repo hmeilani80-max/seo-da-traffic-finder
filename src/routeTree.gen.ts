@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedDomainResearchRouteImport } from './routes/_authenticated/domain-research'
+import { Route as AuthenticatedKeywordResearchRouteImport } from './routes/_authenticated/keyword-research'
 import { Route as AuthenticatedSeoPhase2TestRouteImport } from './routes/_authenticated/seo-phase2-test'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTestSearchVolumeRouteImport } from './routes/_authenticated/test-search-volume'
@@ -37,6 +38,12 @@ const AuthenticatedDomainResearchRoute =
     path: '/domain-research',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedKeywordResearchRoute =
+  AuthenticatedKeywordResearchRouteImport.update({
+    id: '/keyword-research',
+    path: '/keyword-research',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSeoPhase2TestRoute =
   AuthenticatedSeoPhase2TestRouteImport.update({
     id: '/seo-phase2-test',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/domain-research': typeof AuthenticatedDomainResearchRoute
+  '/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/domain-research': typeof AuthenticatedDomainResearchRoute
+  '/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/domain-research': typeof AuthenticatedDomainResearchRoute
+  '/_authenticated/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/_authenticated/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/domain-research'
+    | '/keyword-research'
     | '/seo-phase2-test'
     | '/settings'
     | '/test-search-volume'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/domain-research'
+    | '/keyword-research'
     | '/seo-phase2-test'
     | '/settings'
     | '/test-search-volume'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/domain-research'
+    | '/_authenticated/keyword-research'
     | '/_authenticated/seo-phase2-test'
     | '/_authenticated/settings'
     | '/_authenticated/test-search-volume'
@@ -144,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDomainResearchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/keyword-research': {
+      id: '/_authenticated/keyword-research'
+      path: '/keyword-research'
+      fullPath: '/keyword-research'
+      preLoaderRoute: typeof AuthenticatedKeywordResearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/seo-phase2-test': {
       id: '/_authenticated/seo-phase2-test'
       path: '/seo-phase2-test'
@@ -170,6 +190,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDomainResearchRoute: typeof AuthenticatedDomainResearchRoute
+  AuthenticatedKeywordResearchRoute: typeof AuthenticatedKeywordResearchRoute
   AuthenticatedSeoPhase2TestRoute: typeof AuthenticatedSeoPhase2TestRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTestSearchVolumeRoute: typeof AuthenticatedTestSearchVolumeRoute
@@ -178,6 +199,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDomainResearchRoute: AuthenticatedDomainResearchRoute,
+  AuthenticatedKeywordResearchRoute: AuthenticatedKeywordResearchRoute,
   AuthenticatedSeoPhase2TestRoute: AuthenticatedSeoPhase2TestRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTestSearchVolumeRoute: AuthenticatedTestSearchVolumeRoute,

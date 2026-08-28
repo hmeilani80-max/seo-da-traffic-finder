@@ -116,3 +116,13 @@ export const CACHE_TTL_DAYS = {
 } as const;
 
 export const DEFAULT_COUNTRY = "id";
+
+/** Satu ide keyword hasil searchType `keyword_ideas` (belum di-enrich metrik). */
+export type KeywordIdea = {
+  keyword: string;
+  normalizedKeyword: string;
+  searchVolume: number | null;
+  keywordDifficulty: number | null;
+  cpc: number | null;
+  trafficPotential: number | null;
+};
