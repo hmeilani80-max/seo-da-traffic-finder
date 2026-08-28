@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedBacklinkRecommendationRouteImport } from './routes/_authenticated/backlink-recommendation'
 import { Route as AuthenticatedDomainResearchRouteImport } from './routes/_authenticated/domain-research'
 import { Route as AuthenticatedKeywordResearchRouteImport } from './routes/_authenticated/keyword-research'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
@@ -33,6 +34,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBacklinkRecommendationRoute =
+  AuthenticatedBacklinkRecommendationRouteImport.update({
+    id: '/backlink-recommendation',
+    path: '/backlink-recommendation',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDomainResearchRoute =
   AuthenticatedDomainResearchRouteImport.update({
     id: '/domain-research',
@@ -71,6 +78,7 @@ const AuthenticatedTestSearchVolumeRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/backlink-recommendation': typeof AuthenticatedBacklinkRecommendationRoute
   '/domain-research': typeof AuthenticatedDomainResearchRoute
   '/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -80,6 +88,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/backlink-recommendation': typeof AuthenticatedBacklinkRecommendationRoute
   '/domain-research': typeof AuthenticatedDomainResearchRoute
   '/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/projects': typeof AuthenticatedProjectsRoute
@@ -92,6 +101,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/backlink-recommendation': typeof AuthenticatedBacklinkRecommendationRoute
   '/_authenticated/domain-research': typeof AuthenticatedDomainResearchRoute
   '/_authenticated/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/backlink-recommendation'
     | '/domain-research'
     | '/keyword-research'
     | '/projects'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/backlink-recommendation'
     | '/domain-research'
     | '/keyword-research'
     | '/projects'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/backlink-recommendation'
     | '/_authenticated/domain-research'
     | '/_authenticated/keyword-research'
     | '/_authenticated/projects'
@@ -160,6 +173,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/backlink-recommendation': {
+      id: '/_authenticated/backlink-recommendation'
+      path: '/backlink-recommendation'
+      fullPath: '/backlink-recommendation'
+      preLoaderRoute: typeof AuthenticatedBacklinkRecommendationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/domain-research': {
@@ -208,6 +228,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBacklinkRecommendationRoute: typeof AuthenticatedBacklinkRecommendationRoute
   AuthenticatedDomainResearchRoute: typeof AuthenticatedDomainResearchRoute
   AuthenticatedKeywordResearchRoute: typeof AuthenticatedKeywordResearchRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
@@ -218,6 +239,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBacklinkRecommendationRoute:
+    AuthenticatedBacklinkRecommendationRoute,
   AuthenticatedDomainResearchRoute: AuthenticatedDomainResearchRoute,
   AuthenticatedKeywordResearchRoute: AuthenticatedKeywordResearchRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
