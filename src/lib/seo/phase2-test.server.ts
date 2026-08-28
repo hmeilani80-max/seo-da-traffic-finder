@@ -130,12 +130,16 @@ export async function runPhase2Test(input: {
     keyword,
   );
 
-  // 4. KD fallback -> keyword_difficulty
-  const kd = await step(
-    "keyword_difficulty",
-    { searchType: "keyword_difficulty", keyword, country },
-    keyword,
-  );
+  // 4. KD fallback -> keyword_difficulty (hanya jika keyword_metrics tidak memberi KD)
+  const metricsHasKd =
+    normalizeKeywordMetrics(keyword, country, metrics.items, metrics.error).keywordDifficulty !== null;
+  const kd = metricsHasKd
+    ? { items: [] as never[], error: null as string | null }
+    : await step(
+        "keyword_difficulty",
+        { searchType: "keyword_difficulty", keyword, country },
+        keyword,
+      );
 
   // 5. Rank + ranking URL -> keyword_rank
   const rank = await step(
