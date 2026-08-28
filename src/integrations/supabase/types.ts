@@ -143,6 +143,7 @@ export type Database = {
           price: number | null
           purchase_date: string | null
           research_status: string
+          search_volume: number | null
           status: string
           target_page: string | null
           traffic: number | null
@@ -159,6 +160,7 @@ export type Database = {
           price?: number | null
           purchase_date?: string | null
           research_status?: string
+          search_volume?: number | null
           status?: string
           target_page?: string | null
           traffic?: number | null
@@ -175,6 +177,7 @@ export type Database = {
           price?: number | null
           purchase_date?: string | null
           research_status?: string
+          search_volume?: number | null
           status?: string
           target_page?: string | null
           traffic?: number | null
@@ -255,8 +258,16 @@ export type Tables<
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions extends {
+        schema: infer S
+      }
+        ? S & keyof DatabaseWithoutInternals
+        : never]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions extends {
+          schema: infer S
+        }
+          ? S & keyof DatabaseWithoutInternals
+          : never]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
