@@ -287,7 +287,7 @@ export function normalizeKeywordMetrics(
       "kd",
       "metrics.difficulty",
     ]),
-    cpc: pickNumber(items, ["cpc", "metrics.cpc"]),
+    cpc: pickNumber(items, ["estimatedCpcUsd", "cpc", "metrics.cpc"]),
     trafficPotential: pickNumber(items, [
       "traffic_potential",
       "trafficPotential",
@@ -300,6 +300,25 @@ export function normalizeKeywordMetrics(
   };
 }
 
+/** Cari baris SERP milik domain target di dalam serpResults. */
+function findTargetSerpRow(
+  items: RawAhrefsItem[],
+  normalizedTarget: string,
+): Record<string, unknown> | null {
+  for (const item of items) {
+    const rows = pick(item, ["serpResults", "serp_results", "results"]);
+    if (!Array.isArray(rows)) continue;
+    for (const row of rows) {
+      if (!isRecord(row)) continue;
+      const url = toText(pick(row, ["url", "page", "link"]));
+      if (!url) continue;
+      const host = normalizeDomain(url);
+      if (host === normalizedTarget || host.endsWith(`.${normalizedTarget}`)) return row;
+    }
+  }
+  return null;
+}
+
 export function normalizeKeywordRank(
   targetDomain: string,
   keyword: string,
@@ -307,17 +326,32 @@ export function normalizeKeywordRank(
   items: RawAhrefsItem[],
   error: string | null = null,
 ): KeywordRankResult {
+  const normalizedTarget = normalizeDomain(targetDomain);
+  const row = findTargetSerpRow(items, normalizedTarget);
+
   return {
-    targetDomain: normalizeDomain(targetDomain),
+    targetDomain: normalizedTarget,
     keyword,
     normalizedKeyword: normalizeKeyword(keyword),
     country: country.toLowerCase(),
-    position: pickNumber(items, ["position", "rank", "serp_position", "serpPosition"]),
-    rankingUrl: pickText(items, ["ranking_url", "rankingUrl", "url", "page"]),
-    rankingTitle: pickText(items, ["ranking_title", "rankingTitle", "title"]),
-    traffic: pickNumber(items, ["traffic", "organicTraffic", "organic_traffic"]),
-    dr: pickNumber(items, ["dr", "domain_rating", "domainRating"]),
-    ur: pickNumber(items, ["ur", "url_rating", "urlRating"]),
+    position: row
+      ? toNumber(pick(row, ["position", "rank"]))
+      : pickNumber(items, ["position", "rank", "serp_position", "serpPosition"]),
+    rankingUrl: row
+      ? toText(pick(row, ["url", "page", "link"]))
+      : pickText(items, ["ranking_url", "rankingUrl", "url", "page"]),
+    rankingTitle: row
+      ? toText(pick(row, ["title"]))
+      : pickText(items, ["ranking_title", "rankingTitle", "title"]),
+    traffic: row
+      ? toNumber(pick(row, ["traffic"]))
+      : pickNumber(items, ["traffic", "organicTraffic", "organic_traffic"]),
+    dr: row
+      ? toNumber(pick(row, ["domainRating"]))
+      : pickNumber(items, ["dr", "domain_rating", "domainRating"]),
+    ur: row
+      ? toNumber(pick(row, ["urlRating"]))
+      : pickNumber(items, ["ur", "url_rating", "urlRating"]),
     provider: SEO_PROVIDER_AHREFS_ALL_IN_ONE,
     source: "fresh",
     checkedAt: new Date().toISOString(),
