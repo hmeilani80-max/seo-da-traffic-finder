@@ -1,11 +1,23 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpDown, Download, Pencil, Trash2 } from "lucide-react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  ArrowUpDown,
+  Download,
+  Pencil,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
+import { BacklinkSuggestionDialog } from "@/components/BacklinkSuggestionDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditDomainDialog } from "@/components/EditDomainDialog";
+
 import {
   Table,
   TableBody,
@@ -15,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   deleteRow,
   downloadCSV,
@@ -26,7 +39,11 @@ import {
   type TableKey,
 } from "@/lib/domains";
 
-type SortKey = "domain" | "dr" | "traffic" | "checked_at";
+type SortKey =
+  | "domain"
+  | "dr"
+  | "traffic"
+  | "checked_at";
 
 export function DomainTable({
   table,
@@ -37,49 +54,93 @@ export function DomainTable({
 }) {
   const qc = useQueryClient();
 
-  const [editRow, setEditRow] = useState<DomainRow | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>("checked_at");
-  const [asc, setAsc] = useState(false);
+  const [editRow, setEditRow] =
+    useState<DomainRow | null>(null);
 
-  const detail = table !== "traffic_nol";
+  const [
+    suggestionRow,
+    setSuggestionRow,
+  ] =
+    useState<DomainRow | null>(null);
 
-  const { data = [], isLoading } = useQuery({
+  const [sortKey, setSortKey] =
+    useState<SortKey>("checked_at");
+
+  const [asc, setAsc] =
+    useState(false);
+
+  const detail =
+    table !== "traffic_nol";
+
+  const {
+    data = [],
+    isLoading,
+  } = useQuery({
     queryKey: ["table", table],
-    queryFn: () => fetchTable(table),
+    queryFn: () =>
+      fetchTable(table),
   });
 
-  const { data: priceTotal } = useQuery({
-    queryKey: ["domain-price-total", table],
+  const {
+    data: priceTotal,
+  } = useQuery({
+    queryKey: [
+      "domain-price-total",
+      table,
+    ],
+
     queryFn: () =>
       fetchDomainPriceTotal(
-        table as "sudah_dibeli" | "domain_sudah_pernah",
+        table as
+          | "sudah_dibeli"
+          | "domain_sudah_pernah",
       ),
+
     enabled: detail,
   });
 
-  const hapus = useMutation({
-    mutationFn: (id: string) => deleteRow(table, id),
+  const hapus =
+    useMutation({
+      mutationFn: (
+        id: string,
+      ) =>
+        deleteRow(
+          table,
+          id,
+        ),
 
-    onSuccess: () => {
-      toast.success("Baris dihapus");
+      onSuccess: () => {
+        toast.success(
+          "Baris dihapus",
+        );
 
-      qc.invalidateQueries({
-        queryKey: ["table", table],
-      });
+        qc.invalidateQueries({
+          queryKey: [
+            "table",
+            table,
+          ],
+        });
 
-      qc.invalidateQueries({
-        queryKey: ["domain-price-total", table],
-      });
+        qc.invalidateQueries({
+          queryKey: [
+            "domain-price-total",
+            table,
+          ],
+        });
 
-      qc.invalidateQueries({
-        queryKey: ["ringkasan"],
-      });
-    },
+        qc.invalidateQueries({
+          queryKey: [
+            "ringkasan",
+          ],
+        });
+      },
 
-    onError: () => {
-      toast.error("Gagal menghapus baris");
-    },
-  });
+      onError: () => {
+        toast.error(
+          "Gagal menghapus baris",
+        );
+      },
+    });
 
   /**
    * Search universal.
@@ -96,60 +157,127 @@ export function DomainTable({
    * - Harga
    * - Tanggal
    */
-  const rows = useMemo(() => {
-    const term = searchQuery.trim().toLowerCase();
+  const rows =
+    useMemo(() => {
+      const term =
+        searchQuery
+          .trim()
+          .toLowerCase();
 
-    const filtered = data.filter((r: DomainRow) => {
-      if (!term) return true;
+      const filtered =
+        data.filter(
+          (
+            r: DomainRow,
+          ) => {
+            if (!term) {
+              return true;
+            }
 
-      const searchableValues = [
-        r.domain,
-        r.keyword,
-        r.target_page,
-        r.status,
-        r.research_status,
-        r.notes,
-        r.dr,
-        r.traffic,
-        r.price,
-        r.checked_at,
-        r.purchase_date,
-      ];
+            const searchableValues =
+              [
+                r.domain,
+                r.keyword,
+                r.target_page,
+                r.status,
+                r.research_status,
+                r.notes,
+                r.dr,
+                r.traffic,
+                r.price,
+                r.checked_at,
+                r.purchase_date,
+              ];
 
-      const searchableText = searchableValues
-        .filter(
-          (value) =>
-            value !== null &&
-            value !== undefined &&
-            value !== "",
-        )
-        .map((value) => String(value))
-        .join(" ")
-        .toLowerCase();
+            const searchableText =
+              searchableValues
+                .filter(
+                  (
+                    value,
+                  ) =>
+                    value !==
+                      null &&
+                    value !==
+                      undefined &&
+                    value !==
+                      "",
+                )
+                .map(
+                  (
+                    value,
+                  ) =>
+                    String(
+                      value,
+                    ),
+                )
+                .join(" ")
+                .toLowerCase();
 
-      return searchableText.includes(term);
-    });
+            return searchableText.includes(
+              term,
+            );
+          },
+        );
 
-    return [...filtered].sort((a, b) => {
-      const va = a[sortKey] ?? "";
-      const vb = b[sortKey] ?? "";
+      return [
+        ...filtered,
+      ].sort(
+        (a, b) => {
+          const va =
+            a[sortKey] ??
+            "";
 
-      if (
-        typeof va === "number" &&
-        typeof vb === "number"
-      ) {
-        return asc ? va - vb : vb - va;
-      }
+          const vb =
+            b[sortKey] ??
+            "";
 
-      return asc
-        ? String(va).localeCompare(String(vb))
-        : String(vb).localeCompare(String(va));
-    });
-  }, [data, searchQuery, sortKey, asc]);
+          if (
+            typeof va ===
+              "number" &&
+            typeof vb ===
+              "number"
+          ) {
+            return asc
+              ? va - vb
+              : vb - va;
+          }
 
-  function sortBy(key: SortKey) {
-    if (key === sortKey) {
-      setAsc((value) => !value);
+          return asc
+            ? String(
+                va,
+              ).localeCompare(
+                String(
+                  vb,
+                ),
+              )
+            : String(
+                vb,
+              ).localeCompare(
+                String(
+                  va,
+                ),
+              );
+        },
+      );
+    }, [
+      data,
+      searchQuery,
+      sortKey,
+      asc,
+    ]);
+
+  function sortBy(
+    key: SortKey,
+  ) {
+    if (
+      key === sortKey
+    ) {
+      setAsc(
+        (
+          value,
+        ) =>
+          !value,
+      );
+
       return;
     }
 
@@ -167,10 +295,13 @@ export function DomainTable({
     <TableHead>
       <button
         type="button"
-        onClick={() => sortBy(k)}
+        onClick={() =>
+          sortBy(k)
+        }
         className="inline-flex items-center gap-1 font-medium hover:text-primary"
       >
         {label}
+
         <ArrowUpDown className="size-3.5 opacity-60" />
       </button>
     </TableHead>
@@ -183,23 +314,36 @@ export function DomainTable({
   }) {
     const status =
       row.research_status ??
-      (row.dr != null || row.traffic != null
-        ? "selesai"
-        : "belum_diriset");
+      (
+        row.dr != null ||
+        row.traffic !=
+          null
+          ? "selesai"
+          : "belum_diriset"
+      );
 
     const labels = {
-      belum_diriset: "Belum diriset",
-      sedang_diriset: "Sedang diriset",
-      selesai: "Selesai",
-      gagal: "Gagal",
+      belum_diriset:
+        "Belum diriset",
+
+      sedang_diriset:
+        "Sedang diriset",
+
+      selesai:
+        "Selesai",
+
+      gagal:
+        "Gagal",
     } as const;
 
     return (
       <Badge
         variant={
-          status === "gagal"
+          status ===
+          "gagal"
             ? "destructive"
-            : status === "selesai"
+            : status ===
+                "selesai"
               ? "default"
               : "secondary"
         }
@@ -209,35 +353,66 @@ export function DomainTable({
     );
   }
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      maximumFractionDigits: 0,
-    }).format(value);
+  const formatCurrency = (
+    value: number,
+  ) =>
+    new Intl.NumberFormat(
+      "id-ID",
+      {
+        style:
+          "currency",
 
-  const searchActive = searchQuery.trim().length > 0;
+        currency:
+          "IDR",
+
+        maximumFractionDigits:
+          0,
+      },
+    ).format(value);
+
+  const searchActive =
+    searchQuery
+      .trim()
+      .length > 0;
 
   return (
     <div className="rounded-xl border bg-card shadow-[var(--shadow-card)]">
+      {/* HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
         <div>
           <h2 className="text-base font-semibold">
-            {TABLE_META[table].label}
+            {
+              TABLE_META[
+                table
+              ].label
+            }
           </h2>
 
           <p className="text-sm text-muted-foreground">
-            {TABLE_META[table].deskripsi}
+            {
+              TABLE_META[
+                table
+              ].deskripsi
+            }
           </p>
 
           {searchActive && (
             <p className="mt-1 text-xs text-primary">
-              Menampilkan hasil untuk:{" "}
+              Menampilkan
+              hasil untuk:{" "}
+
               <span className="font-medium">
-                {searchQuery}
+                {
+                  searchQuery
+                }
               </span>
+
               {" · "}
-              {rows.length} hasil
+
+              {
+                rows.length
+              }{" "}
+              hasil
             </p>
           )}
         </div>
@@ -245,10 +420,14 @@ export function DomainTable({
         <Button
           variant="outline"
           onClick={() => {
-            if (rows.length === 0) {
+            if (
+              rows.length ===
+              0
+            ) {
               toast.info(
                 "Tidak ada data untuk diekspor",
               );
+
               return;
             }
 
@@ -259,21 +438,34 @@ export function DomainTable({
           }}
         >
           <Download className="size-4" />
+
           Export CSV
         </Button>
       </div>
 
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <Th label="Domain" k="domain" />
+              <Th
+                label="Domain"
+                k="domain"
+              />
 
-              <Th label="DA / DR" k="dr" />
+              <Th
+                label="DA / DR"
+                k="dr"
+              />
 
-              <Th label="Traffic" k="traffic" />
+              <Th
+                label="Traffic"
+                k="traffic"
+              />
 
-              <TableHead>Status Riset</TableHead>
+              <TableHead>
+                Status Riset
+              </TableHead>
 
               <Th
                 label="Tanggal Dicek"
@@ -282,19 +474,28 @@ export function DomainTable({
 
               {detail && (
                 <>
-                  <TableHead>Keyword</TableHead>
-
                   <TableHead>
-                    Halaman Target
+                    Keyword
                   </TableHead>
 
-                  <TableHead>Tgl. Dibeli</TableHead>
+                  <TableHead>
+                    Halaman
+                    Target
+                  </TableHead>
 
-                  <TableHead>Harga</TableHead>
+                  <TableHead>
+                    Tgl. Dibeli
+                  </TableHead>
+
+                  <TableHead>
+                    Harga
+                  </TableHead>
                 </>
               )}
 
-              <TableHead>Catatan</TableHead>
+              <TableHead>
+                Catatan
+              </TableHead>
 
               <TableHead className="text-right">
                 Aksi
@@ -306,124 +507,198 @@ export function DomainTable({
             {isLoading && (
               <TableRow>
                 <TableCell
-                  colSpan={detail ? 11 : 7}
+                  colSpan={
+                    detail
+                      ? 11
+                      : 7
+                  }
                   className="py-10 text-center text-muted-foreground"
                 >
-                  Memuat data...
+                  Memuat
+                  data...
                 </TableCell>
               </TableRow>
             )}
 
-            {!isLoading && rows.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={detail ? 11 : 7}
-                  className="py-10 text-center text-muted-foreground"
-                >
-                  {searchActive
-                    ? "Tidak ada data yang cocok dengan pencarian."
-                    : "Belum ada data pada tabel ini."}
-                </TableCell>
-              </TableRow>
-            )}
-
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="font-medium">
-                  {r.domain}
-                </TableCell>
-
-                <TableCell>
-                  {r.dr ?? "-"}
-                </TableCell>
-
-                <TableCell>
-                  {r.traffic ?? "-"}
-                </TableCell>
-
-                <TableCell>
-                  <ResearchStatus row={r} />
-                </TableCell>
-
-                <TableCell className="text-muted-foreground">
-                  {new Date(
-                    r.checked_at,
-                  ).toLocaleString("id-ID")}
-                </TableCell>
-
-                {detail && (
-                  <>
-                    <TableCell className="max-w-[220px] truncate">
-                      {r.keyword || "-"}
-                    </TableCell>
-
-                    <TableCell className="max-w-[260px] truncate">
-                      {r.target_page ? (
-                        <a
-                          href={r.target_page}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {r.target_page.replace(
-                            /^https?:\/\/(www\.)?arsjadrasjid\.com/,
-                            "",
-                          ) || "/"}
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {r.purchase_date
-                        ? new Date(
-                            r.purchase_date,
-                          ).toLocaleDateString(
-                            "id-ID",
-                          )
-                        : "-"}
-                    </TableCell>
-
-                    <TableCell className="whitespace-nowrap">
-                      {r.price != null
-                        ? formatCurrency(
-                            Number(r.price),
-                          )
-                        : "-"}
-                    </TableCell>
-                  </>
-                )}
-
-                <TableCell className="max-w-[240px] truncate text-muted-foreground">
-                  {r.notes ?? "-"}
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setEditRow(r)}
-                    aria-label={`Edit ${r.domain}`}
-                  >
-                    <Pencil className="size-4" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      hapus.mutate(r.id)
+            {!isLoading &&
+              rows.length ===
+                0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={
+                      detail
+                        ? 11
+                        : 7
                     }
-                    aria-label={`Hapus ${r.domain}`}
+                    className="py-10 text-center text-muted-foreground"
                   >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+                    {searchActive
+                      ? "Tidak ada data yang cocok dengan pencarian."
+                      : "Belum ada data pada tabel ini."}
+                  </TableCell>
+                </TableRow>
+              )}
+
+            {rows.map(
+              (r) => (
+                <TableRow
+                  key={r.id}
+                >
+                  {/* DOMAIN */}
+                  <TableCell className="font-medium">
+                    {
+                      r.domain
+                    }
+                  </TableCell>
+
+                  {/* DR */}
+                  <TableCell>
+                    {r.dr ??
+                      "-"}
+                  </TableCell>
+
+                  {/* TRAFFIC */}
+                  <TableCell>
+                    {r.traffic ??
+                      "-"}
+                  </TableCell>
+
+                  {/* RESEARCH STATUS */}
+                  <TableCell>
+                    <ResearchStatus
+                      row={r}
+                    />
+                  </TableCell>
+
+                  {/* CHECK DATE */}
+                  <TableCell className="text-muted-foreground">
+                    {new Date(
+                      r.checked_at,
+                    ).toLocaleString(
+                      "id-ID",
+                    )}
+                  </TableCell>
+
+                  {/* DETAIL FIELDS */}
+                  {detail && (
+                    <>
+                      {/* KEYWORD */}
+                      <TableCell className="max-w-[220px] truncate">
+                        {r.keyword ||
+                          "-"}
+                      </TableCell>
+
+                      {/* TARGET PAGE */}
+                      <TableCell className="max-w-[260px] truncate">
+                        {r.target_page ? (
+                          <a
+                            href={
+                              r.target_page
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {r.target_page.replace(
+                              /^https?:\/\/(www\.)?arsjadrasjid\.com/,
+                              "",
+                            ) ||
+                              "/"}
+                          </a>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+
+                      {/* PURCHASE DATE */}
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {r.purchase_date
+                          ? new Date(
+                              r.purchase_date,
+                            ).toLocaleDateString(
+                              "id-ID",
+                            )
+                          : "-"}
+                      </TableCell>
+
+                      {/* PRICE */}
+                      <TableCell className="whitespace-nowrap">
+                        {r.price !=
+                        null
+                          ? formatCurrency(
+                              Number(
+                                r.price,
+                              ),
+                            )
+                          : "-"}
+                      </TableCell>
+                    </>
+                  )}
+
+                  {/* NOTES */}
+                  <TableCell className="max-w-[240px] truncate text-muted-foreground">
+                    {r.notes ??
+                      "-"}
+                  </TableCell>
+
+                  {/* ACTIONS */}
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center">
+                      {table ===
+                        "sudah_dibeli" && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setSuggestionRow(
+                              r,
+                            )
+                          }
+                          aria-label={`Cari saran backlink ${r.domain}`}
+                          title="Cari Saran Backlink"
+                        >
+                          <Sparkles className="size-4 text-primary" />
+                        </Button>
+                      )}
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          setEditRow(
+                            r,
+                          )
+                        }
+                        aria-label={`Edit ${r.domain}`}
+                        title="Edit"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          hapus.mutate(
+                            r.id,
+                          )
+                        }
+                        aria-label={`Hapus ${r.domain}`}
+                        title="Hapus"
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ),
+            )}
           </TableBody>
 
+          {/* TOTAL PRICE */}
           {detail && (
             <TableFooter>
               <TableRow className="font-semibold">
@@ -431,34 +706,77 @@ export function DomainTable({
                   colSpan={8}
                   className="text-right"
                 >
-                  TOTAL HARGA
+                  TOTAL
+                  HARGA
                 </TableCell>
 
                 <TableCell>
                   {formatCurrency(
                     Number(
-                      priceTotal?.total_price ?? 0,
+                      priceTotal
+                        ?.total_price ??
+                        0,
                     ),
                   )}
                 </TableCell>
 
-                <TableCell colSpan={2}></TableCell>
+                <TableCell
+                  colSpan={
+                    2
+                  }
+                />
               </TableRow>
             </TableFooter>
           )}
         </Table>
       </div>
 
+      {/* EDIT DIALOG */}
       {editRow && (
         <EditDomainDialog
           table={table}
           row={editRow}
-          open={editRow !== null}
-          onOpenChange={(open) => {
-            if (!open) setEditRow(null);
+          open={
+            editRow !==
+            null
+          }
+          onOpenChange={(
+            open,
+          ) => {
+            if (!open) {
+              setEditRow(
+                null,
+              );
+            }
           }}
         />
       )}
+
+      {/* BACKLINK SUGGESTION DIALOG */}
+      {suggestionRow &&
+        table ===
+          "sudah_dibeli" && (
+          <BacklinkSuggestionDialog
+            row={
+              suggestionRow
+            }
+            open={
+              suggestionRow !==
+              null
+            }
+            onOpenChange={(
+              open,
+            ) => {
+              if (
+                !open
+              ) {
+                setSuggestionRow(
+                  null,
+                );
+              }
+            }}
+          />
+        )}
     </div>
   );
 }
