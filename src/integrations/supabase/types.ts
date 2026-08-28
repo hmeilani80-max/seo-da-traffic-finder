@@ -258,16 +258,8 @@ export type Tables<
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions extends {
-        schema: infer S
-      }
-        ? S & keyof DatabaseWithoutInternals
-        : never]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions extends {
-          schema: infer S
-        }
-          ? S & keyof DatabaseWithoutInternals
-          : never]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
