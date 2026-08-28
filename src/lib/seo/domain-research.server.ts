@@ -202,8 +202,8 @@ export async function researchDomains(input: {
     results.push(
       await researchDomain({
         domain,
-        country: input.country,
-        forceRefresh: input.forceRefresh,
+        ...(input.country !== undefined ? { country: input.country } : {}),
+        ...(input.forceRefresh !== undefined ? { forceRefresh: input.forceRefresh } : {}),
       }),
     );
   }
