@@ -1,26 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 
-const ACTOR_ID = "radeance~ahrefs-scraper";
-const APIFY_URL = `https://api.apify.com/v2/actors/${ACTOR_ID}/run-sync-get-dataset-items?timeout=180`;
+const ACTOR_ID = "burbn~ahrefs-keyword-explorer";
+const APIFY_URL = `https://api.apify.com/v2/acts/${ACTOR_ID}/run-sync-get-dataset-items?timeout=180`;
 
 export type ApifyKeywordVolumeResult = {
   keyword: string;
   country: string;
   searchVolume: number | null;
+  difficulty: number | null;
+  globalSearchVolume: number | null;
+  trafficPotential: number | null;
   error: string | null;
 };
 
-type KeywordIdea = {
-  keyword?: string | null;
-  country?: string | null;
-  volume?: number | null;
-};
-
 type ApifyKeywordItem = {
-  type?: string | null;
   keyword?: string | null;
-  country?: string | null;
-  keyword_ideas?: KeywordIdea[] | null;
+  searchVolume?: number | null;
+  difficulty?: number | null;
+  globalSearchVolume?: number | null;
+  trafficPotential?: number | null;
 };
 
 function normalizeKeyword(value: string) {
@@ -32,29 +30,10 @@ function toFiniteNumber(value: unknown): number | null {
   return Number.isFinite(number) ? number : null;
 }
 
-function findExactVolume(items: ApifyKeywordItem[], keyword: string) {
-  const wanted = normalizeKeyword(keyword);
-
-  for (const item of items ?? []) {
-    for (const idea of item.keyword_ideas ?? []) {
-      if (normalizeKeyword(String(idea.keyword ?? "")) !== wanted) continue;
-
-      const volume = toFiniteNumber(idea.volume);
-      if (volume != null) return volume;
-    }
-  }
-
-  return null;
-}
-
 /**
- * Ambil Search Volume keyword langsung dari Apify Actor radeance/ahrefs-scraper.
- *
- * Penting:
- * - Tidak lewat connector-gateway.lovable.dev.
- * - Tidak memakai LOVABLE_API_KEY.
- * - APIFY_API_KEY hanya dibaca server-side.
- * - Hanya menjalankan mode keyword research; domain/backlink/traffic dimatikan.
+ * Ambil Search Volume langsung dari Apify Actor burbn/ahrefs-keyword-explorer.
+ * Tidak lewat connector-gateway.lovable.dev dan tidak memakai LOVABLE_API_KEY.
+ * APIFY_API_KEY hanya dibaca server-side.
  */
 export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
   .inputValidator((data: { keyword: string; country?: string }) => {
@@ -69,13 +48,18 @@ export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
     const { keyword, country } = data;
     const apifyKey = process.env["APIFY_API_KEY"];
 
+    const empty = (error: string): ApifyKeywordVolumeResult => ({
+      keyword,
+      country,
+      searchVolume: null,
+      difficulty: null,
+      globalSearchVolume: null,
+      trafficPotential: null,
+      error,
+    });
+
     if (!apifyKey) {
-      return {
-        keyword,
-        country,
-        searchVolume: null,
-        error: "APIFY_API_KEY belum tersedia di environment server.",
-      };
+      return empty("APIFY_API_KEY belum tersedia di environment server.");
     }
 
     try {
@@ -86,32 +70,15 @@ export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          keyword,
+          keywords: [keyword],
           country,
-          mode: "exact",
-          include_web_authority: false,
-          include_traffic: false,
-          include_ai_visibility: false,
-          include_keywords: true,
-          include_keywords_difficulty: false,
-          include_keywords_ranking: false,
-          include_serp: false,
-          include_backlinks: false,
-          include_broken_links: false,
-          include_competitors: false,
-          include_top_websites: false,
         }),
       });
 
       const raw = await response.text();
 
       if (!response.ok) {
-        return {
-          keyword,
-          country,
-          searchVolume: null,
-          error: `Apify error ${response.status}: ${raw.slice(0, 180)}`,
-        };
+        return empty(`Apify error ${response.status}: ${raw.slice(0, 180)}`);
       }
 
       let items: ApifyKeywordItem[];
@@ -119,37 +86,34 @@ export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
       try {
         items = JSON.parse(raw) as ApifyKeywordItem[];
       } catch {
-        return {
-          keyword,
-          country,
-          searchVolume: null,
-          error: "Response Apify bukan JSON yang valid.",
-        };
+        return empty("Response Apify bukan JSON yang valid.");
       }
 
-      const searchVolume = findExactVolume(items, keyword);
+      const wanted = normalizeKeyword(keyword);
+      const item = items.find(
+        (row) => normalizeKeyword(String(row.keyword ?? "")) === wanted,
+      );
+
+      if (!item) {
+        return empty("Keyword exact tidak ditemukan pada output Actor.");
+      }
+
+      const searchVolume = toFiniteNumber(item.searchVolume);
 
       if (searchVolume == null) {
-        return {
-          keyword,
-          country,
-          searchVolume: null,
-          error: "Search Volume exact keyword tidak ditemukan pada output Actor.",
-        };
+        return empty("Search Volume tidak tersedia pada output Actor.");
       }
 
       return {
         keyword,
         country,
         searchVolume,
+        difficulty: toFiniteNumber(item.difficulty),
+        globalSearchVolume: toFiniteNumber(item.globalSearchVolume),
+        trafficPotential: toFiniteNumber(item.trafficPotential),
         error: null,
       };
     } catch (error) {
-      return {
-        keyword,
-        country,
-        searchVolume: null,
-        error: error instanceof Error ? error.message : "Gagal menghubungi Apify",
-      };
+      return empty(error instanceof Error ? error.message : "Gagal menghubungi Apify");
     }
   });
