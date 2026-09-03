@@ -17,7 +17,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 type MenuItem = {
-  to: string;
+  to:
+    | "/"
+    | "/domains"
+    | "/projects"
+    | "/backlink-recommendation"
+    | "/domain-research"
+    | "/keyword-research"
+    | "/settings";
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
