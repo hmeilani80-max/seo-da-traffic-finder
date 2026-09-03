@@ -233,6 +233,7 @@ export type Database = {
           id: string
           keyword: string
           keyword_difficulty: number | null
+          language: string
           normalized_keyword: string
           provider: string
           raw_data: Json | null
@@ -248,6 +249,7 @@ export type Database = {
           id?: string
           keyword: string
           keyword_difficulty?: number | null
+          language?: string
           normalized_keyword: string
           provider?: string
           raw_data?: Json | null
@@ -263,6 +265,7 @@ export type Database = {
           id?: string
           keyword?: string
           keyword_difficulty?: number | null
+          language?: string
           normalized_keyword?: string
           provider?: string
           raw_data?: Json | null
@@ -280,6 +283,7 @@ export type Database = {
           dr: number | null
           id: string
           keyword: string
+          language: string
           normalized_keyword: string
           position: number | null
           provider: string
@@ -298,6 +302,7 @@ export type Database = {
           dr?: number | null
           id?: string
           keyword: string
+          language?: string
           normalized_keyword: string
           position?: number | null
           provider?: string
@@ -316,6 +321,7 @@ export type Database = {
           dr?: number | null
           id?: string
           keyword?: string
+          language?: string
           normalized_keyword?: string
           position?: number | null
           provider?: string
