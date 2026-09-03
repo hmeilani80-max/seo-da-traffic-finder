@@ -12,6 +12,7 @@
 import {
   CACHE_TTL_DAYS,
   DEFAULT_COUNTRY,
+  DEFAULT_LANGUAGE,
   SEO_PROVIDER_AHREFS_ALL_IN_ONE,
   type DomainResearchResult,
   type KeywordMetricsResult,
@@ -47,6 +48,11 @@ export function normalizeKeyword(input: string): string {
 export function normalizeCountry(input?: string | null): string {
   const value = String(input ?? "").trim().toLowerCase();
   return value || DEFAULT_COUNTRY;
+}
+
+export function normalizeLanguage(input?: string | null): string {
+  const value = String(input ?? "").trim().toLowerCase();
+  return value || DEFAULT_LANGUAGE;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -190,9 +196,11 @@ export async function upsertDomainCache(domain: string, patch: DomainCachePatch)
 export async function lookupKeywordMetricsCache(
   keyword: string,
   country?: string,
+  language?: string,
 ): Promise<{ hit: boolean; fresh: boolean; result: KeywordMetricsResult | null }> {
   const normalized_keyword = normalizeKeyword(keyword);
   const countryCode = normalizeCountry(country);
+  const languageCode = normalizeLanguage(language);
   const supabase = await db();
 
   const { data, error } = await supabase
@@ -200,6 +208,7 @@ export async function lookupKeywordMetricsCache(
     .select("*")
     .eq("normalized_keyword", normalized_keyword)
     .eq("country", countryCode)
+    .eq("language", languageCode)
     .maybeSingle();
 
   if (error) console.error("[cache.service] lookupKeywordMetricsCache", error.message);
@@ -212,6 +221,7 @@ export async function lookupKeywordMetricsCache(
       keyword: data.keyword,
       normalizedKeyword: data.normalized_keyword,
       country: data.country,
+      language: (data as { language?: string }).language ?? languageCode,
       searchVolume: toNumberOrNull(data.search_volume),
       keywordDifficulty: toNumberOrNull(data.keyword_difficulty),
       cpc: toNumberOrNull(data.cpc),
@@ -230,6 +240,7 @@ export async function upsertKeywordMetricsCache(result: KeywordMetricsResult): P
     keyword: result.keyword,
     normalized_keyword: normalizeKeyword(result.keyword),
     country: normalizeCountry(result.country),
+    language: normalizeLanguage(result.language),
     search_volume: result.searchVolume,
     keyword_difficulty: result.keywordDifficulty,
     cpc: result.cpc,
@@ -242,7 +253,7 @@ export async function upsertKeywordMetricsCache(result: KeywordMetricsResult): P
   const { error } = await supabase
     .from("keyword_metrics_cache")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(row as any, { onConflict: "normalized_keyword,country" });
+    .upsert(row as any, { onConflict: "normalized_keyword,country,language" });
 
   if (error) console.error("[cache.service] upsertKeywordMetricsCache", error.message);
 }
@@ -255,10 +266,12 @@ export async function lookupKeywordRankCache(
   targetDomain: string,
   keyword: string,
   country?: string,
+  language?: string,
 ): Promise<{ hit: boolean; fresh: boolean; result: KeywordRankResult | null }> {
   const target_domain = normalizeDomain(targetDomain);
   const normalized_keyword = normalizeKeyword(keyword);
   const countryCode = normalizeCountry(country);
+  const languageCode = normalizeLanguage(language);
   const supabase = await db();
 
   const { data, error } = await supabase
@@ -267,6 +280,7 @@ export async function lookupKeywordRankCache(
     .eq("target_domain", target_domain)
     .eq("normalized_keyword", normalized_keyword)
     .eq("country", countryCode)
+    .eq("language", languageCode)
     .maybeSingle();
 
   if (error) console.error("[cache.service] lookupKeywordRankCache", error.message);
@@ -280,6 +294,7 @@ export async function lookupKeywordRankCache(
       keyword: data.keyword,
       normalizedKeyword: data.normalized_keyword,
       country: data.country,
+      language: (data as { language?: string }).language ?? languageCode,
       position: toNumberOrNull(data.position),
       rankingUrl: data.ranking_url,
       rankingTitle: data.ranking_title,
@@ -301,6 +316,7 @@ export async function upsertKeywordRankCache(result: KeywordRankResult): Promise
     keyword: result.keyword,
     normalized_keyword: normalizeKeyword(result.keyword),
     country: normalizeCountry(result.country),
+    language: normalizeLanguage(result.language),
     position: result.position,
     ranking_url: result.rankingUrl,
     ranking_title: result.rankingTitle,
@@ -315,7 +331,7 @@ export async function upsertKeywordRankCache(result: KeywordRankResult): Promise
   const { error } = await supabase
     .from("keyword_rank_cache")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .upsert(row as any, { onConflict: "target_domain,normalized_keyword,country" });
+    .upsert(row as any, { onConflict: "target_domain,normalized_keyword,country,language" });
 
   if (error) console.error("[cache.service] upsertKeywordRankCache", error.message);
 }
