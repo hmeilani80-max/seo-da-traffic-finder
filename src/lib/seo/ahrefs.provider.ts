@@ -11,6 +11,7 @@
 
 import {
   DEFAULT_COUNTRY,
+  DEFAULT_LANGUAGE,
   SEO_PROVIDER_AHREFS_ALL_IN_ONE,
   type AhrefsSearchType,
   type DomainResearchResult,
@@ -31,6 +32,7 @@ export type RunAhrefsInput = {
   urls?: string[];
   keyword?: string;
   country?: string;
+  language?: string;
   /** exact | subdomains | prefix | domain */
   mode?: "exact" | "subdomains" | "prefix" | "domain";
   additionalOptions?: Record<string, unknown>;
@@ -75,6 +77,7 @@ export async function runAhrefs(input: RunAhrefsInput): Promise<RunAhrefsResult>
   const body: Record<string, unknown> = {
     searchType: input.searchType,
     country: (input.country ?? DEFAULT_COUNTRY).toLowerCase(),
+    language: (input.language ?? DEFAULT_LANGUAGE).toLowerCase(),
     ...(input.urls?.length ? { urls: input.urls } : {}),
     ...(input.keyword ? { keyword: input.keyword } : {}),
     ...(input.mode ? { mode: input.mode } : {}),
@@ -270,11 +273,13 @@ export function normalizeKeywordMetrics(
   country: string,
   items: RawAhrefsItem[],
   error: string | null = null,
+  language: string = DEFAULT_LANGUAGE,
 ): KeywordMetricsResult {
   return {
     keyword,
     normalizedKeyword: normalizeKeyword(keyword),
     country: country.toLowerCase(),
+    language: language.toLowerCase(),
     searchVolume: pickNumber(items, [
       "search_volume",
       "searchVolume",
@@ -326,6 +331,7 @@ export function normalizeKeywordRank(
   country: string,
   items: RawAhrefsItem[],
   error: string | null = null,
+  language: string = DEFAULT_LANGUAGE,
 ): KeywordRankResult {
   const normalizedTarget = normalizeDomain(targetDomain);
   const row = findTargetSerpRow(items, normalizedTarget);
@@ -335,6 +341,7 @@ export function normalizeKeywordRank(
     keyword,
     normalizedKeyword: normalizeKeyword(keyword),
     country: country.toLowerCase(),
+    language: language.toLowerCase(),
     position: row
       ? toNumber(pick(row, ["position", "rank"]))
       : pickNumber(items, ["position", "rank", "serp_position", "serpPosition"]),

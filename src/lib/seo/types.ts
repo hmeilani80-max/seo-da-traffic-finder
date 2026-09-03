@@ -65,6 +65,7 @@ export type KeywordMetricsResult = {
   keyword: string;
   normalizedKeyword: string;
   country: string;
+  language: string;
   searchVolume: number | null;
   keywordDifficulty: number | null;
   cpc: number | null;
@@ -81,6 +82,7 @@ export type KeywordRankResult = {
   keyword: string;
   normalizedKeyword: string;
   country: string;
+  language: string;
   position: number | null;
   rankingUrl: string | null;
   rankingTitle: string | null;
@@ -116,6 +118,37 @@ export const CACHE_TTL_DAYS = {
 } as const;
 
 export const DEFAULT_COUNTRY = "id";
+export const DEFAULT_LANGUAGE = "id";
+
+/** Pilihan negara/lokasi yang didukung UI riset keyword. */
+export const SEO_COUNTRIES = [
+  { code: "id", label: "Indonesia" },
+  { code: "us", label: "Amerika Serikat" },
+  { code: "sg", label: "Singapura" },
+  { code: "my", label: "Malaysia" },
+  { code: "au", label: "Australia" },
+  { code: "gb", label: "Inggris" },
+  { code: "in", label: "India" },
+  { code: "ph", label: "Filipina" },
+  { code: "th", label: "Thailand" },
+  { code: "vn", label: "Vietnam" },
+  { code: "jp", label: "Jepang" },
+  { code: "de", label: "Jerman" },
+  { code: "nl", label: "Belanda" },
+] as const;
+
+/** Pilihan bahasa yang didukung UI riset keyword. */
+export const SEO_LANGUAGES = [
+  { code: "id", label: "Bahasa Indonesia" },
+  { code: "en", label: "Inggris" },
+  { code: "ms", label: "Melayu" },
+  { code: "th", label: "Thai" },
+  { code: "vi", label: "Vietnam" },
+  { code: "ja", label: "Jepang" },
+  { code: "de", label: "Jerman" },
+  { code: "nl", label: "Belanda" },
+  { code: "hi", label: "Hindi" },
+] as const;
 
 /** Satu ide keyword hasil searchType `keyword_ideas` (belum di-enrich metrik). */
 export type KeywordIdea = {
