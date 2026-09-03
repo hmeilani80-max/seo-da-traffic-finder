@@ -16,7 +16,14 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-const MENU = [
+type MenuItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+};
+
+const MENU: MenuItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/domains", label: "Domain Saya", icon: Database },
   { to: "/projects", label: "Proyek & Placement", icon: FolderKanban },
@@ -28,7 +35,7 @@ const MENU = [
   { to: "/domain-research", label: "Riset Domain", icon: Globe },
   { to: "/keyword-research", label: "Riset Keyword", icon: KeyRound },
   { to: "/settings", label: "Pengaturan", icon: Settings },
-] as const;
+];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
