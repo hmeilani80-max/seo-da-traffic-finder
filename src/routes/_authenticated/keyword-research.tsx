@@ -10,6 +10,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SEO_COUNTRIES, SEO_LANGUAGES } from "@/lib/seo/types";
+import {
   generateKeywordIdeasFn,
   researchKeywordsFn,
   type KeywordIdea,
@@ -49,6 +57,8 @@ function KeywordResearchPage() {
   const runMetrics = useServerFn(researchKeywordsFn);
 
   const [seed, setSeed] = useState("");
+  const [country, setCountry] = useState("id");
+  const [language, setLanguage] = useState("id");
   const [ideas, setIdeas] = useState<KeywordIdea[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<KeywordMetricsResult[]>([]);
@@ -72,7 +82,7 @@ function KeywordResearchPage() {
     }
     setLoadingIdeas(true);
     try {
-      const res = await runIdeas({ data: { seed, country: "id", limit: 50 } });
+      const res = await runIdeas({ data: { seed, country, language, limit: 50 } });
       setIdeas(res.ideas);
       setSelected([]);
       setMetrics([]);
@@ -93,7 +103,7 @@ function KeywordResearchPage() {
     }
     setLoadingMetrics(true);
     try {
-      const res = await runMetrics({ data: { keywords: selected, country: "id" } });
+      const res = await runMetrics({ data: { keywords: selected, country, language } });
       setMetrics(res);
       const failed = res.filter((r) => r.error).length;
       if (failed) toast.warning(`${failed} dari ${res.length} keyword gagal diambil metriknya`);
@@ -111,8 +121,8 @@ function KeywordResearchPage() {
         <h1 className="text-2xl font-bold tracking-tight">Riset Keyword</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Alur: seed keyword → ide keyword → shortlist → metrik keyword. Metrik hanya diambil untuk
-          keyword yang Anda pilih, dan cache 30 hari dipakai lebih dulu agar hemat biaya. Negara
-          default: Indonesia (id).
+          keyword yang Anda pilih, dan cache 30 hari dipakai lebih dulu agar hemat biaya. Cache
+          dipisahkan per kombinasi negara dan bahasa.
         </p>
       </header>
 
@@ -128,6 +138,38 @@ function KeywordResearchPage() {
               if (e.key === "Enter") void handleIdeas();
             }}
           />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="country">Negara / Lokasi</Label>
+            <Select value={country} onValueChange={setCountry}>
+              <SelectTrigger id="country">
+                <SelectValue placeholder="Pilih negara" />
+              </SelectTrigger>
+              <SelectContent>
+                {SEO_COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.label} ({c.code.toUpperCase()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="language">Bahasa</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger id="language">
+                <SelectValue placeholder="Pilih bahasa" />
+              </SelectTrigger>
+              <SelectContent>
+                {SEO_LANGUAGES.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <Button onClick={() => void handleIdeas()} disabled={loadingIdeas || !seed.trim()}>
           {loadingIdeas ? (
@@ -186,6 +228,7 @@ function KeywordResearchPage() {
               <thead className="text-left text-xs text-muted-foreground">
                 <tr className="border-b">
                   <th className="px-4 py-2">Keyword</th>
+                  <th className="px-4 py-2">Negara / Bahasa</th>
                   <th className="px-4 py-2">Search Volume</th>
                   <th className="px-4 py-2">KD</th>
                   <th className="px-4 py-2">Traffic Potential</th>
@@ -199,6 +242,9 @@ function KeywordResearchPage() {
                     <td className="px-4 py-2 font-medium">
                       {m.keyword}
                       {m.error && <div className="text-xs font-normal text-destructive">{m.error}</div>}
+                    </td>
+                    <td className="px-4 py-2 uppercase">
+                      {m.country} / {m.language}
                     </td>
                     <td className="px-4 py-2">{fmt(m.searchVolume)}</td>
                     <td className="px-4 py-2">{fmt(m.keywordDifficulty)}</td>
