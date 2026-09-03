@@ -14,6 +14,7 @@ import {
   lookupKeywordMetricsCache,
   normalizeCountry,
   normalizeKeyword,
+  normalizeLanguage,
   upsertKeywordMetricsCache,
 } from "./cache.service";
 import {
@@ -25,6 +26,7 @@ import {
 export type KeywordIdeasResult = {
   seed: string;
   country: string;
+  language: string;
   ideas: KeywordIdea[];
   error: string | null;
 };
@@ -35,20 +37,29 @@ export const MAX_SHORTLIST = 25;
 export async function generateKeywordIdeas(input: {
   seed: string;
   country?: string;
+  language?: string;
   limit?: number;
 }): Promise<KeywordIdeasResult> {
   const seed = normalizeKeyword(input.seed);
   const country = normalizeCountry(input.country);
+  const language = normalizeLanguage(input.language);
   const limit = Math.max(1, Math.min(input.limit ?? 50, 100));
 
   if (!seed) {
-    return { seed: input.seed, country, ideas: [], error: "Seed keyword tidak boleh kosong" };
+    return {
+      seed: input.seed,
+      country,
+      language,
+      ideas: [],
+      error: "Seed keyword tidak boleh kosong",
+    };
   }
 
   const run = await runAhrefs({
     searchType: "keyword_ideas",
     keyword: seed,
     country,
+    language,
   });
 
   const ideas = run.error ? [] : normalizeKeywordIdeas(run.items).slice(0, limit);
@@ -64,24 +75,27 @@ export async function generateKeywordIdeas(input: {
     durationMs: run.durationMs,
   });
 
-  return { seed, country, ideas, error: run.error };
+  return { seed, country, language, ideas, error: run.error };
 }
 
 /** Langkah 2 — metrik untuk SATU keyword, cache-first. */
 export async function researchKeyword(input: {
   keyword: string;
   country?: string;
+  language?: string;
   forceRefresh?: boolean;
 }): Promise<KeywordMetricsResult> {
   const keyword = String(input.keyword ?? "").trim();
   const normalizedKeyword = normalizeKeyword(keyword);
   const country = normalizeCountry(input.country);
+  const language = normalizeLanguage(input.language);
 
   if (!normalizedKeyword) {
     return {
       keyword,
       normalizedKeyword,
       country,
+      language,
       searchVolume: null,
       keywordDifficulty: null,
       cpc: null,
@@ -94,7 +108,7 @@ export async function researchKeyword(input: {
   }
 
   if (!input.forceRefresh) {
-    const cached = await lookupKeywordMetricsCache(keyword, country);
+    const cached = await lookupKeywordMetricsCache(keyword, country, language);
     if (cached.hit && cached.fresh && cached.result) {
       await logResearchRun({
         provider: SEO_PROVIDER_AHREFS_ALL_IN_ONE,
@@ -114,6 +128,7 @@ export async function researchKeyword(input: {
     searchType: "keyword_metrics",
     keyword,
     country,
+    language,
   });
 
   await logResearchRun({
@@ -129,13 +144,14 @@ export async function researchKeyword(input: {
 
   if (run.error) {
     // Jangan membuat data palsu — pakai cache stale bila ada.
-    const stale = await lookupKeywordMetricsCache(keyword, country);
+    const stale = await lookupKeywordMetricsCache(keyword, country, language);
     if (stale.result) return { ...stale.result, error: run.error };
 
     return {
       keyword,
       normalizedKeyword,
       country,
+      language,
       searchVolume: null,
       keywordDifficulty: null,
       cpc: null,
@@ -147,7 +163,7 @@ export async function researchKeyword(input: {
     };
   }
 
-  const result = normalizeKeywordMetrics(keyword, country, run.items, null);
+  const result = normalizeKeywordMetrics(keyword, country, run.items, null, language);
 
   const hasData =
     result.searchVolume !== null ||
@@ -164,9 +180,11 @@ export async function researchKeyword(input: {
 export async function researchKeywords(input: {
   keywords: string[];
   country?: string;
+  language?: string;
   forceRefresh?: boolean;
 }): Promise<KeywordMetricsResult[]> {
   const country = normalizeCountry(input.country);
+  const language = normalizeLanguage(input.language);
   const unique: string[] = [];
   const seen = new Set<string>();
 
@@ -181,7 +199,12 @@ export async function researchKeywords(input: {
   const results: KeywordMetricsResult[] = [];
   for (const keyword of unique.slice(0, MAX_SHORTLIST)) {
     results.push(
-      await researchKeyword({ keyword, country, forceRefresh: Boolean(input.forceRefresh) }),
+      await researchKeyword({
+        keyword,
+        country,
+        language,
+        forceRefresh: Boolean(input.forceRefresh),
+      }),
     );
   }
   return results;
