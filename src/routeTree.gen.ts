@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedBacklinkRecommendationRouteImport } from './routes/_authenticated/backlink-recommendation'
 import { Route as AuthenticatedDomainResearchRouteImport } from './routes/_authenticated/domain-research'
+import { Route as AuthenticatedDomainsRouteImport } from './routes/_authenticated/domains'
 import { Route as AuthenticatedKeywordResearchRouteImport } from './routes/_authenticated/keyword-research'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedSeoPhase2TestRouteImport } from './routes/_authenticated/seo-phase2-test'
@@ -46,6 +47,11 @@ const AuthenticatedDomainResearchRoute =
     path: '/domain-research',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDomainsRoute = AuthenticatedDomainsRouteImport.update({
+  id: '/domains',
+  path: '/domains',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedKeywordResearchRoute =
   AuthenticatedKeywordResearchRouteImport.update({
     id: '/keyword-research',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/backlink-recommendation': typeof AuthenticatedBacklinkRecommendationRoute
   '/domain-research': typeof AuthenticatedDomainResearchRoute
+  '/domains': typeof AuthenticatedDomainsRoute
   '/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/backlink-recommendation': typeof AuthenticatedBacklinkRecommendationRoute
   '/domain-research': typeof AuthenticatedDomainResearchRoute
+  '/domains': typeof AuthenticatedDomainsRoute
   '/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/backlink-recommendation': typeof AuthenticatedBacklinkRecommendationRoute
   '/_authenticated/domain-research': typeof AuthenticatedDomainResearchRoute
+  '/_authenticated/domains': typeof AuthenticatedDomainsRoute
   '/_authenticated/keyword-research': typeof AuthenticatedKeywordResearchRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/backlink-recommendation'
     | '/domain-research'
+    | '/domains'
     | '/keyword-research'
     | '/projects'
     | '/seo-phase2-test'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/backlink-recommendation'
     | '/domain-research'
+    | '/domains'
     | '/keyword-research'
     | '/projects'
     | '/seo-phase2-test'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/backlink-recommendation'
     | '/_authenticated/domain-research'
+    | '/_authenticated/domains'
     | '/_authenticated/keyword-research'
     | '/_authenticated/projects'
     | '/_authenticated/seo-phase2-test'
@@ -189,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDomainResearchRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/domains': {
+      id: '/_authenticated/domains'
+      path: '/domains'
+      fullPath: '/domains'
+      preLoaderRoute: typeof AuthenticatedDomainsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/keyword-research': {
       id: '/_authenticated/keyword-research'
       path: '/keyword-research'
@@ -230,6 +249,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBacklinkRecommendationRoute: typeof AuthenticatedBacklinkRecommendationRoute
   AuthenticatedDomainResearchRoute: typeof AuthenticatedDomainResearchRoute
+  AuthenticatedDomainsRoute: typeof AuthenticatedDomainsRoute
   AuthenticatedKeywordResearchRoute: typeof AuthenticatedKeywordResearchRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedSeoPhase2TestRoute: typeof AuthenticatedSeoPhase2TestRoute
@@ -242,6 +262,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBacklinkRecommendationRoute:
     AuthenticatedBacklinkRecommendationRoute,
   AuthenticatedDomainResearchRoute: AuthenticatedDomainResearchRoute,
+  AuthenticatedDomainsRoute: AuthenticatedDomainsRoute,
   AuthenticatedKeywordResearchRoute: AuthenticatedKeywordResearchRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedSeoPhase2TestRoute: AuthenticatedSeoPhase2TestRoute,

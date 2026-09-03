@@ -105,34 +105,13 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Dashboard Riset Backlink
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Domain Saya</h1>
 
         <p className="text-sm text-muted-foreground">
           Cek domain rajabacklink.com untuk client arsjadrasjid.com — otomatis
           riset DR &amp; traffic lalu dirutekan ke tabel yang sesuai.
         </p>
-
-        <nav className="mt-3 flex flex-wrap gap-2 text-sm">
-          <Link to="/projects" className="rounded-md border px-3 py-1 hover:bg-muted">
-            Proyek &amp; Placement
-          </Link>
-          <Link
-            to="/backlink-recommendation"
-            className="rounded-md border px-3 py-1 hover:bg-muted"
-          >
-            Rekomendasi Backlink
-          </Link>
-          <Link to="/domain-research" className="rounded-md border px-3 py-1 hover:bg-muted">
-            Riset Domain
-          </Link>
-          <Link to="/keyword-research" className="rounded-md border px-3 py-1 hover:bg-muted">
-            Riset Keyword
-          </Link>
-        </nav>
       </header>
-
 
       <TambahDomainDibeli />
 
