@@ -1,283 +1,217 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DomainTable } from "@/components/DomainTable";
-import { DomainSearchResearch } from "@/components/DomainSearchResearch";
-import { TambahDomainDibeli } from "@/components/TambahDomainDibeli";
-import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import {
-  fetchSearchHistory,
-  fetchTable,
-  getSearchMatchType,
-  normalizeSearchQuery,
-  type SearchMatchType,
-  type TableKey,
-} from "@/lib/domains";
+  ArrowRight,
+  Database,
+  FolderKanban,
+  Globe,
+  KeyRound,
+  Sparkles,
+} from "lucide-react";
 
+import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
+import { fetchTable } from "@/lib/domains";
+import {
+  fetchPlacementOrders,
+  fetchProjects,
+  PLACEMENT_STATUS_LABEL,
+} from "@/lib/projects";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
-      { title: "Dashboard Riset Backlink — Manajemen Domain" },
+      { title: "Dashboard — Backlink Manager" },
       {
         name: "description",
         content:
-          "Tool internal untuk cek, riset, dan mengelola pembelian backlink domain dengan data DR dan traffic dari Ahrefs.",
+          "Ringkasan manajemen backlink: domain, proyek, placement order, dan riset SEO.",
       },
-      {
-        property: "og:title",
-        content: "Dashboard Riset Backlink — Manajemen Domain",
-      },
+      { property: "og:title", content: "Dashboard — Backlink Manager" },
       {
         property: "og:description",
         content:
-          "Cek domain massal, riset DR & traffic otomatis, dan kelola riwayat pembelian backlink.",
+          "Ringkasan manajemen backlink: domain, proyek, placement order, dan riset SEO.",
       },
     ],
   }),
-  component: Dashboard,
+  component: DashboardHome,
 });
 
-function matchLabel(matchType: SearchMatchType) {
-  switch (matchType) {
-    case "sama":
-      return "✓ Sama";
+const FEATURES = [
+  {
+    to: "/domains",
+    icon: Database,
+    title: "Domain Saya",
+    description:
+      "Cek domain massal, riset DR & traffic otomatis via Apify, dan kelola tabel sudah dibeli / sudah pernah / traffic 0.",
+  },
+  {
+    to: "/projects",
+    icon: FolderKanban,
+    title: "Proyek & Placement",
+    description:
+      "Kelola proyek client, buat placement order, dan pantau status draft, dipesan, tayang, atau batal.",
+  },
+  {
+    to: "/backlink-recommendation",
+    icon: Sparkles,
+    title: "Rekomendasi Backlink",
+    description:
+      "Pipeline AI: profil domain → kandidat keyword → metrik & rank Ahrefs → Top 5 rekomendasi placement.",
+  },
+  {
+    to: "/domain-research",
+    icon: Globe,
+    title: "Riset Domain",
+    description:
+      "Riset satu atau banyak domain: DR, organic traffic, backlink, dan referring domains dengan cache 30 hari.",
+  },
+  {
+    to: "/keyword-research",
+    icon: KeyRound,
+    title: "Riset Keyword",
+    description:
+      "Generate ide keyword dari seed, lalu ambil search volume, KD, traffic potential, dan CPC untuk shortlist.",
+  },
+] as const;
 
-    case "mengandung":
-      return "↳ Mengandung query aktif";
-
-    case "terkandung":
-      return "↳ Terkandung dalam query aktif";
-
-    default:
-      return "Tersimpan";
-  }
+function StatCard({
+  label,
+  value,
+  loading,
+}: {
+  label: string;
+  value: number;
+  loading: boolean;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-3xl font-bold tabular-nums">
+        {loading ? "…" : value.toLocaleString("id-ID")}
+      </p>
+    </div>
+  );
 }
 
-function Dashboard() {
+function DashboardHome() {
   useRealtimeDomains();
 
-  const [activeTab, setActiveTab] = useState<TableKey>("sudah_dibeli");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const counts = useQuery({
-    queryKey: ["ringkasan"],
+  const stats = useQuery({
+    queryKey: ["dashboard-home"],
     queryFn: async () => {
-      const [a, b, c] = await Promise.all([
+      const [dibeli, pernah, nol, projects, orders] = await Promise.all([
+        fetchTable("sudah_dibeli"),
         fetchTable("domain_sudah_pernah"),
         fetchTable("traffic_nol"),
-        fetchTable("sudah_dibeli"),
+        fetchProjects(),
+        fetchPlacementOrders(),
       ]);
-
       return {
-        domain_sudah_pernah: a.length,
-        traffic_nol: b.length,
-        sudah_dibeli: c.length,
+        dibeli: dibeli.length,
+        pernah: pernah.length,
+        nol: nol.length,
+        projects: projects.length,
+        orders: orders.length,
+        recentOrders: orders.slice(0, 5),
       };
     },
   });
 
-  const searchHistory = useQuery({
-    queryKey: ["search-history"],
-    queryFn: fetchSearchHistory,
-  });
-
-
-
-
-  const c = counts.data ?? {
-    domain_sudah_pernah: 0,
-    traffic_nol: 0,
-    sudah_dibeli: 0,
-  };
-
-  const normalizedCurrent = normalizeSearchQuery(searchQuery);
-  const history = searchHistory.data ?? [];
-
-  const relatedHistory = history.filter(
-    (item) =>
-      normalizedCurrent.length > 0 &&
-      getSearchMatchType(searchQuery, item.query) !== "tidak_terkait",
-  );
+  const s = stats.data;
+  const loading = stats.isLoading;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Dashboard Riset Backlink
-        </h1>
-
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Cek domain rajabacklink.com untuk client arsjadrasjid.com — otomatis
-          riset DR &amp; traffic lalu dirutekan ke tabel yang sesuai.
+          Ringkasan seluruh aktivitas riset dan pembelian backlink kamu.
         </p>
-
-        <nav className="mt-3 flex flex-wrap gap-2 text-sm">
-          <Link to="/projects" className="rounded-md border px-3 py-1 hover:bg-muted">
-            Proyek &amp; Placement
-          </Link>
-          <Link
-            to="/backlink-recommendation"
-            className="rounded-md border px-3 py-1 hover:bg-muted"
-          >
-            Rekomendasi Backlink
-          </Link>
-          <Link to="/domain-research" className="rounded-md border px-3 py-1 hover:bg-muted">
-            Riset Domain
-          </Link>
-          <Link to="/keyword-research" className="rounded-md border px-3 py-1 hover:bg-muted">
-            Riset Keyword
-          </Link>
-        </nav>
       </header>
 
-
-      <TambahDomainDibeli />
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <StatCard label="Domain Dibeli" value={s?.dibeli ?? 0} loading={loading} />
+        <StatCard label="Domain Sudah Pernah" value={s?.pernah ?? 0} loading={loading} />
+        <StatCard label="Traffic 0" value={s?.nol ?? 0} loading={loading} />
+        <StatCard label="Proyek" value={s?.projects ?? 0} loading={loading} />
+        <StatCard label="Placement Order" value={s?.orders ?? 0} loading={loading} />
+      </section>
 
       <section>
-        <DomainSearchResearch
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          onFound={setActiveTab}
-        />
-
-        {normalizedCurrent && relatedHistory.length > 0 && (
-          <div className="mb-4 rounded-md bg-muted/50 px-3 py-2 text-sm">
-            <span className="font-medium">Query aktif:</span> {searchQuery}
-            <span className="ml-2 font-medium text-primary">
-              • {relatedHistory.length} query terkait ditemukan
-            </span>
-          </div>
-        )}
-
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableKey)}>
-
-          <TabsList>
-            <TabsTrigger value="sudah_dibeli">
-              Sudah Dibeli ({c.sudah_dibeli})
-            </TabsTrigger>
-
-            <TabsTrigger value="domain_sudah_pernah">
-              Domain Sudah Pernah ({c.domain_sudah_pernah})
-            </TabsTrigger>
-
-            <TabsTrigger value="traffic_nol">
-              Traffic 0 ({c.traffic_nol})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="sudah_dibeli" className="mt-4">
-            <DomainTable
-              table="sudah_dibeli"
-              searchQuery={searchQuery}
-            />
-          </TabsContent>
-
-          <TabsContent value="domain_sudah_pernah" className="mt-4">
-            <DomainTable
-              table="domain_sudah_pernah"
-              searchQuery={searchQuery}
-            />
-          </TabsContent>
-
-          <TabsContent value="traffic_nol" className="mt-4">
-            <DomainTable
-              table="traffic_nol"
-              searchQuery={searchQuery}
-            />
-          </TabsContent>
-        </Tabs>
+        <h2 className="mb-3 text-base font-semibold">Menu Utama</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((f) => {
+            const Icon = f.icon;
+            return (
+              <Link
+                key={f.to}
+                to={f.to}
+                className="group rounded-xl border bg-card p-5 shadow-[var(--shadow-card)] transition-colors hover:border-primary/50"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="grid size-10 place-items-center rounded-md bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </span>
+                  <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                </div>
+                <h3 className="mt-3 font-semibold">{f.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {f.description}
+                </p>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
       <section className="rounded-xl border bg-card shadow-[var(--shadow-card)]">
-        <div className="border-b p-4">
-          <h2 className="text-base font-semibold">
-            Tabel Riwayat Search
-          </h2>
-
-          <p className="text-sm text-muted-foreground">
-            Riwayat pencarian dicocokkan dengan query aktif berdasarkan query
-            yang sama atau saling mengandung.
-          </p>
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="text-base font-semibold">Placement Order Terbaru</h2>
+          <Link
+            to="/projects"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Lihat semua
+          </Link>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/30">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">
-                  Query
-                </th>
-
-                <th className="px-4 py-3 text-left font-medium">
-                  Jumlah Dicari
-                </th>
-
-                <th className="px-4 py-3 text-left font-medium">
-                  Terakhir Dicari
-                </th>
-
-                <th className="px-4 py-3 text-left font-medium">
-                  Status
-                </th>
+                <th className="px-4 py-3 text-left font-medium">Domain</th>
+                <th className="px-4 py-3 text-left font-medium">Keyword</th>
+                <th className="px-4 py-3 text-left font-medium">Status</th>
+                <th className="px-4 py-3 text-left font-medium">Dibuat</th>
               </tr>
             </thead>
-
             <tbody>
-              {history.length === 0 ? (
+              {!s || s.recentOrders.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
-                    Belum ada riwayat pencarian.
+                    {loading ? "Memuat…" : "Belum ada placement order."}
                   </td>
                 </tr>
               ) : (
-                history.map((item) => {
-                  const matchType = getSearchMatchType(
-                    searchQuery,
-                    item.query,
-                  );
-
-                  const isRelated =
-                    matchType !== "tidak_terkait";
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`border-b last:border-0 ${
-                        isRelated ? "bg-primary/5" : ""
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-medium">
-                        {item.query}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {item.search_count}×
-                      </td>
-
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(
-                          item.last_searched_at,
-                        ).toLocaleString("id-ID")}
-                      </td>
-
-                      <td
-                        className={`px-4 py-3 ${
-                          isRelated
-                            ? "font-medium text-primary"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {matchLabel(matchType)}
-                      </td>
-                    </tr>
-                  );
-                })
+                s.recentOrders.map((o) => (
+                  <tr key={o.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-medium">{o.source_domain}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {o.keyword ?? "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                        {PLACEMENT_STATUS_LABEL[o.status] ?? o.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {new Date(o.created_at).toLocaleDateString("id-ID")}
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

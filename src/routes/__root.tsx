@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 
 
@@ -122,52 +121,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function AppNav() {
-  const linkClass =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground";
-  return (
-    <header className="border-b border-sidebar-border bg-sidebar">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-            BL
-          </span>
-          <span className="text-sm font-semibold text-sidebar-foreground">
-            Backlink Research Tool
-          </span>
-        </Link>
-        <div className="flex items-center gap-1">
-          <Link
-            to="/"
-            className={linkClass}
-            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm font-medium bg-sidebar-accent text-sidebar-foreground" }}
-            activeOptions={{ exact: true }}
-          >
-            Dashboard
-          </Link>
-          <Link
-            to="/settings"
-            className={linkClass}
-            activeProps={{ className: "rounded-md px-3 py-1.5 text-sm font-medium bg-sidebar-accent text-sidebar-foreground" }}
-          >
-            Pengaturan
-          </Link>
-          <button
-            type="button"
-            className={linkClass}
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = "/auth";
-            }}
-          >
-            Keluar
-          </button>
-        </div>
-
-      </nav>
-    </header>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -175,7 +128,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background font-sans">
-        <AppNav />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </div>
