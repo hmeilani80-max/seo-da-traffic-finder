@@ -141,7 +141,7 @@ function DashboardHome() {
               </tr>
             </thead>
             <tbody>
-              {!s || s.recentOrders.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
@@ -151,7 +151,7 @@ function DashboardHome() {
                   </td>
                 </tr>
               ) : (
-                s.recentOrders.map((o) => (
+                recentOrders.map((o: PlacementOrderRow) => (
                   <tr key={o.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{o.source_domain}</td>
                     <td className="px-4 py-3 text-muted-foreground">
