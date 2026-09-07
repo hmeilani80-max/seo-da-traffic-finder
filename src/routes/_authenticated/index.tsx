@@ -10,11 +10,10 @@ import {
 } from "lucide-react";
 
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
-import { fetchTable } from "@/lib/domains";
 import {
   fetchPlacementOrders,
-  fetchProjects,
   PLACEMENT_STATUS_LABEL,
+  type PlacementOrderRow,
 } from "@/lib/projects";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -75,51 +74,19 @@ const FEATURES = [
   },
 ] as const;
 
-function StatCard({
-  label,
-  value,
-  loading,
-}: {
-  label: string;
-  value: number;
-  loading: boolean;
-}) {
-  return (
-    <div className="rounded-xl border bg-card p-4 shadow-[var(--shadow-card)]">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-3xl font-bold tabular-nums">
-        {loading ? "…" : value.toLocaleString("id-ID")}
-      </p>
-    </div>
-  );
-}
-
 function DashboardHome() {
   useRealtimeDomains();
 
-  const stats = useQuery({
-    queryKey: ["dashboard-home"],
+  const ordersQuery = useQuery({
+    queryKey: ["dashboard-recent-orders"],
     queryFn: async () => {
-      const [dibeli, pernah, nol, projects, orders] = await Promise.all([
-        fetchTable("sudah_dibeli"),
-        fetchTable("domain_sudah_pernah"),
-        fetchTable("traffic_nol"),
-        fetchProjects(),
-        fetchPlacementOrders(),
-      ]);
-      return {
-        dibeli: dibeli.length,
-        pernah: pernah.length,
-        nol: nol.length,
-        projects: projects.length,
-        orders: orders.length,
-        recentOrders: orders.slice(0, 5),
-      };
+      const orders = await fetchPlacementOrders();
+      return orders.slice(0, 5);
     },
   });
 
-  const s = stats.data;
-  const loading = stats.isLoading;
+  const recentOrders = ordersQuery.data ?? [];
+  const loading = ordersQuery.isLoading;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
@@ -129,14 +96,6 @@ function DashboardHome() {
           Ringkasan seluruh aktivitas riset dan pembelian backlink kamu.
         </p>
       </header>
-
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label="Domain Dibeli" value={s?.dibeli ?? 0} loading={loading} />
-        <StatCard label="Domain Sudah Pernah" value={s?.pernah ?? 0} loading={loading} />
-        <StatCard label="Traffic 0" value={s?.nol ?? 0} loading={loading} />
-        <StatCard label="Proyek" value={s?.projects ?? 0} loading={loading} />
-        <StatCard label="Placement Order" value={s?.orders ?? 0} loading={loading} />
-      </section>
 
       <section>
         <h2 className="mb-3 text-base font-semibold">Menu Utama</h2>
@@ -186,7 +145,7 @@ function DashboardHome() {
               </tr>
             </thead>
             <tbody>
-              {!s || s.recentOrders.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
@@ -196,7 +155,7 @@ function DashboardHome() {
                   </td>
                 </tr>
               ) : (
-                s.recentOrders.map((o) => (
+                recentOrders.map((o: PlacementOrderRow) => (
                   <tr key={o.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{o.source_domain}</td>
                     <td className="px-4 py-3 text-muted-foreground">
