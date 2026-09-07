@@ -32,6 +32,14 @@ export async function openAiJson<T>(input: {
         "OPENAI_API_KEY belum dikonfigurasi di server. Tambahkan secret tersebut untuk mengaktifkan rekomendasi AI.",
     };
   }
+  if (!apiKey.startsWith("sk-")) {
+    return {
+      data: null,
+      error:
+        "OPENAI_API_KEY yang tersimpan bukan API key OpenAI (harus diawali 'sk-'). Perbarui secret dengan key dari platform.openai.com.",
+    };
+  }
+
 
   try {
     const response = await fetch(OPENAI_URL, {
