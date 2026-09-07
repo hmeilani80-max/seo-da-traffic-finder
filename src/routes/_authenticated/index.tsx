@@ -10,12 +10,7 @@ import {
 } from "lucide-react";
 
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
-import { fetchTable } from "@/lib/domains";
-import {
-  fetchPlacementOrders,
-  fetchProjects,
-  PLACEMENT_STATUS_LABEL,
-} from "@/lib/projects";
+import { fetchPlacementOrders, PLACEMENT_STATUS_LABEL } from "@/lib/projects";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
