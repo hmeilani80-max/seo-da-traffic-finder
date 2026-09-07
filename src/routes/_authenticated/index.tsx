@@ -10,7 +10,11 @@ import {
 } from "lucide-react";
 
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
-import { fetchPlacementOrders, PLACEMENT_STATUS_LABEL } from "@/lib/projects";
+import {
+  fetchPlacementOrders,
+  PLACEMENT_STATUS_LABEL,
+  type PlacementOrderRow,
+} from "@/lib/projects";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
