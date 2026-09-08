@@ -4,6 +4,7 @@ Buatkan dashboard tools untuk manajemen riset & pembelian backlink domain, denga
 
 KONTEKS ALUR KERJA:
 User membeli backlink di rajabacklink.com untuk website client arsjadrasjid.com. Setiap kali cek domain, alurnya:
+
 1. User cek apakah domain tersebut sudah pernah dibeli sebelumnya (cek ke semua tabel riwayat)
 2. Jika SUDAH pernah dibeli -> catat/tandai di tabel "Domain Sudah Pernah"
 3. Jika BELUM pernah -> sistem otomatis riset domain lewat Ahrefs API untuk ambil data DA (Domain Authority/Domain Rating) dan Traffic
@@ -11,6 +12,7 @@ User membeli backlink di rajabacklink.com untuk website client arsjadrasjid.com.
 5. Jika Traffic > 0 -> tandai sebagai "Sudah Dibeli" dan masukkan ke tabel "Sudah Dibeli"
 
 FITUR YANG DIBUTUHKAN:
+
 - Halaman utama: input/search satu domain atau paste banyak domain sekaligus (bulk check, satu domain per baris)
 - Untuk tiap domain yang di-submit, sistem cek dulu ke database (tabel riwayat gabungan) apakah domain sudah pernah muncul di tabel manapun
 - Jika belum pernah, panggil Ahrefs API (gunakan API key yang bisa diisi user di halaman Settings) untuk ambil DR (Domain Rating) dan Organic Traffic domain tersebut

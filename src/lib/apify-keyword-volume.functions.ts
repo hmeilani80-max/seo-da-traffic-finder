@@ -38,7 +38,10 @@ function toFiniteNumber(value: unknown): number | null {
 export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
   .inputValidator((data: { keyword: string; country?: string }) => {
     const keyword = String(data?.keyword ?? "").trim();
-    const country = String(data?.country ?? "id").trim().toLowerCase() || "id";
+    const country =
+      String(data?.country ?? "id")
+        .trim()
+        .toLowerCase() || "id";
 
     if (!keyword) throw new Error("Keyword wajib diisi");
 
@@ -90,9 +93,7 @@ export const researchKeywordVolumeViaApify = createServerFn({ method: "POST" })
       }
 
       const wanted = normalizeKeyword(keyword);
-      const item = items.find(
-        (row) => normalizeKeyword(String(row.keyword ?? "")) === wanted,
-      );
+      const item = items.find((row) => normalizeKeyword(String(row.keyword ?? "")) === wanted);
 
       if (!item) {
         return empty("Keyword exact tidak ditemukan pada output Actor.");

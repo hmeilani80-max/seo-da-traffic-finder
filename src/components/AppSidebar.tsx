@@ -50,9 +50,7 @@ function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   return (
     <nav className="flex flex-1 flex-col gap-1">
       {MENU.map((item) => {
-        const active = item.exact
-          ? pathname === item.to
-          : pathname.startsWith(item.to);
+        const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
         const Icon = item.icon;
         return (
           <Link
@@ -78,17 +76,11 @@ function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
 function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      <Link
-        to="/"
-        onClick={onNavigate}
-        className="flex items-center gap-2 px-1"
-      >
+      <Link to="/" onClick={onNavigate} className="flex items-center gap-2 px-1">
         <span className="grid size-8 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
           BL
         </span>
-        <span className="text-sm font-semibold text-sidebar-foreground">
-          Backlink Manager
-        </span>
+        <span className="text-sm font-semibold text-sidebar-foreground">Backlink Manager</span>
       </Link>
 
       <NavLinks onNavigate={onNavigate} />
@@ -121,10 +113,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       {/* Sidebar mobile (drawer) */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div
-            className="absolute inset-0 bg-background/80"
-            onClick={() => setOpen(false)}
-          />
+          <div className="absolute inset-0 bg-background/80" onClick={() => setOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-64 border-r border-sidebar-border bg-sidebar">
             <button
               type="button"
@@ -150,9 +139,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           >
             <Menu className="size-5" />
           </button>
-          <span className="text-sm font-semibold text-sidebar-foreground">
-            Backlink Manager
-          </span>
+          <span className="text-sm font-semibold text-sidebar-foreground">Backlink Manager</span>
         </header>
 
         <main className="flex-1">{children}</main>

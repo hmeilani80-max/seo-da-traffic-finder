@@ -1,0 +1,6 @@
+{
+  "name": "Dashboard Riset Backlink",
+  "description": "Tool internal manajemen riset & pembelian backlink domain dan SEO DA & Traffic Finder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

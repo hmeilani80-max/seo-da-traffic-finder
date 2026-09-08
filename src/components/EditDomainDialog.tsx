@@ -32,11 +32,7 @@ import {
   type TableKey,
 } from "@/lib/domains";
 
-type ResearchStatus =
-  | "belum_diriset"
-  | "sedang_diriset"
-  | "selesai"
-  | "gagal";
+type ResearchStatus = "belum_diriset" | "sedang_diriset" | "selesai" | "gagal";
 
 const STATUS_OPTIONS: { value: ResearchStatus; label: string }[] = [
   { value: "belum_diriset", label: "Belum diriset" },
@@ -73,9 +69,7 @@ export function EditDomainDialog({
   const [targetPage, setTargetPage] = useState(row.target_page ?? "");
   const [purchaseDate, setPurchaseDate] = useState(row.purchase_date ?? "");
   const [price, setPrice] = useState(row.price?.toString() ?? "");
-  const [searchVolume, setSearchVolume] = useState(
-    row.search_volume?.toString() ?? "",
-  );
+  const [searchVolume, setSearchVolume] = useState(row.search_volume?.toString() ?? "");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,11 +96,7 @@ export function EditDomainDialog({
         throw new Error("Domain tidak valid. Contoh yang benar: contoh.com");
       }
 
-      const parseNumber = (
-        value: string,
-        label: string,
-        max?: number,
-      ): number | null => {
+      const parseNumber = (value: string, label: string, max?: number): number | null => {
         const trimmed = value.trim();
         if (!trimmed) return null;
 
@@ -183,8 +173,7 @@ export function EditDomainDialog({
     },
 
     onError: (err: unknown) => {
-      const message =
-        err instanceof Error ? err.message : "Gagal menyimpan perubahan.";
+      const message = err instanceof Error ? err.message : "Gagal menyimpan perubahan.";
       setError(message);
       toast.error(message);
     },
@@ -244,9 +233,7 @@ export function EditDomainDialog({
 
             <Select
               value={researchStatus}
-              onValueChange={(value) =>
-                setResearchStatus(value as ResearchStatus)
-              }
+              onValueChange={(value) => setResearchStatus(value as ResearchStatus)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -344,11 +331,7 @@ export function EditDomainDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={simpan.isPending}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={simpan.isPending}>
             Batal
           </Button>
 

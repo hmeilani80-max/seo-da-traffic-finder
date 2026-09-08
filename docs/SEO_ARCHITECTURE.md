@@ -238,7 +238,7 @@ runAhrefs({
   keyword,
   country,
   additionalOptions,
-})
+});
 ```
 
 The rest of the application must not depend on the raw Apify response format.
@@ -725,12 +725,12 @@ Frontend should interact with a small application-level service interface.
 Preferred functions:
 
 ```ts
-researchDomain()
-generateKeywordIdeas()
-researchKeyword()
-checkKeywordRank()
-generateBacklinkSuggestions()
-refreshSeoData()
+researchDomain();
+generateKeywordIdeas();
+researchKeyword();
+checkKeywordRank();
+generateBacklinkSuggestions();
+refreshSeoData();
 ```
 
 Internally these functions may call:

@@ -16,11 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import {
-  insertLog,
-  updateDomainRow,
-  type DomainRow,
-} from "@/lib/domains";
+import { insertLog, updateDomainRow, type DomainRow } from "@/lib/domains";
 
 export function BacklinkSuggestionDialog({
   row,
@@ -33,17 +29,11 @@ export function BacklinkSuggestionDialog({
 }) {
   const queryClient = useQueryClient();
 
-  const [keyword, setKeyword] = useState(
-    row.keyword ?? "",
-  );
+  const [keyword, setKeyword] = useState(row.keyword ?? "");
 
-  const [targetPage, setTargetPage] = useState(
-    row.target_page ?? "",
-  );
+  const [targetPage, setTargetPage] = useState(row.target_page ?? "");
 
-  const [searchVolume, setSearchVolume] = useState<number | null>(
-    row.search_volume ?? null,
-  );
+  const [searchVolume, setSearchVolume] = useState<number | null>(row.search_volume ?? null);
 
   /**
    * Setiap dialog dibuka,
@@ -67,37 +57,27 @@ export function BacklinkSuggestionDialog({
       const cleanTargetPage = targetPage.trim();
 
       if (!cleanKeyword) {
-        throw new Error(
-          "Pilih atau isi Keyword / Anchor terlebih dahulu.",
-        );
+        throw new Error("Pilih atau isi Keyword / Anchor terlebih dahulu.");
       }
 
       if (!cleanTargetPage) {
-        throw new Error(
-          "Pilih atau isi Halaman Target terlebih dahulu.",
-        );
+        throw new Error("Pilih atau isi Halaman Target terlebih dahulu.");
       }
 
       try {
         const parsed = new URL(cleanTargetPage);
 
-        const hostname = parsed.hostname
-          .toLowerCase()
-          .replace(/^www\./, "");
+        const hostname = parsed.hostname.toLowerCase().replace(/^www\./, "");
 
         if (hostname !== "arsjadrasjid.com") {
-          throw new Error(
-            "Halaman Target harus berasal dari arsjadrasjid.com.",
-          );
+          throw new Error("Halaman Target harus berasal dari arsjadrasjid.com.");
         }
       } catch (error) {
         if (error instanceof Error) {
           throw error;
         }
 
-        throw new Error(
-          "Format Halaman Target tidak valid.",
-        );
+        throw new Error("Format Halaman Target tidak valid.");
       }
 
       /**
@@ -107,16 +87,12 @@ export function BacklinkSuggestionDialog({
        * Karena itu traffic existing dikirim kembali
        * agar nilainya tidak berubah menjadi null.
        */
-      await updateDomainRow(
-        "sudah_dibeli",
-        row.id,
-        {
-          keyword: cleanKeyword,
-          target_page: cleanTargetPage,
-          search_volume: searchVolume,
-          traffic: row.traffic,
-        },
-      );
+      await updateDomainRow("sudah_dibeli", row.id, {
+        keyword: cleanKeyword,
+        target_page: cleanTargetPage,
+        search_volume: searchVolume,
+        traffic: row.traffic,
+      });
 
       /**
        * Simpan histori perubahan.
@@ -130,28 +106,19 @@ export function BacklinkSuggestionDialog({
 
         traffic: row.traffic,
 
-        pesan:
-          `Rekomendasi backlink disimpan: ${cleanKeyword} → ${cleanTargetPage}`,
+        pesan: `Rekomendasi backlink disimpan: ${cleanKeyword} → ${cleanTargetPage}`,
       });
     },
 
     onSuccess: async () => {
-      toast.success(
-        "Keyword, Halaman Target, dan Search Volume berhasil disimpan",
-      );
+      toast.success("Keyword, Halaman Target, dan Search Volume berhasil disimpan");
 
       await queryClient.invalidateQueries({
-        queryKey: [
-          "table",
-          "sudah_dibeli",
-        ],
+        queryKey: ["table", "sudah_dibeli"],
       });
 
       await queryClient.invalidateQueries({
-        queryKey: [
-          "domain-price-total",
-          "sudah_dibeli",
-        ],
+        queryKey: ["domain-price-total", "sudah_dibeli"],
       });
 
       await queryClient.invalidateQueries({
@@ -162,30 +129,21 @@ export function BacklinkSuggestionDialog({
     },
 
     onError: (error: Error) => {
-      toast.error(
-        error.message ||
-          "Gagal menyimpan rekomendasi backlink",
-      );
+      toast.error(error.message || "Gagal menyimpan rekomendasi backlink");
     },
   });
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-7xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-5 text-primary" />
-
             Cari Saran Backlink
           </DialogTitle>
 
           <DialogDescription>
-            Analisa OpenSEO untuk{" "}
-            <strong>{row.domain}</strong>{" "}
-            dan pilih Keyword + Halaman Target
+            Analisa OpenSEO untuk <strong>{row.domain}</strong> dan pilih Keyword + Halaman Target
             terbaik di arsjadrasjid.com.
           </DialogDescription>
         </DialogHeader>
@@ -194,38 +152,22 @@ export function BacklinkSuggestionDialog({
           {/* DOMAIN INFORMATION */}
           <div className="grid gap-3 rounded-lg border bg-muted/20 p-4 sm:grid-cols-3">
             <div>
-              <p className="text-[11px] text-muted-foreground">
-                Domain Sumber
-              </p>
+              <p className="text-[11px] text-muted-foreground">Domain Sumber</p>
 
-              <p className="mt-1 font-semibold">
-                {row.domain}
-              </p>
+              <p className="mt-1 font-semibold">{row.domain}</p>
             </div>
 
             <div>
-              <p className="text-[11px] text-muted-foreground">
-                DA / DR
-              </p>
+              <p className="text-[11px] text-muted-foreground">DA / DR</p>
 
-              <p className="mt-1 font-semibold">
-                {row.dr ?? "—"}
-              </p>
+              <p className="mt-1 font-semibold">{row.dr ?? "—"}</p>
             </div>
 
             <div>
-              <p className="text-[11px] text-muted-foreground">
-                Organic Traffic
-              </p>
+              <p className="text-[11px] text-muted-foreground">Organic Traffic</p>
 
               <p className="mt-1 font-semibold">
-                {row.traffic != null
-                  ? Number(
-                      row.traffic,
-                    ).toLocaleString(
-                      "id-ID",
-                    )
-                  : "—"}
+                {row.traffic != null ? Number(row.traffic).toLocaleString("id-ID") : "—"}
               </p>
             </div>
           </div>
@@ -233,91 +175,59 @@ export function BacklinkSuggestionDialog({
           {/* OPENSEO RECOMMENDATION ENGINE */}
           <BacklinkSuggestionPanel
             domain={row.domain}
-            sourceDr={
-              row.dr != null
-                ? String(row.dr)
-                : ""
-            }
+            sourceDr={row.dr != null ? String(row.dr) : ""}
             onUse={(suggestion) => {
-              setKeyword(
-                suggestion.keyword,
-              );
+              setKeyword(suggestion.keyword);
 
-              setTargetPage(
-                suggestion.targetPage,
-              );
+              setTargetPage(suggestion.targetPage);
 
-              setSearchVolume(
-                suggestion.searchVolume,
-              );
+              setSearchVolume(suggestion.searchVolume);
             }}
           />
 
           {/* SELECTED RECOMMENDATION */}
           <div className="rounded-lg border p-4">
             <div>
-              <p className="text-sm font-semibold">
-                Pilihan yang Akan Disimpan
-              </p>
+              <p className="text-sm font-semibold">Pilihan yang Akan Disimpan</p>
 
               <p className="mt-1 text-xs text-muted-foreground">
-                Setelah memilih rekomendasi,
-                Anda masih dapat mengubah
-                Keyword atau Halaman Target
+                Setelah memilih rekomendasi, Anda masih dapat mengubah Keyword atau Halaman Target
                 secara manual.
               </p>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="backlink-keyword">
-                  Keyword / Anchor
-                </Label>
+                <Label htmlFor="backlink-keyword">Keyword / Anchor</Label>
 
                 <Input
                   id="backlink-keyword"
                   value={keyword}
-                  onChange={(event) =>
-                    setKeyword(
-                      event.target.value,
-                    )
-                  }
+                  onChange={(event) => setKeyword(event.target.value)}
                   placeholder="Contoh: kendaraan listrik Indonesia"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="backlink-target-page">
-                  Halaman Target
-                </Label>
+                <Label htmlFor="backlink-target-page">Halaman Target</Label>
 
                 <Input
                   id="backlink-target-page"
                   value={targetPage}
-                  onChange={(event) =>
-                    setTargetPage(
-                      event.target.value,
-                    )
-                  }
+                  onChange={(event) => setTargetPage(event.target.value)}
                   placeholder="https://arsjadrasjid.com/..."
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="backlink-search-volume">
-                  Search Volume
-                </Label>
+                <Label htmlFor="backlink-search-volume">Search Volume</Label>
 
                 <Input
                   id="backlink-search-volume"
                   type="number"
                   value={searchVolume ?? ""}
                   onChange={(event) =>
-                    setSearchVolume(
-                      event.target.value === ""
-                        ? null
-                        : Number(event.target.value),
-                    )
+                    setSearchVolume(event.target.value === "" ? null : Number(event.target.value))
                   }
                   placeholder="0"
                 />
@@ -330,32 +240,20 @@ export function BacklinkSuggestionDialog({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              onOpenChange(false)
-            }
-            disabled={
-              saveMutation.isPending
-            }
+            onClick={() => onOpenChange(false)}
+            disabled={saveMutation.isPending}
           >
             Batal
           </Button>
 
           <Button
             type="button"
-            onClick={() =>
-              saveMutation.mutate()
-            }
-            disabled={
-              saveMutation.isPending ||
-              !keyword.trim() ||
-              !targetPage.trim()
-            }
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || !keyword.trim() || !targetPage.trim()}
           >
             <Save className="size-4" />
 
-            {saveMutation.isPending
-              ? "Menyimpan..."
-              : "Simpan ke Sudah Dibeli"}
+            {saveMutation.isPending ? "Menyimpan..." : "Simpan ke Sudah Dibeli"}
           </Button>
         </DialogFooter>
       </DialogContent>

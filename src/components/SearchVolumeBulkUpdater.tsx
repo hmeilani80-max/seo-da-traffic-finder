@@ -73,11 +73,13 @@ export function SearchVolumeBulkUpdater() {
             Test Search Volume — 1 Row
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Actor: burbn/ahrefs-keyword-explorer · Country: Indonesia (ID) · test tidak menyimpan ke database.
+            Actor: burbn/ahrefs-keyword-explorer · Country: Indonesia (ID) · test tidak menyimpan ke
+            database.
           </p>
           {testRow ? (
             <p className="mt-1 text-xs">
-              Domain: <strong>{testRow.domain}</strong> · Keyword: <strong>{testRow.keyword}</strong>
+              Domain: <strong>{testRow.domain}</strong> · Keyword:{" "}
+              <strong>{testRow.keyword}</strong>
             </p>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -126,9 +128,7 @@ export function SearchVolumeBulkUpdater() {
                 : "—"}
             </p>
           </div>
-          {result.error && (
-            <p className="sm:col-span-4 text-xs text-destructive">{result.error}</p>
-          )}
+          {result.error && <p className="sm:col-span-4 text-xs text-destructive">{result.error}</p>}
         </div>
       )}
     </div>

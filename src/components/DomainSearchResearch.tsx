@@ -255,9 +255,7 @@ export function DomainSearchResearch({
           >
             <StepIcon state={steps[key]} />
             {label}
-            {steps[key] === "skip" && (
-              <span className="opacity-70">· Tidak diperlukan</span>
-            )}
+            {steps[key] === "skip" && <span className="opacity-70">· Tidak diperlukan</span>}
           </div>
         ))}
       </div>
@@ -300,9 +298,7 @@ export function DomainSearchResearch({
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Waktu Pengecekan</p>
-            <p className="font-medium">
-              {new Date(hasil.checkedAt).toLocaleString("id-ID")}
-            </p>
+            <p className="font-medium">{new Date(hasil.checkedAt).toLocaleString("id-ID")}</p>
           </div>
         </div>
       )}
