@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Masuk — Backlink Research Tool" },
@@ -38,9 +37,15 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+      if (isMounted && data.session) {
+        navigate({ to: "/", replace: true });
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -50,12 +55,14 @@ function AuthPage() {
       if (mode === "masuk") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        navigate({ to: "/", replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: {
+            emailRedirectTo: typeof window !== "undefined" ? window.location.origin : "",
+          },
         });
         if (error) throw error;
         toast.success("Akun dibuat. Silakan masuk.");
