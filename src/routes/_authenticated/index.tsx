@@ -79,7 +79,7 @@ function DashboardHome() {
         <div className="relative z-10 max-w-2xl">
           <p className="text-sm font-medium text-brand-teal-foreground/75">{greeting()}, SEO Team</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            SEO Operating System
+            SEO System
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-brand-teal-foreground/80 sm:text-base">
             Kelola calon client, project context, evidence, research, backlink, dan pekerjaan SEO
