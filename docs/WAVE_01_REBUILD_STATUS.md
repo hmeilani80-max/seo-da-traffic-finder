@@ -26,3 +26,7 @@ Scope is intentionally limited to the foundation required before Site Audit.
 - Reporting expansion.
 
 These remain later PRD waves.
+
+## GitHub checkpoint — 2026-09-10
+
+Wave 0–1 rebuild has been committed and pushed to branch `wave-01-rebuild-github` and is tracked in Draft PR #4. Site Audit remains intentionally deferred until this foundation passes deployment/database verification and UAT.
