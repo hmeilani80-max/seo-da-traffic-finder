@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderPlus, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, FolderPlus, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
 import {
   PLACEMENT_STATUS,
   PLACEMENT_STATUS_LABEL,
+  PROJECT_LIFECYCLE_LABEL,
   assignPlacementProject,
   createPlacementOrder,
   createProject,
@@ -34,16 +35,16 @@ import {
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({
     meta: [
-      { title: "Proyek & Placement Order — Manajemen Backlink" },
+      { title: "Projects — SEO Operating System" },
       {
         name: "description",
         content:
-          "Kelola proyek klien, buat placement order backlink, dan atur penugasan order draft ke proyek yang sesuai.",
+          "Kelola Project client, buka Project Workspace, dan pertahankan placement order workflow yang sudah berjalan.",
       },
-      { property: "og:title", content: "Proyek & Placement Order — Manajemen Backlink" },
+      { property: "og:title", content: "Projects — SEO Operating System" },
       {
         property: "og:description",
-        content: "Dashboard proyek, draft placement order, dan penugasan proyek.",
+        content: "Project workspace dan placement order dalam satu alur kerja.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -63,7 +64,6 @@ function ProjectsPage() {
   const qc = useQueryClient();
   const projects = useQuery({ queryKey: ["projects"], queryFn: fetchProjects });
   const orders = useQuery({ queryKey: ["placement_orders"], queryFn: fetchPlacementOrders });
-
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const invalidate = () => {
@@ -73,15 +73,14 @@ function ProjectsPage() {
 
   const projectList = projects.data ?? [];
   const orderList = orders.data ?? [];
-
   const recentProjects = useMemo(() => projectList.slice(0, 5), [projectList]);
   const draftOrders = orderList.filter((o) => o.project_id === null);
 
   const countByProject = useMemo(() => {
     const map = new Map<string, number>();
-    for (const o of orderList) {
-      if (!o.project_id) continue;
-      map.set(o.project_id, (map.get(o.project_id) ?? 0) + 1);
+    for (const order of orderList) {
+      if (!order.project_id) continue;
+      map.set(order.project_id, (map.get(order.project_id) ?? 0) + 1);
     }
     return map;
   }, [orderList]);
@@ -89,10 +88,9 @@ function ProjectsPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Proyek &amp; Placement Order</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
         <p className="text-sm text-muted-foreground">
-          Kelola proyek klien dan pesanan penempatan backlink. Order tanpa proyek otomatis masuk ke{" "}
-          <strong>Draft / Belum Terkategori</strong>.
+          Project menjadi workspace utama client. Placement Order lama tetap tersedia dan tidak diubah.
         </p>
       </header>
 
@@ -100,7 +98,7 @@ function ProjectsPage() {
 
       {recentProjects.length > 0 && (
         <section className="space-y-2">
-          <Label>Proyek Terakhir (pilih cepat)</Label>
+          <Label>Project Terakhir (pilih untuk Placement Order)</Label>
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -109,14 +107,14 @@ function ProjectsPage() {
             >
               Draft
             </Button>
-            {recentProjects.map((p) => (
+            {recentProjects.map((project) => (
               <Button
-                key={p.id}
+                key={project.id}
                 size="sm"
-                variant={activeProjectId === p.id ? "default" : "outline"}
-                onClick={() => setActiveProjectId(p.id)}
+                variant={activeProjectId === project.id ? "default" : "outline"}
+                onClick={() => setActiveProjectId(project.id)}
               >
-                {p.name}
+                {project.name}
               </Button>
             ))}
           </div>
@@ -130,50 +128,64 @@ function ProjectsPage() {
       />
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Dashboard Proyek</h2>
+        <div>
+          <h2 className="text-lg font-semibold">Project Workspace</h2>
+          <p className="text-sm text-muted-foreground">
+            Buka workspace untuk melengkapi business context, data source, dan evidence.
+          </p>
+        </div>
         {projects.isLoading ? (
-          <p className="text-sm text-muted-foreground">Memuat proyek…</p>
+          <p className="text-sm text-muted-foreground">Memuat project…</p>
         ) : projectList.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Belum ada proyek.</p>
+          <p className="text-sm text-muted-foreground">Belum ada project.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {projectList.map((p) => (
-              <div key={p.id} className="rounded-lg border p-4">
+            {projectList.map((project) => (
+              <div key={project.id} className="rounded-lg border p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.client_domain || "tanpa domain klien"}
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{project.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {project.client_domain || "website belum diisi"}
                     </p>
                   </div>
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label={`Hapus proyek ${p.name}`}
+                    aria-label={`Hapus project ${project.name}`}
                     onClick={async () => {
-                      if (!confirm(`Hapus proyek "${p.name}"? Order-nya akan menjadi Draft.`))
-                        return;
+                      if (!confirm(`Hapus project "${project.name}"? Order-nya akan menjadi Draft.`)) return;
                       try {
-                        await deleteProject(p.id);
+                        await deleteProject(project.id);
                         invalidate();
-                        toast.success("Proyek dihapus");
-                      } catch (e) {
-                        toast.error(e instanceof Error ? e.message : "Gagal menghapus proyek");
+                        toast.success("Project dihapus");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Gagal menghapus project");
                       }
                     }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <Badge variant="secondary">{countByProject.get(p.id) ?? 0} order</Badge>
-                  <span className="text-xs text-muted-foreground">
-                    dibuat {fmtDate(p.created_at)}
-                  </span>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">{countByProject.get(project.id) ?? 0} order</Badge>
+                  <Badge variant="outline">
+                    {PROJECT_LIFECYCLE_LABEL[project.lifecycle_status] ?? project.lifecycle_status ?? "Prospect"}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">dibuat {fmtDate(project.created_at)}</span>
                 </div>
-                {p.description && (
-                  <p className="mt-2 text-xs text-muted-foreground">{p.description}</p>
+
+                {project.description && (
+                  <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{project.description}</p>
                 )}
+
+                <Button asChild size="sm" variant="outline" className="mt-4 w-full">
+                  <Link to="/projects/$projectId" params={{ projectId: project.id }}>
+                    Buka Workspace
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
               </div>
             ))}
           </div>
@@ -209,37 +221,41 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
       setClientDomain("");
       setDescription("");
       onCreated();
-      toast.success("Proyek dibuat");
+      toast.success("Project dibuat");
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Gagal membuat proyek"),
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : "Gagal membuat project"),
   });
 
   return (
     <section className="rounded-lg border p-4">
       <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-        <FolderPlus className="h-4 w-4" /> Proyek Baru
+        <FolderPlus className="h-4 w-4" /> Project Baru
       </h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Cukup nama client/project dan website bila sudah diketahui. Context lain dapat dilengkapi di workspace.
+      </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
-          <Label htmlFor="project-name">Nama Proyek</Label>
+          <Label htmlFor="project-name">Nama Project / Client</Label>
           <Input
             id="project-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Kampanye Q3"
+            placeholder="Nama client"
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="project-domain">Domain Klien</Label>
+          <Label htmlFor="project-domain">Website</Label>
           <Input
             id="project-domain"
             value={clientDomain}
             onChange={(e) => setClientDomain(e.target.value)}
-            placeholder="arsjadrasjid.com"
+            placeholder="client.com"
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="project-desc">Deskripsi</Label>
+          <Label htmlFor="project-desc">Deskripsi Singkat</Label>
           <Textarea
             id="project-desc"
             rows={1}
@@ -254,12 +270,8 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
         disabled={!name.trim() || mutation.isPending}
         onClick={() => mutation.mutate()}
       >
-        {mutation.isPending ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="mr-2 h-4 w-4" />
-        )}
-        Simpan Proyek
+        {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+        Simpan Project
       </Button>
     </section>
   );
@@ -282,7 +294,6 @@ function PlacementOrderForm({
   const [status, setStatus] = useState<string>("draft");
   const [projectId, setProjectId] = useState<string>(activeProjectId ?? DRAFT_VALUE);
   const [notes, setNotes] = useState("");
-
   const effectiveProject = activeProjectId ?? projectId;
 
   const mutation = useMutation({
@@ -307,7 +318,8 @@ function PlacementOrderForm({
       onCreated();
       toast.success("Placement order dibuat");
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Gagal membuat order"),
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : "Gagal membuat order"),
   });
 
   return (
@@ -316,21 +328,11 @@ function PlacementOrderForm({
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label htmlFor="po-domain">Domain Sumber *</Label>
-          <Input
-            id="po-domain"
-            value={sourceDomain}
-            onChange={(e) => setSourceDomain(e.target.value)}
-            placeholder="contoh.com"
-          />
+          <Input id="po-domain" value={sourceDomain} onChange={(e) => setSourceDomain(e.target.value)} placeholder="contoh.com" />
         </div>
         <div className="space-y-1">
           <Label htmlFor="po-target">URL Target</Label>
-          <Input
-            id="po-target"
-            value={targetUrl}
-            onChange={(e) => setTargetUrl(e.target.value)}
-            placeholder="https://klien.com/halaman"
-          />
+          <Input id="po-target" value={targetUrl} onChange={(e) => setTargetUrl(e.target.value)} placeholder="https://client.com/halaman" />
         </div>
         <div className="space-y-1">
           <Label htmlFor="po-keyword">Keyword</Label>
@@ -338,72 +340,42 @@ function PlacementOrderForm({
         </div>
         <div className="space-y-1">
           <Label htmlFor="po-anchor">Anchor Text</Label>
-          <Input
-            id="po-anchor"
-            value={anchorText}
-            onChange={(e) => setAnchorText(e.target.value)}
-          />
+          <Input id="po-anchor" value={anchorText} onChange={(e) => setAnchorText(e.target.value)} />
         </div>
         <div className="space-y-1">
           <Label htmlFor="po-price">Harga</Label>
-          <Input
-            id="po-price"
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
+          <Input id="po-price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
         <div className="space-y-1">
           <Label>Status</Label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {PLACEMENT_STATUS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {PLACEMENT_STATUS_LABEL[s]}
-                </SelectItem>
+              {PLACEMENT_STATUS.map((value) => (
+                <SelectItem key={value} value={value}>{PLACEMENT_STATUS_LABEL[value]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1">
-          <Label>Proyek</Label>
+          <Label>Project</Label>
           <Select value={effectiveProject ?? DRAFT_VALUE} onValueChange={setProjectId}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value={DRAFT_VALUE}>Draft (tanpa proyek)</SelectItem>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
+              <SelectItem value={DRAFT_VALUE}>Draft (tanpa project)</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1 sm:col-span-2">
           <Label htmlFor="po-notes">Catatan</Label>
-          <Textarea
-            id="po-notes"
-            rows={1}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
+          <Textarea id="po-notes" rows={1} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       </div>
-      <Button
-        className="mt-3"
-        disabled={!sourceDomain.trim() || mutation.isPending}
-        onClick={() => mutation.mutate()}
-      >
-        {mutation.isPending ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="mr-2 h-4 w-4" />
-        )}
+      <Button className="mt-3" disabled={!sourceDomain.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
+        {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
         Simpan Order
       </Button>
     </section>
@@ -435,81 +407,73 @@ function OrderTable({
                 <th className="p-2">Keyword</th>
                 <th className="p-2">URL Target</th>
                 <th className="p-2">Status</th>
-                <th className="p-2">Proyek</th>
+                <th className="p-2">Project</th>
                 <th className="p-2">Dibuat</th>
                 <th className="p-2" />
               </tr>
             </thead>
             <tbody>
-              {rows.map((o) => (
-                <tr key={o.id} className="border-t align-middle">
-                  <td className="p-2 font-medium">{o.source_domain}</td>
-                  <td className="p-2">{o.keyword || "—"}</td>
-                  <td className="max-w-[220px] truncate p-2">{o.target_url || "—"}</td>
+              {rows.map((order) => (
+                <tr key={order.id} className="border-t align-middle">
+                  <td className="p-2 font-medium">{order.source_domain}</td>
+                  <td className="p-2">{order.keyword || "—"}</td>
+                  <td className="max-w-[220px] truncate p-2">{order.target_url || "—"}</td>
                   <td className="p-2">
                     <Select
-                      value={o.status}
-                      onValueChange={async (v) => {
+                      value={order.status}
+                      onValueChange={async (value) => {
                         try {
-                          await updatePlacementStatus(o.id, v);
+                          await updatePlacementStatus(order.id, value);
                           onChanged();
-                        } catch (e) {
-                          toast.error(e instanceof Error ? e.message : "Gagal ubah status");
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Gagal ubah status");
                         }
                       }}
                     >
-                      <SelectTrigger className="h-8 w-[130px]">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="h-8 w-[130px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {PLACEMENT_STATUS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {PLACEMENT_STATUS_LABEL[s]}
-                          </SelectItem>
+                        {PLACEMENT_STATUS.map((value) => (
+                          <SelectItem key={value} value={value}>{PLACEMENT_STATUS_LABEL[value]}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </td>
                   <td className="p-2">
                     <Select
-                      value={o.project_id ?? DRAFT_VALUE}
-                      onValueChange={async (v) => {
+                      value={order.project_id ?? DRAFT_VALUE}
+                      onValueChange={async (value) => {
                         try {
-                          await assignPlacementProject(o.id, v === DRAFT_VALUE ? null : v);
+                          await assignPlacementProject(order.id, value === DRAFT_VALUE ? null : value);
                           onChanged();
-                          toast.success("Proyek diperbarui");
-                        } catch (e) {
-                          toast.error(e instanceof Error ? e.message : "Gagal assign proyek");
+                          toast.success("Project diperbarui");
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Gagal assign project");
                         }
                       }}
                     >
-                      <SelectTrigger className="h-8 w-[170px]">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="h-8 w-[170px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={DRAFT_VALUE}>Draft</SelectItem>
-                        {projects.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name}
-                          </SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="p-2 text-muted-foreground">{fmtDate(o.created_at)}</td>
+                  <td className="p-2 text-muted-foreground">{fmtDate(order.created_at)}</td>
                   <td className="p-2 text-right">
                     <Button
                       size="icon"
                       variant="ghost"
-                      aria-label={`Hapus order ${o.source_domain}`}
+                      aria-label={`Hapus order ${order.source_domain}`}
                       onClick={async () => {
-                        if (!confirm(`Hapus order ${o.source_domain}?`)) return;
+                        if (!confirm(`Hapus order ${order.source_domain}?`)) return;
                         try {
-                          await deletePlacementOrder(o.id);
+                          await deletePlacementOrder(order.id);
                           onChanged();
                           toast.success("Order dihapus");
-                        } catch (e) {
-                          toast.error(e instanceof Error ? e.message : "Gagal menghapus");
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Gagal menghapus order");
                         }
                       }}
                     >
