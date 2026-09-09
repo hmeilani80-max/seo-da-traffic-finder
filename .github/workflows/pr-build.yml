@@ -24,5 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm install --ignore-scripts
 
+      - name: Typecheck
+        run: npx tsc --noEmit
+
       - name: Build
         run: npm run build
