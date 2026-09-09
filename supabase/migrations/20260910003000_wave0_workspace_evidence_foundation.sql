@@ -117,8 +117,55 @@ CREATE TRIGGER add_workspace_creator_member_trigger
 AFTER INSERT ON public.app_workspaces
 FOR EACH ROW EXECUTE FUNCTION public.add_workspace_creator_member();
 
--- Authenticated helper for future UI/services. Creates one personal workspace
--- lazily for the current user and returns its id.
+-- Internal helper used by migration/DB triggers. It is intentionally not
+-- executable by normal authenticated clients with an arbitrary user id.
+CREATE OR REPLACE FUNCTION public.ensure_personal_workspace_for_user(p_user_id uuid)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_workspace_id uuid;
+BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT w.id INTO v_workspace_id
+  FROM public.app_workspaces w
+  WHERE w.created_by = p_user_id AND w.is_personal = true
+  ORDER BY w.created_at
+  LIMIT 1;
+
+  IF v_workspace_id IS NULL THEN
+    INSERT INTO public.app_workspaces (name, created_by, is_personal)
+    VALUES ('SEO Workspace', p_user_id, true)
+    ON CONFLICT DO NOTHING
+    RETURNING id INTO v_workspace_id;
+
+    IF v_workspace_id IS NULL THEN
+      SELECT w.id INTO v_workspace_id
+      FROM public.app_workspaces w
+      WHERE w.created_by = p_user_id AND w.is_personal = true
+      ORDER BY w.created_at
+      LIMIT 1;
+    END IF;
+  END IF;
+
+  INSERT INTO public.app_workspace_members (workspace_id, user_id, role, status)
+  VALUES (v_workspace_id, p_user_id, 'owner', 'active')
+  ON CONFLICT (workspace_id, user_id)
+  DO UPDATE SET status = 'active';
+
+  RETURN v_workspace_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.ensure_personal_workspace_for_user(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.ensure_personal_workspace_for_user(uuid) TO service_role;
+
+-- Authenticated helper for future UI/services. It only operates on auth.uid().
 CREATE OR REPLACE FUNCTION public.ensure_default_workspace()
 RETURNS uuid
 LANGUAGE plpgsql
@@ -127,39 +174,12 @@ SET search_path = public
 AS $$
 DECLARE
   v_user_id uuid := auth.uid();
-  v_workspace_id uuid;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
   END IF;
 
-  SELECT w.id INTO v_workspace_id
-  FROM public.app_workspaces w
-  WHERE w.created_by = v_user_id AND w.is_personal = true
-  ORDER BY w.created_at
-  LIMIT 1;
-
-  IF v_workspace_id IS NULL THEN
-    INSERT INTO public.app_workspaces (name, created_by, is_personal)
-    VALUES ('SEO Workspace', v_user_id, true)
-    ON CONFLICT DO NOTHING
-    RETURNING id INTO v_workspace_id;
-
-    IF v_workspace_id IS NULL THEN
-      SELECT w.id INTO v_workspace_id
-      FROM public.app_workspaces w
-      WHERE w.created_by = v_user_id AND w.is_personal = true
-      ORDER BY w.created_at
-      LIMIT 1;
-    END IF;
-  END IF;
-
-  INSERT INTO public.app_workspace_members (workspace_id, user_id, role, status)
-  VALUES (v_workspace_id, v_user_id, 'owner', 'active')
-  ON CONFLICT (workspace_id, user_id)
-  DO UPDATE SET status = 'active';
-
-  RETURN v_workspace_id;
+  RETURN public.ensure_personal_workspace_for_user(v_user_id);
 END;
 $$;
 
@@ -178,47 +198,44 @@ WITH existing_users AS (
   UNION
   SELECT user_id FROM public.backlinks
 )
-INSERT INTO public.app_workspaces (name, created_by, is_personal)
-SELECT 'SEO Workspace', eu.user_id, true
+SELECT public.ensure_personal_workspace_for_user(eu.user_id)
 FROM existing_users eu
-WHERE eu.user_id IS NOT NULL
-  AND NOT EXISTS (
-    SELECT 1 FROM public.app_workspaces w
-    WHERE w.created_by = eu.user_id AND w.is_personal = true
-  );
-
-INSERT INTO public.app_workspace_members (workspace_id, user_id, role, status)
-SELECT w.id, w.created_by, 'owner', 'active'
-FROM public.app_workspaces w
-WHERE w.is_personal = true
-ON CONFLICT (workspace_id, user_id)
-DO UPDATE SET status = 'active';
+WHERE eu.user_id IS NOT NULL;
 
 UPDATE public.projects p
-SET workspace_id = w.id
-FROM public.app_workspaces w
-WHERE p.workspace_id IS NULL
-  AND w.created_by = p.user_id
-  AND w.is_personal = true;
+SET workspace_id = public.ensure_personal_workspace_for_user(p.user_id)
+WHERE p.workspace_id IS NULL;
 
 UPDATE public.placement_orders po
-SET workspace_id = COALESCE(p.workspace_id, w.id)
-FROM public.app_workspaces w
-LEFT JOIN public.projects p ON p.id = po.project_id
-WHERE po.workspace_id IS NULL
-  AND w.created_by = po.user_id
-  AND w.is_personal = true;
+SET workspace_id = COALESCE(
+  (SELECT p.workspace_id FROM public.projects p WHERE p.id = po.project_id),
+  public.ensure_personal_workspace_for_user(po.user_id)
+)
+WHERE po.workspace_id IS NULL;
 
 UPDATE public.backlinks b
-SET workspace_id = COALESCE(p.workspace_id, w.id)
-FROM public.app_workspaces w
-LEFT JOIN public.projects p ON p.id = b.project_id
-WHERE b.workspace_id IS NULL
-  AND w.created_by = b.user_id
-  AND w.is_personal = true;
+SET workspace_id = COALESCE(
+  (SELECT p.workspace_id FROM public.projects p WHERE p.id = b.project_id),
+  public.ensure_personal_workspace_for_user(b.user_id)
+)
+WHERE b.workspace_id IS NULL;
 
 -- Keep current client code working: new rows get a workspace automatically.
-CREATE OR REPLACE FUNCTION public.assign_operational_workspace()
+CREATE OR REPLACE FUNCTION public.assign_project_workspace()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.workspace_id IS NULL THEN
+    NEW.workspace_id := public.ensure_personal_workspace_for_user(NEW.user_id);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.assign_child_workspace()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -231,37 +248,17 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Placement/backlink rows should inherit the selected Project workspace.
-  IF TG_TABLE_NAME IN ('placement_orders', 'backlinks') AND NEW.project_id IS NOT NULL THEN
+  IF NEW.project_id IS NOT NULL THEN
     SELECT p.workspace_id INTO v_workspace_id
     FROM public.projects p
     WHERE p.id = NEW.project_id;
   END IF;
 
-  IF v_workspace_id IS NULL AND NEW.user_id IS NOT NULL THEN
-    SELECT w.id INTO v_workspace_id
-    FROM public.app_workspaces w
-    WHERE w.created_by = NEW.user_id AND w.is_personal = true
-    ORDER BY w.created_at
-    LIMIT 1;
+  NEW.workspace_id := COALESCE(
+    v_workspace_id,
+    public.ensure_personal_workspace_for_user(NEW.user_id)
+  );
 
-    IF v_workspace_id IS NULL THEN
-      INSERT INTO public.app_workspaces (name, created_by, is_personal)
-      VALUES ('SEO Workspace', NEW.user_id, true)
-      ON CONFLICT DO NOTHING
-      RETURNING id INTO v_workspace_id;
-
-      IF v_workspace_id IS NULL THEN
-        SELECT w.id INTO v_workspace_id
-        FROM public.app_workspaces w
-        WHERE w.created_by = NEW.user_id AND w.is_personal = true
-        ORDER BY w.created_at
-        LIMIT 1;
-      END IF;
-    END IF;
-  END IF;
-
-  NEW.workspace_id := v_workspace_id;
   RETURN NEW;
 END;
 $$;
@@ -269,17 +266,17 @@ $$;
 DROP TRIGGER IF EXISTS projects_assign_workspace ON public.projects;
 CREATE TRIGGER projects_assign_workspace
 BEFORE INSERT ON public.projects
-FOR EACH ROW EXECUTE FUNCTION public.assign_operational_workspace();
+FOR EACH ROW EXECUTE FUNCTION public.assign_project_workspace();
 
 DROP TRIGGER IF EXISTS placement_orders_assign_workspace ON public.placement_orders;
 CREATE TRIGGER placement_orders_assign_workspace
 BEFORE INSERT ON public.placement_orders
-FOR EACH ROW EXECUTE FUNCTION public.assign_operational_workspace();
+FOR EACH ROW EXECUTE FUNCTION public.assign_child_workspace();
 
 DROP TRIGGER IF EXISTS backlinks_assign_workspace ON public.backlinks;
 CREATE TRIGGER backlinks_assign_workspace
 BEFORE INSERT ON public.backlinks
-FOR EACH ROW EXECUTE FUNCTION public.assign_operational_workspace();
+FOR EACH ROW EXECUTE FUNCTION public.assign_child_workspace();
 
 -- ---------------------------------------------------------------------------
 -- RLS for workspace metadata.
@@ -367,7 +364,7 @@ CREATE TABLE IF NOT EXISTS public.project_connections (
   last_synced_at timestamptz,
   last_error text,
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
-  created_by uuid NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE RESTRICT,
+  created_by uuid DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT project_connections_project_workspace_fk
@@ -389,15 +386,13 @@ CREATE TABLE IF NOT EXISTS public.project_evidence (
   raw_text text,
   extracted_metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   processing_status text NOT NULL DEFAULT 'pending',
-  created_by uuid NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE RESTRICT,
+  created_by uuid DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT project_evidence_project_workspace_fk
     FOREIGN KEY (project_id, workspace_id)
     REFERENCES public.projects(id, workspace_id)
-    ON DELETE CASCADE,
-  CONSTRAINT project_evidence_has_source_chk
-    CHECK (storage_path IS NOT NULL OR source_url IS NOT NULL OR raw_text IS NOT NULL)
+    ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS public.data_imports (
@@ -410,7 +405,7 @@ CREATE TABLE IF NOT EXISTS public.data_imports (
   mapping jsonb NOT NULL DEFAULT '{}'::jsonb,
   normalization_summary jsonb NOT NULL DEFAULT '{}'::jsonb,
   status text NOT NULL DEFAULT 'pending',
-  created_by uuid NOT NULL DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE RESTRICT,
+  created_by uuid DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT data_imports_project_workspace_fk
