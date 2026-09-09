@@ -59,16 +59,16 @@ function SettingsPage() {
         <div className="mt-4 flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
           <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
           <span>
-            Kredensial Apify dikelola lewat connector workspace dan hanya dapat diakses oleh
-            server. Tidak ada konfigurasi yang perlu diisi di halaman ini.
+            Kredensial Apify dikelola lewat connector workspace dan hanya dapat diakses oleh server.
+            Tidak ada konfigurasi yang perlu diisi di halaman ini.
           </span>
         </div>
 
         <div className="mt-3 flex items-start gap-2 rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
           <Info className="mt-0.5 size-4 shrink-0" />
           <span>
-            Jika riset gagal dengan pesan koneksi Apify belum tersedia, hubungkan kembali
-            connector Apify melalui Project Settings → Connectors.
+            Jika riset gagal dengan pesan koneksi Apify belum tersedia, hubungkan kembali connector
+            Apify melalui Project Settings → Connectors.
           </span>
         </div>
       </div>

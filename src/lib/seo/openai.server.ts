@@ -40,7 +40,6 @@ export async function openAiJson<T>(input: {
     };
   }
 
-
   try {
     const response = await fetch(OPENAI_URL, {
       method: "POST",

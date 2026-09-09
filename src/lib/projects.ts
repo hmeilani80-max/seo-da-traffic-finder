@@ -44,12 +44,7 @@ export type BacklinkRow = {
   created_at: string;
 };
 
-export const PLACEMENT_STATUS = [
-  "draft",
-  "dipesan",
-  "tayang",
-  "batal",
-] as const;
+export const PLACEMENT_STATUS = ["draft", "dipesan", "tayang", "batal"] as const;
 
 export type PlacementStatus = (typeof PLACEMENT_STATUS)[number];
 
@@ -128,9 +123,7 @@ export type PlacementOrderInput = {
   search_volume?: number | null;
 };
 
-export async function createPlacementOrder(
-  input: PlacementOrderInput,
-): Promise<PlacementOrderRow> {
+export async function createPlacementOrder(input: PlacementOrderInput): Promise<PlacementOrderRow> {
   const { data: auth } = await supabase.auth.getUser();
   const userId = auth.user?.id;
   if (!userId) throw new Error("Sesi tidak ditemukan, silakan login ulang.");
@@ -159,10 +152,7 @@ export async function createPlacementOrder(
   return data as PlacementOrderRow;
 }
 
-export async function assignPlacementProject(
-  id: string,
-  projectId: string | null,
-) {
+export async function assignPlacementProject(id: string, projectId: string | null) {
   const { error } = await supabase
     .from("placement_orders")
     .update({ project_id: projectId })
@@ -172,10 +162,7 @@ export async function assignPlacementProject(
 }
 
 export async function updatePlacementStatus(id: string, status: string) {
-  const { error } = await supabase
-    .from("placement_orders")
-    .update({ status })
-    .eq("id", id);
+  const { error } = await supabase.from("placement_orders").update({ status }).eq("id", id);
 
   if (error) throw error;
 }

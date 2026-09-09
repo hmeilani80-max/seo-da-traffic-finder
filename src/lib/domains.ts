@@ -53,11 +53,7 @@ export type SearchHistoryRow = {
   last_searched_at: string;
 };
 
-export type SearchMatchType =
-  | "sama"
-  | "mengandung"
-  | "terkandung"
-  | "tidak_terkait";
+export type SearchMatchType = "sama" | "mengandung" | "terkandung" | "tidak_terkait";
 
 export type DomainPriceTotal = {
   table_name: "sudah_dibeli" | "domain_sudah_pernah";
@@ -76,9 +72,7 @@ export async function fetchTable(table: TableKey): Promise<DomainRow[]> {
   return (data ?? []) as DomainRow[];
 }
 
-export async function fetchDomainPriceTotal(
-  table: "sudah_dibeli" | "domain_sudah_pernah",
-) {
+export async function fetchDomainPriceTotal(table: "sudah_dibeli" | "domain_sudah_pernah") {
   const { data, error } = await supabase
     .from("domain_price_totals")
     .select("table_name, total_price, updated_at")
@@ -87,13 +81,11 @@ export async function fetchDomainPriceTotal(
 
   if (error) throw error;
 
-  return (
-    data ?? {
-      table_name: table,
-      total_price: 0,
-      updated_at: new Date(0).toISOString(),
-    }
-  ) as DomainPriceTotal;
+  return (data ?? {
+    table_name: table,
+    total_price: 0,
+    updated_at: new Date(0).toISOString(),
+  }) as DomainPriceTotal;
 }
 
 export async function fetchLogs(): Promise<LogRow[]> {
@@ -111,9 +103,7 @@ export async function fetchLogs(): Promise<LogRow[]> {
 export async function fetchSearchHistory(): Promise<SearchHistoryRow[]> {
   const { data, error } = await supabase
     .from("search_history")
-    .select(
-      "id, query, normalized_query, search_count, first_searched_at, last_searched_at",
-    )
+    .select("id, query, normalized_query, search_count, first_searched_at, last_searched_at")
     .order("last_searched_at", { ascending: false })
     .limit(50);
 
@@ -126,10 +116,7 @@ export function normalizeSearchQuery(input: string) {
   return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-export function getSearchMatchType(
-  activeQuery: string,
-  historyQuery: string,
-): SearchMatchType {
+export function getSearchMatchType(activeQuery: string, historyQuery: string): SearchMatchType {
   const active = normalizeSearchQuery(activeQuery);
   const history = normalizeSearchQuery(historyQuery);
 
@@ -201,15 +188,8 @@ export async function deleteRow(table: TableKey, id: string) {
   if (error) throw error;
 }
 
-export async function updateNotes(
-  table: TableKey,
-  id: string,
-  notes: string,
-) {
-  const { error } = await supabase
-    .from(table)
-    .update({ notes })
-    .eq("id", id);
+export async function updateNotes(table: TableKey, id: string, notes: string) {
+  const { error } = await supabase.from(table).update({ notes }).eq("id", id);
 
   if (error) throw error;
 }
@@ -223,9 +203,7 @@ export function normalizeDomain(input: string) {
     .replace(/\/.*$/, "");
 }
 
-export async function findExisting(
-  domain: string,
-): Promise<TableKey | null> {
+export async function findExisting(domain: string): Promise<TableKey | null> {
   const found = await findExistingRow(domain);
   return found ? found.table : null;
 }
@@ -239,11 +217,7 @@ export async function findExistingRow(
 ): Promise<{ table: TableKey; row: DomainRow } | null> {
   const normalized = normalizeDomain(domain);
 
-  const tables: TableKey[] = [
-    "sudah_dibeli",
-    "domain_sudah_pernah",
-    "traffic_nol",
-  ];
+  const tables: TableKey[] = ["sudah_dibeli", "domain_sudah_pernah", "traffic_nol"];
 
   for (const table of tables) {
     const { data, error } = await supabase
@@ -286,7 +260,6 @@ export async function insertResearchedRow(
 
   if (error) throw error;
 }
-
 
 export async function insertRow(
   table: TableKey,
@@ -339,8 +312,7 @@ export function toCSV(rows: DomainRow[]) {
     "Catatan",
   ];
 
-  const escape = (value: unknown) =>
-    `"${String(value ?? "").replace(/"/g, '""')}"`;
+  const escape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
   const lines = rows.map((row) =>
     [
@@ -396,11 +368,7 @@ export async function findDuplicateDomain(
 ): Promise<TableKey | null> {
   const normalized = normalizeDomain(domain);
 
-  const tables: TableKey[] = [
-    "sudah_dibeli",
-    "domain_sudah_pernah",
-    "traffic_nol",
-  ];
+  const tables: TableKey[] = ["sudah_dibeli", "domain_sudah_pernah", "traffic_nol"];
 
   for (const table of tables) {
     const { data, error } = await supabase
@@ -419,11 +387,7 @@ export async function findDuplicateDomain(
 }
 
 /** Update baris existing tanpa memindahkan tabel. */
-export async function updateDomainRow(
-  table: TableKey,
-  id: string,
-  patch: DomainPatch,
-) {
+export async function updateDomainRow(table: TableKey, id: string, patch: DomainPatch) {
   const checkedAt = new Date().toISOString();
 
   const common: {
@@ -437,8 +401,7 @@ export async function updateDomainRow(
   if (patch.domain !== undefined) common.domain = patch.domain;
   if (patch.dr !== undefined) common.dr = patch.dr;
   if (patch.notes !== undefined) common.notes = patch.notes;
-  if (patch.research_status !== undefined)
-    common.research_status = patch.research_status;
+  if (patch.research_status !== undefined) common.research_status = patch.research_status;
 
   const detail: {
     keyword?: string | null;
@@ -449,8 +412,7 @@ export async function updateDomainRow(
 
   if (patch.keyword !== undefined) detail.keyword = patch.keyword;
   if (patch.target_page !== undefined) detail.target_page = patch.target_page;
-  if (patch.purchase_date !== undefined)
-    detail.purchase_date = patch.purchase_date;
+  if (patch.purchase_date !== undefined) detail.purchase_date = patch.purchase_date;
   if (patch.price !== undefined) detail.price = patch.price;
 
   // search_volume hanya ada di kolom tabel "sudah_dibeli".
@@ -462,31 +424,21 @@ export async function updateDomainRow(
 
   const query =
     table === "traffic_nol"
-      ? supabase
-          .from("traffic_nol")
-          .update({ ...common, traffic: patch.traffic ?? 0 })
+      ? supabase.from("traffic_nol").update({ ...common, traffic: patch.traffic ?? 0 })
       : table === "sudah_dibeli"
-        ? supabase
-            .from("sudah_dibeli")
-            .update({
-              ...common,
-              ...detail,
-              ...sudahDibeliExtra,
-              traffic: patch.traffic ?? null,
-            })
+        ? supabase.from("sudah_dibeli").update({
+            ...common,
+            ...detail,
+            ...sudahDibeliExtra,
+            traffic: patch.traffic ?? null,
+          })
         : supabase
             .from("domain_sudah_pernah")
             .update({ ...common, ...detail, traffic: patch.traffic ?? null });
 
-
-
-  const { data, error } = await query
-    .eq("id", id)
-    .select("*")
-    .maybeSingle();
+  const { data, error } = await query.eq("id", id).select("*").maybeSingle();
 
   if (error) throw error;
 
   return data as DomainRow | null;
-
 }

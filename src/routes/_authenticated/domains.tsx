@@ -16,7 +16,6 @@ import {
   type TableKey,
 } from "@/lib/domains";
 
-
 export const Route = createFileRoute("/_authenticated/domains")({
   head: () => ({
     meta: [
@@ -84,9 +83,6 @@ function Dashboard() {
     queryFn: fetchSearchHistory,
   });
 
-
-
-
   const c = counts.data ?? {
     domain_sudah_pernah: 0,
     traffic_nol: 0,
@@ -108,8 +104,8 @@ function Dashboard() {
         <h1 className="text-2xl font-bold tracking-tight">Domain Saya</h1>
 
         <p className="text-sm text-muted-foreground">
-          Cek domain rajabacklink.com untuk client arsjadrasjid.com — otomatis
-          riset DR &amp; traffic lalu dirutekan ke tabel yang sesuai.
+          Cek domain rajabacklink.com untuk client arsjadrasjid.com — otomatis riset DR &amp;
+          traffic lalu dirutekan ke tabel yang sesuai.
         </p>
       </header>
 
@@ -132,53 +128,37 @@ function Dashboard() {
         )}
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TableKey)}>
-
           <TabsList>
-            <TabsTrigger value="sudah_dibeli">
-              Sudah Dibeli ({c.sudah_dibeli})
-            </TabsTrigger>
+            <TabsTrigger value="sudah_dibeli">Sudah Dibeli ({c.sudah_dibeli})</TabsTrigger>
 
             <TabsTrigger value="domain_sudah_pernah">
               Domain Sudah Pernah ({c.domain_sudah_pernah})
             </TabsTrigger>
 
-            <TabsTrigger value="traffic_nol">
-              Traffic 0 ({c.traffic_nol})
-            </TabsTrigger>
+            <TabsTrigger value="traffic_nol">Traffic 0 ({c.traffic_nol})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="sudah_dibeli" className="mt-4">
-            <DomainTable
-              table="sudah_dibeli"
-              searchQuery={searchQuery}
-            />
+            <DomainTable table="sudah_dibeli" searchQuery={searchQuery} />
           </TabsContent>
 
           <TabsContent value="domain_sudah_pernah" className="mt-4">
-            <DomainTable
-              table="domain_sudah_pernah"
-              searchQuery={searchQuery}
-            />
+            <DomainTable table="domain_sudah_pernah" searchQuery={searchQuery} />
           </TabsContent>
 
           <TabsContent value="traffic_nol" className="mt-4">
-            <DomainTable
-              table="traffic_nol"
-              searchQuery={searchQuery}
-            />
+            <DomainTable table="traffic_nol" searchQuery={searchQuery} />
           </TabsContent>
         </Tabs>
       </section>
 
       <section className="rounded-xl border bg-card shadow-[var(--shadow-card)]">
         <div className="border-b p-4">
-          <h2 className="text-base font-semibold">
-            Tabel Riwayat Search
-          </h2>
+          <h2 className="text-base font-semibold">Tabel Riwayat Search</h2>
 
           <p className="text-sm text-muted-foreground">
-            Riwayat pencarian dicocokkan dengan query aktif berdasarkan query
-            yang sama atau saling mengandung.
+            Riwayat pencarian dicocokkan dengan query aktif berdasarkan query yang sama atau saling
+            mengandung.
           </p>
         </div>
 
@@ -186,70 +166,45 @@ function Dashboard() {
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/30">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">
-                  Query
-                </th>
+                <th className="px-4 py-3 text-left font-medium">Query</th>
 
-                <th className="px-4 py-3 text-left font-medium">
-                  Jumlah Dicari
-                </th>
+                <th className="px-4 py-3 text-left font-medium">Jumlah Dicari</th>
 
-                <th className="px-4 py-3 text-left font-medium">
-                  Terakhir Dicari
-                </th>
+                <th className="px-4 py-3 text-left font-medium">Terakhir Dicari</th>
 
-                <th className="px-4 py-3 text-left font-medium">
-                  Status
-                </th>
+                <th className="px-4 py-3 text-left font-medium">Status</th>
               </tr>
             </thead>
 
             <tbody>
               {history.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-4 py-8 text-center text-muted-foreground"
-                  >
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                     Belum ada riwayat pencarian.
                   </td>
                 </tr>
               ) : (
                 history.map((item) => {
-                  const matchType = getSearchMatchType(
-                    searchQuery,
-                    item.query,
-                  );
+                  const matchType = getSearchMatchType(searchQuery, item.query);
 
-                  const isRelated =
-                    matchType !== "tidak_terkait";
+                  const isRelated = matchType !== "tidak_terkait";
 
                   return (
                     <tr
                       key={item.id}
-                      className={`border-b last:border-0 ${
-                        isRelated ? "bg-primary/5" : ""
-                      }`}
+                      className={`border-b last:border-0 ${isRelated ? "bg-primary/5" : ""}`}
                     >
-                      <td className="px-4 py-3 font-medium">
-                        {item.query}
-                      </td>
+                      <td className="px-4 py-3 font-medium">{item.query}</td>
 
-                      <td className="px-4 py-3">
-                        {item.search_count}×
-                      </td>
+                      <td className="px-4 py-3">{item.search_count}×</td>
 
                       <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(
-                          item.last_searched_at,
-                        ).toLocaleString("id-ID")}
+                        {new Date(item.last_searched_at).toLocaleString("id-ID")}
                       </td>
 
                       <td
                         className={`px-4 py-3 ${
-                          isRelated
-                            ? "font-medium text-primary"
-                            : "text-muted-foreground"
+                          isRelated ? "font-medium text-primary" : "text-muted-foreground"
                         }`}
                       >
                         {matchLabel(matchType)}

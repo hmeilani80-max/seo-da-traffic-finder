@@ -31,7 +31,6 @@ function AuthenticatedLayout() {
 
         setIsAuthenticated(true);
         setAuthChecked(true);
-
       } catch {
         if (isMounted) {
           setIsAuthenticated(false);

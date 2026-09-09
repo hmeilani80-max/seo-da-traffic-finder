@@ -13,8 +13,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 
-
-
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -81,7 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Dashboard Riset Backlink" },
-      { name: "description", content: "Tool internal manajemen riset & pembelian backlink domain." },
+      {
+        name: "description",
+        content: "Tool internal manajemen riset & pembelian backlink domain.",
+      },
       { property: "og:title", content: "Dashboard Riset Backlink" },
       {
         property: "og:description",
@@ -121,7 +122,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -135,4 +135,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

@@ -82,14 +82,17 @@ function DomainResearchPage() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Riset Domain</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Cek DR, organic traffic, backlinks, dan referring domains. Data diambil dari cache bila masih
-          segar (DR 30 hari, traffic 14 hari) sehingga tidak memanggil API berbayar tanpa perlu.
+          Cek DR, organic traffic, backlinks, dan referring domains. Data diambil dari cache bila
+          masih segar (DR 30 hari, traffic 14 hari) sehingga tidak memanggil API berbayar tanpa
+          perlu.
         </p>
       </header>
 
       <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
         <div className="space-y-1.5">
-          <Label htmlFor="domains">Domain (satu atau banyak — pisahkan dengan baris baru atau koma)</Label>
+          <Label htmlFor="domains">
+            Domain (satu atau banyak — pisahkan dengan baris baru atau koma)
+          </Label>
           <Textarea
             id="domains"
             rows={4}
@@ -166,8 +169,8 @@ function DomainResearchPage() {
             </table>
           </div>
           <p className="border-t px-4 py-2 text-xs text-muted-foreground">
-            Status &quot;Cache&quot; berarti seluruh metrik diambil dari Supabase tanpa memanggil Actor.
-            &quot;Fresh&quot; berarti minimal satu metrik baru diambil dari Ahrefs.
+            Status &quot;Cache&quot; berarti seluruh metrik diambil dari Supabase tanpa memanggil
+            Actor. &quot;Fresh&quot; berarti minimal satu metrik baru diambil dari Ahrefs.
           </p>
         </section>
       )}

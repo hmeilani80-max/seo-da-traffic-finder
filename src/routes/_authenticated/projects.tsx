@@ -91,8 +91,8 @@ function ProjectsPage() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Proyek &amp; Placement Order</h1>
         <p className="text-sm text-muted-foreground">
-          Kelola proyek klien dan pesanan penempatan backlink. Order tanpa proyek otomatis
-          masuk ke <strong>Draft / Belum Terkategori</strong>.
+          Kelola proyek klien dan pesanan penempatan backlink. Order tanpa proyek otomatis masuk ke{" "}
+          <strong>Draft / Belum Terkategori</strong>.
         </p>
       </header>
 
@@ -151,7 +151,8 @@ function ProjectsPage() {
                     variant="ghost"
                     aria-label={`Hapus proyek ${p.name}`}
                     onClick={async () => {
-                      if (!confirm(`Hapus proyek "${p.name}"? Order-nya akan menjadi Draft.`)) return;
+                      if (!confirm(`Hapus proyek "${p.name}"? Order-nya akan menjadi Draft.`))
+                        return;
                       try {
                         await deleteProject(p.id);
                         invalidate();
@@ -202,8 +203,7 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
   const [description, setDescription] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () =>
-      createProject({ name, client_domain: clientDomain, description }),
+    mutationFn: () => createProject({ name, client_domain: clientDomain, description }),
     onSuccess: () => {
       setName("");
       setClientDomain("");
@@ -211,8 +211,7 @@ function NewProjectForm({ onCreated }: { onCreated: () => void }) {
       onCreated();
       toast.success("Proyek dibuat");
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Gagal membuat proyek"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Gagal membuat proyek"),
   });
 
   return (
@@ -289,8 +288,7 @@ function PlacementOrderForm({
   const mutation = useMutation({
     mutationFn: () =>
       createPlacementOrder({
-        project_id:
-          effectiveProject === DRAFT_VALUE || !effectiveProject ? null : effectiveProject,
+        project_id: effectiveProject === DRAFT_VALUE || !effectiveProject ? null : effectiveProject,
         source_domain: sourceDomain,
         target_url: targetUrl,
         keyword,
@@ -309,8 +307,7 @@ function PlacementOrderForm({
       onCreated();
       toast.success("Placement order dibuat");
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Gagal membuat order"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Gagal membuat order"),
   });
 
   return (
@@ -337,11 +334,7 @@ function PlacementOrderForm({
         </div>
         <div className="space-y-1">
           <Label htmlFor="po-keyword">Keyword</Label>
-          <Input
-            id="po-keyword"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-          />
+          <Input id="po-keyword" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
         </div>
         <div className="space-y-1">
           <Label htmlFor="po-anchor">Anchor Text</Label>
@@ -377,10 +370,7 @@ function PlacementOrderForm({
         </div>
         <div className="space-y-1">
           <Label>Proyek</Label>
-          <Select
-            value={effectiveProject ?? DRAFT_VALUE}
-            onValueChange={setProjectId}
-          >
+          <Select value={effectiveProject ?? DRAFT_VALUE} onValueChange={setProjectId}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>

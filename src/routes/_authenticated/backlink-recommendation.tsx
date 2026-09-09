@@ -35,7 +35,8 @@ export const Route = createFileRoute("/_authenticated/backlink-recommendation")(
       { property: "og:title", content: "Rekomendasi Backlink AI" },
       {
         property: "og:description",
-        content: "Top 5 rekomendasi keyword + halaman target berbasis data Ahrefs dan penalaran OpenAI.",
+        content:
+          "Top 5 rekomendasi keyword + halaman target berbasis data Ahrefs dan penalaran OpenAI.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

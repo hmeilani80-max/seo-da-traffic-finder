@@ -132,7 +132,8 @@ export async function runPhase2Test(input: {
 
   // 4. KD fallback -> keyword_difficulty (hanya jika keyword_metrics tidak memberi KD)
   const metricsHasKd =
-    normalizeKeywordMetrics(keyword, country, metrics.items, metrics.error).keywordDifficulty !== null;
+    normalizeKeywordMetrics(keyword, country, metrics.items, metrics.error).keywordDifficulty !==
+    null;
   const kd = metricsHasKd
     ? { items: [] as never[], error: null as string | null }
     : await step(
@@ -158,7 +159,9 @@ export async function runPhase2Test(input: {
     ...authorityNorm,
     traffic: trafficNorm.traffic ?? authorityNorm.traffic,
     trafficCheckedAt: trafficNorm.trafficCheckedAt ?? authorityNorm.trafficCheckedAt,
-    topKeywords: authorityNorm.topKeywords.length ? authorityNorm.topKeywords : trafficNorm.topKeywords,
+    topKeywords: authorityNorm.topKeywords.length
+      ? authorityNorm.topKeywords
+      : trafficNorm.topKeywords,
     topPages: authorityNorm.topPages.length ? authorityNorm.topPages : trafficNorm.topPages,
     error: authorityNorm.error ?? trafficNorm.error,
   };
@@ -171,8 +174,18 @@ export async function runPhase2Test(input: {
 
   const fields: Phase2FieldReport[] = [
     fieldReport("DR", domainResearch.dr, "website_authority", Boolean(authority.error)),
-    fieldReport("Organic Traffic", domainResearch.traffic, "traffic_overview", Boolean(traffic.error)),
-    fieldReport("Search Volume", keywordMetrics.searchVolume, "keyword_metrics", Boolean(metrics.error)),
+    fieldReport(
+      "Organic Traffic",
+      domainResearch.traffic,
+      "traffic_overview",
+      Boolean(traffic.error),
+    ),
+    fieldReport(
+      "Search Volume",
+      keywordMetrics.searchVolume,
+      "keyword_metrics",
+      Boolean(metrics.error),
+    ),
     fieldReport(
       "KD",
       keywordMetrics.keywordDifficulty,

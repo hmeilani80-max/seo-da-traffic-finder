@@ -87,10 +87,7 @@ async function loadPreviousPlacements(userId: string): Promise<Set<string>> {
   const keys = new Set<string>();
 
   const [orders, legacy] = await Promise.all([
-    supabase
-      .from("placement_orders")
-      .select("keyword, target_url")
-      .eq("user_id", userId),
+    supabase.from("placement_orders").select("keyword, target_url").eq("user_id", userId),
     supabase.from("sudah_dibeli").select("keyword, target_page").eq("user_id", userId),
   ]);
 
@@ -98,7 +95,10 @@ async function loadPreviousPlacements(userId: string): Promise<Set<string>> {
     if (!row.keyword) continue;
     keys.add(`${normalizeKeyword(row.keyword)}|${normalizeUrl(row.target_url ?? "")}`);
   }
-  for (const row of (legacy.data ?? []) as { keyword: string | null; target_page: string | null }[]) {
+  for (const row of (legacy.data ?? []) as {
+    keyword: string | null;
+    target_page: string | null;
+  }[]) {
     if (!row.keyword) continue;
     keys.add(`${normalizeKeyword(row.keyword)}|${normalizeUrl(row.target_page ?? "")}`);
   }
@@ -152,8 +152,7 @@ async function generateCandidates(input: {
   for (const raw of ai.data.candidates ?? []) {
     const keyword = String(raw.keyword ?? "").trim();
     if (!keyword) continue;
-    const targetUrl =
-      String(raw.target_url ?? "").trim() || `https://${input.targetDomain}/`;
+    const targetUrl = String(raw.target_url ?? "").trim() || `https://${input.targetDomain}/`;
     const key = `${normalizeKeyword(keyword)}|${normalizeUrl(targetUrl)}`;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -11,12 +11,14 @@ const MAX_SHORTLIST = 25;
 
 export const generateKeywordIdeasFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { seed: string; country?: string; language?: string; limit?: number }) => ({
-    seed: String(input?.seed ?? "").trim(),
-    country: input?.country ? String(input.country).trim() : "id",
-    language: input?.language ? String(input.language).trim() : "id",
-    limit: Number.isFinite(Number(input?.limit)) ? Number(input?.limit) : 50,
-  }))
+  .inputValidator(
+    (input: { seed: string; country?: string; language?: string; limit?: number }) => ({
+      seed: String(input?.seed ?? "").trim(),
+      country: input?.country ? String(input.country).trim() : "id",
+      language: input?.language ? String(input.language).trim() : "id",
+      limit: Number.isFinite(Number(input?.limit)) ? Number(input?.limit) : 50,
+    }),
+  )
   .handler(async ({ data }): Promise<KeywordIdeasResult> => {
     const { generateKeywordIdeas } = await import("./keyword-research.server");
     return generateKeywordIdeas(data);
@@ -31,10 +33,10 @@ export const researchKeywordsFn = createServerFn({ method: "POST" })
       language?: string;
       forceRefresh?: boolean;
     }) => ({
-    keywords: (Array.isArray(input?.keywords) ? input.keywords : [])
-      .map((k) => String(k ?? "").trim())
-      .filter(Boolean)
-      .slice(0, MAX_SHORTLIST),
+      keywords: (Array.isArray(input?.keywords) ? input.keywords : [])
+        .map((k) => String(k ?? "").trim())
+        .filter(Boolean)
+        .slice(0, MAX_SHORTLIST),
       country: input?.country ? String(input.country).trim() : "id",
       language: input?.language ? String(input.language).trim() : "id",
       forceRefresh: Boolean(input?.forceRefresh),

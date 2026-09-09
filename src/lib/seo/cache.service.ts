@@ -46,12 +46,16 @@ export function normalizeKeyword(input: string): string {
 }
 
 export function normalizeCountry(input?: string | null): string {
-  const value = String(input ?? "").trim().toLowerCase();
+  const value = String(input ?? "")
+    .trim()
+    .toLowerCase();
   return value || DEFAULT_COUNTRY;
 }
 
 export function normalizeLanguage(input?: string | null): string {
-  const value = String(input ?? "").trim().toLowerCase();
+  const value = String(input ?? "")
+    .trim()
+    .toLowerCase();
   return value || DEFAULT_LANGUAGE;
 }
 
@@ -69,7 +73,8 @@ export function isFresh(checkedAt: string | null | undefined, ttlDays: number): 
 }
 
 export const freshness = {
-  domainAuthority: (checkedAt?: string | null) => isFresh(checkedAt, CACHE_TTL_DAYS.domainAuthority),
+  domainAuthority: (checkedAt?: string | null) =>
+    isFresh(checkedAt, CACHE_TTL_DAYS.domainAuthority),
   domainTraffic: (checkedAt?: string | null) => isFresh(checkedAt, CACHE_TTL_DAYS.domainTraffic),
   keywordMetrics: (checkedAt?: string | null) => isFresh(checkedAt, CACHE_TTL_DAYS.keywordMetrics),
   keywordRank: (checkedAt?: string | null) => isFresh(checkedAt, CACHE_TTL_DAYS.keywordRank),
@@ -177,7 +182,8 @@ export async function upsertDomainCache(domain: string, patch: DomainCachePatch)
   if (patch.referringDomains !== undefined) row["referring_domains"] = patch.referringDomains;
   if (patch.topKeywords !== undefined) row["top_keywords"] = patch.topKeywords;
   if (patch.topPages !== undefined) row["top_pages"] = patch.topPages;
-  if (patch.authorityCheckedAt !== undefined) row["authority_checked_at"] = patch.authorityCheckedAt;
+  if (patch.authorityCheckedAt !== undefined)
+    row["authority_checked_at"] = patch.authorityCheckedAt;
   if (patch.trafficCheckedAt !== undefined) row["traffic_checked_at"] = patch.trafficCheckedAt;
   if (patch.rawData !== undefined) row["raw_data"] = patch.rawData;
 

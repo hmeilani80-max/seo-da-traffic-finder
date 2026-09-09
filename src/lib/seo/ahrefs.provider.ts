@@ -101,7 +101,9 @@ export async function runAhrefs(input: RunAhrefsInput): Promise<RunAhrefsResult>
 
     if (!res.ok) {
       const text = await res.text();
-      console.error(`[ahrefs.provider] ${input.searchType} gagal [${res.status}]: ${text.slice(0, 400)}`);
+      console.error(
+        `[ahrefs.provider] ${input.searchType} gagal [${res.status}]: ${text.slice(0, 400)}`,
+      );
       return {
         items: [],
         durationMs: Date.now() - started,
@@ -228,11 +230,7 @@ export function normalizeDomainResearch(
     "data.referringDomains",
   ]);
 
-  const topKeywords: SeoTopKeyword[] = pickArray(items, [
-    "top_keywords",
-    "topKeywords",
-    "keywords",
-  ])
+  const topKeywords: SeoTopKeyword[] = pickArray(items, ["top_keywords", "topKeywords", "keywords"])
     .filter(isRecord)
     .map((row) => ({
       keyword: toText(pick(row, ["keyword", "query", "name"])) ?? "",

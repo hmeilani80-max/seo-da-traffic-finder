@@ -202,7 +202,10 @@ function KeywordResearchPage() {
           </div>
           <ul className="max-h-80 divide-y overflow-y-auto">
             {ideas.map((idea) => (
-              <li key={idea.normalizedKeyword} className="flex items-center gap-3 px-4 py-2 text-sm">
+              <li
+                key={idea.normalizedKeyword}
+                className="flex items-center gap-3 px-4 py-2 text-sm"
+              >
                 <Checkbox
                   id={`kw-${idea.normalizedKeyword}`}
                   checked={selected.includes(idea.keyword)}
@@ -212,7 +215,9 @@ function KeywordResearchPage() {
                   {idea.keyword}
                 </Label>
                 {idea.searchVolume !== null && (
-                  <span className="text-xs text-muted-foreground">Vol {fmt(idea.searchVolume)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Vol {fmt(idea.searchVolume)}
+                  </span>
                 )}
               </li>
             ))}
@@ -241,7 +246,9 @@ function KeywordResearchPage() {
                   <tr key={m.normalizedKeyword} className="border-b last:border-0">
                     <td className="px-4 py-2 font-medium">
                       {m.keyword}
-                      {m.error && <div className="text-xs font-normal text-destructive">{m.error}</div>}
+                      {m.error && (
+                        <div className="text-xs font-normal text-destructive">{m.error}</div>
+                      )}
                     </td>
                     <td className="px-4 py-2 uppercase">
                       {m.country} / {m.language}
@@ -251,7 +258,10 @@ function KeywordResearchPage() {
                     <td className="px-4 py-2">{fmt(m.trafficPotential)}</td>
                     <td className="px-4 py-2">{fmt(m.cpc)}</td>
                     <td className="px-4 py-2">
-                      <Badge variant={m.source === "cache" ? "secondary" : "default"} className="gap-1">
+                      <Badge
+                        variant={m.source === "cache" ? "secondary" : "default"}
+                        className="gap-1"
+                      >
                         {m.source === "cache" ? (
                           <Database className="size-3" />
                         ) : (

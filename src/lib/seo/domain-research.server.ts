@@ -192,9 +192,7 @@ export async function researchDomains(input: {
   country?: string;
   forceRefresh?: boolean;
 }): Promise<DomainResearchReport[]> {
-  const unique = Array.from(
-    new Set(input.domains.map((d) => normalizeDomain(d)).filter(Boolean)),
-  );
+  const unique = Array.from(new Set(input.domains.map((d) => normalizeDomain(d)).filter(Boolean)));
 
   const results: DomainResearchReport[] = [];
   // Sekuensial: menghindari beban paralel ke Actor berbayar.

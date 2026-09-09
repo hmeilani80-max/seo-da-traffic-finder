@@ -21,7 +21,8 @@ export const Route = createFileRoute("/_authenticated/seo-phase2-test")({
       { property: "og:title", content: "Uji Provider Ahrefs All-in-One — Phase 2" },
       {
         property: "og:description",
-        content: "Verifikasi DR, traffic, search volume, KD, rank, dan ranking URL dari satu Actor.",
+        content:
+          "Verifikasi DR, traffic, search volume, KD, rank, dan ranking URL dari satu Actor.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -56,10 +57,12 @@ function Phase2TestPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Uji Provider Ahrefs All-in-One (Phase 2)</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Uji Provider Ahrefs All-in-One (Phase 2)
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Utility internal sementara. Memanggil Actor pro100chok/ahrefs-seo-tools untuk satu domain dan
-          satu keyword. Tidak menulis ke tabel operasional — hanya cache SEO dan log riset.
+          Utility internal sementara. Memanggil Actor pro100chok/ahrefs-seo-tools untuk satu domain
+          dan satu keyword. Tidak menulis ke tabel operasional — hanya cache SEO dan log riset.
         </p>
       </header>
 
@@ -72,8 +75,15 @@ function Phase2TestPage() {
           <Label htmlFor="keyword">Keyword</Label>
           <Input id="keyword" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
         </div>
-        <Button onClick={() => void handleRun()} disabled={running || !domain.trim() || !keyword.trim()}>
-          {running ? <Loader2 className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
+        <Button
+          onClick={() => void handleRun()}
+          disabled={running || !domain.trim() || !keyword.trim()}
+        >
+          {running ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <FlaskConical className="size-4" />
+          )}
           {running ? "Menjalankan..." : "Jalankan Test"}
         </Button>
       </div>
@@ -137,7 +147,8 @@ function Phase2TestPage() {
           <section className="rounded-lg border p-4">
             <h2 className="text-sm font-semibold">Output ternormalisasi</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Cache ditulis: {result.cacheWritten.length ? result.cacheWritten.join(", ") : "tidak ada"}
+              Cache ditulis:{" "}
+              {result.cacheWritten.length ? result.cacheWritten.join(", ") : "tidak ada"}
             </p>
             <pre className="mt-3 max-h-96 overflow-auto rounded-md bg-muted p-3 text-xs">
               {JSON.stringify(result.normalized, null, 2)}

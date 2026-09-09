@@ -1,13 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  Database,
-  FolderKanban,
-  Globe,
-  KeyRound,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Database, FolderKanban, Globe, KeyRound, Sparkles } from "lucide-react";
 
 import { useRealtimeDomains } from "@/hooks/useRealtimeDomains";
 import {
@@ -22,14 +15,12 @@ export const Route = createFileRoute("/_authenticated/")({
       { title: "Dashboard — Backlink Manager" },
       {
         name: "description",
-        content:
-          "Ringkasan manajemen backlink: domain, proyek, placement order, dan riset SEO.",
+        content: "Ringkasan manajemen backlink: domain, proyek, placement order, dan riset SEO.",
       },
       { property: "og:title", content: "Dashboard — Backlink Manager" },
       {
         property: "og:description",
-        content:
-          "Ringkasan manajemen backlink: domain, proyek, placement order, dan riset SEO.",
+        content: "Ringkasan manajemen backlink: domain, proyek, placement order, dan riset SEO.",
       },
     ],
   }),
@@ -115,9 +106,7 @@ function DashboardHome() {
                   <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
                 <h3 className="mt-3 font-semibold">{f.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {f.description}
-                </p>
+                <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>
               </Link>
             );
           })}
@@ -127,10 +116,7 @@ function DashboardHome() {
       <section className="rounded-xl border bg-card shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between border-b p-4">
           <h2 className="text-base font-semibold">Placement Order Terbaru</h2>
-          <Link
-            to="/projects"
-            className="text-sm font-medium text-primary hover:underline"
-          >
+          <Link to="/projects" className="text-sm font-medium text-primary hover:underline">
             Lihat semua
           </Link>
         </div>
@@ -147,10 +133,7 @@ function DashboardHome() {
             <tbody>
               {recentOrders.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-4 py-8 text-center text-muted-foreground"
-                  >
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                     {loading ? "Memuat…" : "Belum ada placement order."}
                   </td>
                 </tr>
@@ -158,9 +141,7 @@ function DashboardHome() {
                 recentOrders.map((o: PlacementOrderRow) => (
                   <tr key={o.id} className="border-b last:border-0">
                     <td className="px-4 py-3 font-medium">{o.source_domain}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {o.keyword ?? "—"}
-                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{o.keyword ?? "—"}</td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
                         {PLACEMENT_STATUS_LABEL[o.status] ?? o.status}
