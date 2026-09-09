@@ -548,6 +548,57 @@ export type Database = {
           },
         ]
       }
+      project_data_sources: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          source_key: string
+          status: string
+          updated_at: string
+          updated_by: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id: string
+          source_key: string
+          status?: string
+          updated_at?: string
+          updated_by?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id?: string
+          source_key?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_data_sources_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_data_sources_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_evidence: {
         Row: {
           created_at: string
@@ -620,42 +671,193 @@ export type Database = {
           },
         ]
       }
+      project_field_suggestions: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          field: string
+          id: string
+          project_id: string
+          rationale: string | null
+          run_id: string | null
+          status: string
+          suggested_value: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          field: string
+          id?: string
+          project_id: string
+          rationale?: string | null
+          run_id?: string | null
+          status?: string
+          suggested_value: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          field?: string
+          id?: string
+          project_id?: string
+          rationale?: string | null
+          run_id?: string | null
+          status?: string
+          suggested_value?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_field_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_field_suggestions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "project_intelligence_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_field_suggestions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_intelligence_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          input_summary: Json
+          model: string | null
+          output: Json
+          project_id: string
+          provider: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          input_summary?: Json
+          model?: string | null
+          output?: Json
+          project_id: string
+          provider?: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          input_summary?: Json
+          model?: string | null
+          output?: Json
+          project_id?: string
+          provider?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_intelligence_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_intelligence_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           activated_at: string | null
+          budget_indication: string | null
           client_domain: string | null
+          competitors: string[]
+          contact_person: string | null
           created_at: string
+          current_problem: string | null
           description: string | null
+          discovery_notes: string | null
           id: string
+          industry: string | null
           lifecycle_status: string
           name: string
+          objectives: string[]
           status: string
+          target_market: string | null
           updated_at: string
           user_id: string
           workspace_id: string | null
         }
         Insert: {
           activated_at?: string | null
+          budget_indication?: string | null
           client_domain?: string | null
+          competitors?: string[]
+          contact_person?: string | null
           created_at?: string
+          current_problem?: string | null
           description?: string | null
+          discovery_notes?: string | null
           id?: string
+          industry?: string | null
           lifecycle_status?: string
           name: string
+          objectives?: string[]
           status?: string
+          target_market?: string | null
           updated_at?: string
           user_id?: string
           workspace_id?: string | null
         }
         Update: {
           activated_at?: string | null
+          budget_indication?: string | null
           client_domain?: string | null
+          competitors?: string[]
+          contact_person?: string | null
           created_at?: string
+          current_problem?: string | null
           description?: string | null
+          discovery_notes?: string | null
           id?: string
+          industry?: string | null
           lifecycle_status?: string
           name?: string
+          objectives?: string[]
           status?: string
+          target_market?: string | null
           updated_at?: string
           user_id?: string
           workspace_id?: string | null
