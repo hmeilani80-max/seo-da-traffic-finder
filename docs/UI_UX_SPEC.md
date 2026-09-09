@@ -477,12 +477,12 @@ rajabacklink-september.xlsx
 
 Use a table:
 
-| Source Column | Detected Field | Confidence | Action |
-|---|---|---|---|
-| Website | Source Domain | High | dropdown |
-| Authority | DR | High | dropdown |
-| Visitor | Organic Traffic | Medium | dropdown |
-| Harga | Price | High | dropdown |
+| Source Column | Detected Field  | Confidence | Action   |
+| ------------- | --------------- | ---------- | -------- |
+| Website       | Source Domain   | High       | dropdown |
+| Authority     | DR              | High       | dropdown |
+| Visitor       | Organic Traffic | Medium     | dropdown |
+| Harga         | Price           | High       | dropdown |
 
 AI/automatic mapping may be used, but user can override.
 
