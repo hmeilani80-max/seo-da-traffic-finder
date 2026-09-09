@@ -328,14 +328,14 @@ function ProjectOverview({ project }: { project: ProjectFull }) {
           ) : (
             <div className="mt-4 space-y-2">
               {nextActions.slice(0, 5).map((action) => (
-                <Link
+                <a
                   key={`${action.to}-${action.label}`}
-                  to={action.to}
+                  href={action.to}
                   className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 text-sm transition-colors hover:bg-muted/60"
                 >
                   <span>{action.label}</span>
                   <ArrowRight className="size-4 shrink-0 text-primary" />
-                </Link>
+                </a>
               ))}
             </div>
           )}
@@ -346,7 +346,11 @@ function ProjectOverview({ project }: { project: ProjectFull }) {
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold">Evidence Terbaru</h2>
-            <Link to={`/projects/${project.id}/files`} className="text-sm font-medium text-primary hover:underline">
+            <Link
+              to="/projects/$projectId/files"
+              params={{ projectId: project.id }}
+              className="text-sm font-medium text-primary hover:underline"
+            >
               Lihat semua
             </Link>
           </div>
@@ -372,7 +376,11 @@ function ProjectOverview({ project }: { project: ProjectFull }) {
         <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold">AI Client Intelligence</h2>
-            <Link to={`/projects/${project.id}/intelligence`} className="text-sm font-medium text-primary hover:underline">
+            <Link
+              to="/projects/$projectId/intelligence"
+              params={{ projectId: project.id }}
+              className="text-sm font-medium text-primary hover:underline"
+            >
               Buka Intelligence
             </Link>
           </div>
