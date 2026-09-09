@@ -48,8 +48,9 @@ export function DataSourcesRegistry({
       <header>
         <h2 className="text-lg font-semibold">Sumber Data &amp; Koneksi</h2>
         <p className="text-sm text-muted-foreground">
-          Status di bawah dicatat manual oleh tim. Aplikasi belum melakukan koneksi OAuth otomatis,
-          jadi pilih <strong>Bukti Manual</strong> bila data diperoleh lewat file/screenshot dari klien.
+          Wave 1 hanya mencatat kesiapan akses. Belum ada source yang dianggap terhubung otomatis
+          sampai OAuth/connector production benar-benar diimplementasikan. Gunakan <strong>Bukti Manual</strong>
+          bila data diperoleh dari file, screenshot, export, atau akses yang diberikan klien.
         </p>
       </header>
 
@@ -68,26 +69,22 @@ export function DataSourcesRegistry({
                   <p className="mt-1 text-xs text-muted-foreground">{source.description}</p>
                 </div>
                 <Badge variant="outline" className="shrink-0">
-                  {source.availability === "connector_available"
-                    ? "Konektor tersedia"
-                    : "Belum didukung"}
+                  {source.availability === "planned_connector" ? "Connector planned" : "Manual"}
                 </Badge>
               </div>
 
               <div className="mt-3 flex items-center gap-2">
                 <Select
-                  value={status}
+                  value={status === "connected" ? "manual_evidence" : status}
                   onValueChange={(value) => mutation.mutate({ sourceKey: source.key, status: value })}
                 >
-                  <SelectTrigger className="w-52">
+                  <SelectTrigger className="w-56">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SOURCE_STATUS.filter(
-                      (s) => s !== "connected" || source.availability === "connector_available",
-                    ).map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {SOURCE_STATUS_LABEL[s]}
+                    {SOURCE_STATUS.map((sourceStatus) => (
+                      <SelectItem key={sourceStatus} value={sourceStatus}>
+                        {SOURCE_STATUS_LABEL[sourceStatus]}
                       </SelectItem>
                     ))}
                   </SelectContent>
