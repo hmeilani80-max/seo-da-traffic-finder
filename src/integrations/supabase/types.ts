@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_workspace_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_workspaces: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       backlinks: {
         Row: {
           anchor_text: string | null
@@ -33,6 +98,7 @@ export type Database = {
           traffic: number | null
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           anchor_text?: string | null
@@ -52,6 +118,7 @@ export type Database = {
           traffic?: number | null
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
           anchor_text?: string | null
@@ -71,6 +138,7 @@ export type Database = {
           traffic?: number | null
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -85,6 +153,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backlinks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -121,6 +196,69 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      data_imports: {
+        Row: {
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          mapping: Json
+          module: string
+          normalization_summary: Json
+          original_filename: string | null
+          project_id: string | null
+          source_type: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          mapping?: Json
+          module: string
+          normalization_summary?: Json
+          original_filename?: string | null
+          project_id?: string | null
+          source_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          mapping?: Json
+          module?: string
+          normalization_summary?: Json
+          original_filename?: string | null
+          project_id?: string | null
+          source_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_imports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_imports_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       domain_sudah_pernah: {
         Row: {
@@ -353,6 +491,7 @@ export type Database = {
           traffic: number | null
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           anchor_text?: string | null
@@ -371,6 +510,7 @@ export type Database = {
           traffic?: number | null
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
           anchor_text?: string | null
@@ -389,6 +529,7 @@ export type Database = {
           traffic?: number | null
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -398,40 +539,136 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "placement_orders_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_evidence: {
+        Row: {
+          created_at: string
+          created_by: string
+          extracted_metadata: Json
+          id: string
+          mime_type: string | null
+          original_filename: string | null
+          processing_error: string | null
+          processing_status: string
+          project_id: string | null
+          raw_text: string | null
+          source_type: string
+          source_url: string | null
+          storage_path: string | null
+          title: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          extracted_metadata?: Json
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          project_id?: string | null
+          raw_text?: string | null
+          source_type?: string
+          source_url?: string | null
+          storage_path?: string | null
+          title?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          extracted_metadata?: Json
+          id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          project_id?: string | null
+          raw_text?: string | null
+          source_type?: string
+          source_url?: string | null
+          storage_path?: string | null
+          title?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_evidence_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projects: {
         Row: {
+          activated_at: string | null
           client_domain: string | null
           created_at: string
           description: string | null
           id: string
+          lifecycle_status: string
           name: string
           status: string
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
+          activated_at?: string | null
           client_domain?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          lifecycle_status?: string
           name: string
           status?: string
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Update: {
+          activated_at?: string | null
           client_domain?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          lifecycle_status?: string
           name?: string
           status?: string
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "app_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       search_history: {
         Row: {
@@ -610,7 +847,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      is_workspace_member: { Args: { _workspace_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
