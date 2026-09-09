@@ -6,6 +6,17 @@ export type ProjectRow = {
   client_domain: string | null;
   description: string | null;
   status: string;
+  workspace_id: string | null;
+  lifecycle_status: string;
+  activated_at: string | null;
+  industry: string | null;
+  objectives: string[];
+  target_market: string | null;
+  current_problem: string | null;
+  contact_person: string | null;
+  budget_indication: string | null;
+  competitors: string[];
+  discovery_notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -13,6 +24,7 @@ export type ProjectRow = {
 export type PlacementOrderRow = {
   id: string;
   project_id: string | null;
+  workspace_id?: string | null;
   source_domain: string;
   target_url: string | null;
   keyword: string | null;
@@ -31,6 +43,7 @@ export type PlacementOrderRow = {
 export type BacklinkRow = {
   id: string;
   project_id: string | null;
+  workspace_id?: string | null;
   placement_order_id: string | null;
   source_domain: string;
   source_url: string | null;
@@ -42,6 +55,24 @@ export type BacklinkRow = {
   dr: number | null;
   traffic: number | null;
   created_at: string;
+};
+
+export const PROJECT_LIFECYCLES = [
+  "prospect",
+  "assessment",
+  "proposal",
+  "active",
+  "lost",
+  "archived",
+] as const;
+
+export const PROJECT_LIFECYCLE_LABEL: Record<string, string> = {
+  prospect: "Prospect",
+  assessment: "Assessment",
+  proposal: "Proposal",
+  active: "Active",
+  lost: "Lost",
+  archived: "Archived",
 };
 
 export const PLACEMENT_STATUS = ["draft", "dipesan", "tayang", "batal"] as const;
@@ -64,7 +95,13 @@ export async function fetchProjects(): Promise<ProjectRow[]> {
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as ProjectRow[];
+  return (data ?? []) as unknown as ProjectRow[];
+}
+
+export async function fetchProject(id: string): Promise<ProjectRow> {
+  const { data, error } = await supabase.from("projects").select("*").eq("id", id).single();
+  if (error) throw error;
+  return data as unknown as ProjectRow;
 }
 
 export async function createProject(input: {
@@ -88,6 +125,54 @@ export async function createProject(input: {
     .single();
 
   if (error) throw error;
+  return data as unknown as ProjectRow;
+}
+
+export type ProjectProfileInput = {
+  name: string;
+  client_domain: string | null;
+  description: string | null;
+  lifecycle_status: string;
+  industry: string | null;
+  objectives: string[];
+  target_market: string | null;
+  current_problem: string | null;
+  contact_person: string | null;
+  budget_indication: string | null;
+  competitors: string[];
+  discovery_notes: string | null;
+};
+
+export async function updateProjectProfile(
+  id: string,
+  input: ProjectProfileInput,
+): Promise<ProjectRow> {
+  // The generated Supabase type file currently trails the already-applied Wave 1
+  // schema. Keep this escape local until generated types are refreshed.
+  const db = supabase as any;
+  const lifecycle = PROJECT_LIFECYCLES.includes(input.lifecycle_status as (typeof PROJECT_LIFECYCLES)[number])
+    ? input.lifecycle_status
+    : "prospect";
+
+  const payload: Record<string, unknown> = {
+    name: input.name.trim(),
+    client_domain: input.client_domain?.trim() || null,
+    description: input.description?.trim() || null,
+    lifecycle_status: lifecycle,
+    industry: input.industry?.trim() || null,
+    objectives: input.objectives.map((v) => v.trim()).filter(Boolean),
+    target_market: input.target_market?.trim() || null,
+    current_problem: input.current_problem?.trim() || null,
+    contact_person: input.contact_person?.trim() || null,
+    budget_indication: input.budget_indication?.trim() || null,
+    competitors: input.competitors.map((v) => v.trim()).filter(Boolean),
+    discovery_notes: input.discovery_notes?.trim() || null,
+  };
+
+  if (lifecycle === "active") payload.activated_at = new Date().toISOString();
+
+  const { data, error } = await db.from("projects").update(payload).eq("id", id).select("*").single();
+  if (error) throw error;
   return data as ProjectRow;
 }
 
@@ -105,7 +190,7 @@ export async function fetchPlacementOrders(): Promise<PlacementOrderRow[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as PlacementOrderRow[];
+  return (data ?? []) as unknown as PlacementOrderRow[];
 }
 
 export type PlacementOrderInput = {
@@ -149,7 +234,7 @@ export async function createPlacementOrder(input: PlacementOrderInput): Promise<
     .single();
 
   if (error) throw error;
-  return data as PlacementOrderRow;
+  return data as unknown as PlacementOrderRow;
 }
 
 export async function assignPlacementProject(id: string, projectId: string | null) {
@@ -181,5 +266,5 @@ export async function fetchBacklinks(): Promise<BacklinkRow[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []) as BacklinkRow[];
+  return (data ?? []) as unknown as BacklinkRow[];
 }
