@@ -1,6 +1,15 @@
 import { createFileRoute, Link, Outlet, useParams, useRouterState } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Brain,
+  Database,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Target,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +23,16 @@ import {
 } from "@/components/ui/select";
 import { ProjectProfileDialog } from "@/components/project/ProjectProfileDialog";
 import { cn } from "@/lib/utils";
+import { fetchEvidence } from "@/lib/evidence";
+import { fetchProjectDataSources } from "@/lib/data-sources";
+import { fetchIntelligenceRuns } from "@/lib/project-intelligence";
 import {
   LIFECYCLE,
   LIFECYCLE_LABEL,
   LIFECYCLE_TONE,
   fetchProject,
   setProjectLifecycle,
+  type ProjectFull,
 } from "@/lib/project-profile";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
@@ -93,6 +106,9 @@ function ProjectWorkspaceLayout() {
     );
   }
 
+  const overviewPath = `/projects/${projectId}`;
+  const isOverview = pathname === overviewPath || pathname === `${overviewPath}/`;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-6">
       <Link
@@ -102,7 +118,6 @@ function ProjectWorkspaceLayout() {
         <ArrowLeft className="size-4" /> Semua Proyek
       </Link>
 
-      {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-brand-teal px-6 py-7 text-brand-teal-foreground sm:px-8">
         <div
           aria-hidden
@@ -175,11 +190,10 @@ function ProjectWorkspaceLayout() {
         </div>
       </section>
 
-      {/* Local nav */}
       <nav className="flex flex-wrap gap-1 rounded-2xl border border-border bg-card p-1">
         {TABS.map((tab) => {
           const href = tab.to.replace("$projectId", projectId);
-          const active = tab.exact ? pathname === href : pathname.startsWith(href);
+          const active = tab.exact ? isOverview : pathname.startsWith(href);
           return (
             <Link
               key={tab.label}
@@ -198,7 +212,224 @@ function ProjectWorkspaceLayout() {
         })}
       </nav>
 
-      <Outlet />
+      {isOverview ? <ProjectOverview project={project} /> : <Outlet />}
+    </div>
+  );
+}
+
+function ProjectOverview({ project }: { project: ProjectFull }) {
+  const evidence = useQuery({
+    queryKey: ["evidence", project.id],
+    queryFn: () => fetchEvidence(project.id),
+    enabled: Boolean(project.workspace_id),
+  });
+  const sources = useQuery({
+    queryKey: ["project-data-sources", project.id],
+    queryFn: () => fetchProjectDataSources(project.id),
+    enabled: Boolean(project.workspace_id),
+  });
+  const intelligence = useQuery({
+    queryKey: ["intelligence-runs", project.id],
+    queryFn: () => fetchIntelligenceRuns(project.id),
+    enabled: Boolean(project.workspace_id),
+  });
+
+  const evidenceRows = evidence.data ?? [];
+  const sourceRows = sources.data ?? [];
+  const latestIntelligence = intelligence.data?.[0];
+  const availableSources = sourceRows.filter((row) => row.status !== "not_connected").length;
+
+  const nextActions: { label: string; to: string }[] = [];
+  if (!project.client_domain || !project.industry || !project.target_market || !project.current_problem) {
+    nextActions.push({ label: "Lengkapi profil & konteks bisnis", to: `/projects/${project.id}` });
+  }
+  if (project.objectives.length === 0) {
+    nextActions.push({ label: "Tentukan objective utama", to: `/projects/${project.id}` });
+  }
+  if (sourceRows.length === 0) {
+    nextActions.push({ label: "Catat sumber data & akses yang tersedia", to: `/projects/${project.id}/data-sources` });
+  }
+  if (evidenceRows.length === 0) {
+    nextActions.push({ label: "Tambahkan file, link, atau evidence manual", to: `/projects/${project.id}/files` });
+  }
+  if (!latestIntelligence) {
+    nextActions.push({ label: "Jalankan AI Client Intelligence", to: `/projects/${project.id}/intelligence` });
+  }
+
+  return (
+    <div className="space-y-5">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <OverviewKpi
+          icon={Target}
+          label="Objective"
+          value={project.objectives.length ? `${project.objectives.length} tercatat` : "Belum diisi"}
+          className="bg-kpi-peach"
+        />
+        <OverviewKpi
+          icon={Database}
+          label="Sumber Data"
+          value={sourceRows.length ? `${availableSources}/${sourceRows.length} tersedia` : "Belum dicatat"}
+          className="bg-kpi-aqua"
+        />
+        <OverviewKpi
+          icon={FileText}
+          label="Evidence"
+          value={evidenceRows.length ? `${evidenceRows.length} item` : "Belum ada"}
+          className="bg-kpi-lime"
+        />
+        <OverviewKpi
+          icon={Brain}
+          label="AI Intelligence"
+          value={latestIntelligence ? "Analisis tersedia" : "Belum dijalankan"}
+          className="bg-kpi-cream"
+        />
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold">Konteks Client & Bisnis</h2>
+              <p className="text-sm text-muted-foreground">Informasi discovery yang sudah dikonfirmasi.</p>
+            </div>
+            <ProjectProfileDialog project={project} />
+          </div>
+
+          <dl className="mt-5 grid gap-4 sm:grid-cols-2">
+            <ContextItem label="Industri" value={project.industry} />
+            <ContextItem label="Target Market" value={project.target_market} />
+            <ContextItem label="Kontak Person" value={project.contact_person} />
+            <ContextItem label="Indikasi Budget" value={project.budget_indication} />
+            <div className="sm:col-span-2">
+              <ContextItem label="Masalah / Pain Point" value={project.current_problem} />
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Objective</p>
+              {project.objectives.length ? (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {project.objectives.map((objective) => (
+                    <Badge key={objective} variant="secondary">{objective}</Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">Belum tersedia</p>
+              )}
+            </div>
+          </dl>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="font-semibold">Next Actions</h2>
+          <p className="text-sm text-muted-foreground">Berdasarkan kelengkapan Project saat ini.</p>
+          {nextActions.length === 0 ? (
+            <p className="mt-4 rounded-xl bg-kpi-lime px-4 py-3 text-sm">
+              Fondasi Project sudah lengkap. Lanjutkan ke assessment SEO berikutnya.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {nextActions.slice(0, 5).map((action) => (
+                <Link
+                  key={`${action.to}-${action.label}`}
+                  to={action.to}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 text-sm transition-colors hover:bg-muted/60"
+                >
+                  <span>{action.label}</span>
+                  <ArrowRight className="size-4 shrink-0 text-primary" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold">Evidence Terbaru</h2>
+            <Link to={`/projects/${project.id}/files`} className="text-sm font-medium text-primary hover:underline">
+              Lihat semua
+            </Link>
+          </div>
+          {evidenceRows.length === 0 ? (
+            <p className="mt-4 text-sm text-muted-foreground">Belum ada evidence yang disimpan.</p>
+          ) : (
+            <div className="mt-3 divide-y divide-border">
+              {evidenceRows.slice(0, 4).map((row) => (
+                <div key={row.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{row.title ?? row.original_filename ?? "Evidence"}</p>
+                    <p className="text-xs text-muted-foreground">{row.source_type} · {row.processing_status}</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {new Date(row.created_at).toLocaleDateString("id-ID")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold">AI Client Intelligence</h2>
+            <Link to={`/projects/${project.id}/intelligence`} className="text-sm font-medium text-primary hover:underline">
+              Buka Intelligence
+            </Link>
+          </div>
+          {latestIntelligence ? (
+            <div className="mt-4">
+              <Badge variant={latestIntelligence.status === "ok" ? "secondary" : "destructive"}>
+                {latestIntelligence.status === "ok" ? "Analisis tersedia" : "Analisis gagal"}
+              </Badge>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Terakhir dijalankan {new Date(latestIntelligence.created_at).toLocaleString("id-ID")}
+                {latestIntelligence.provider ? ` · ${latestIntelligence.provider}` : ""}
+              </p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                AI hanya menalar data Project dan evidence yang tersedia; metrik SEO tidak dibuat atau ditebak.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-dashed border-border p-4">
+              <p className="text-sm font-medium">Belum ada analisis AI.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tambahkan konteks/evidence terlebih dahulu, lalu jalankan analisis saat diperlukan.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function OverviewKpi({
+  icon: Icon,
+  label,
+  value,
+  className,
+}: {
+  icon: typeof Target;
+  label: string;
+  value: string;
+  className: string;
+}) {
+  return (
+    <div className={cn("rounded-2xl border border-border p-4", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium text-foreground/70">{label}</p>
+        <Icon className="size-4 text-foreground/60" />
+      </div>
+      <p className="mt-2 text-lg font-bold">{value}</p>
+    </div>
+  );
+}
+
+function ContextItem({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-sm">{value?.trim() || "Belum tersedia"}</dd>
     </div>
   );
 }
