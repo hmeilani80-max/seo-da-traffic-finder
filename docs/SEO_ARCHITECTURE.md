@@ -1,632 +1,497 @@
-# Backlink & SEO Outreach Management — Final Architecture
+# SEO Operating System — Final Architecture
 
-## Primary Objective
+> Evolution of: SEO DA & Traffic Finder / Backlink Manager
+> Status: Architectural source of truth
+> Product requirements: `docs/PRD.md`
+> User workflow: `docs/USER_STORY_PLAYBOOK.md`
+> Product knowledge: `docs/KNOWLEDGE_BASE.md`
+> UI/UX: `docs/UI_UX_SPEC.md`
 
-Extend the existing **SEO DA & Traffic Finder** application into a project-based **Backlink & SEO Outreach Management** system.
+---
 
-**This is not a greenfield rebuild.**
+# Primary Objective
 
-The existing application, GitHub repository, Supabase data, routes, working domain-research flow, and existing integrations must remain functional while the new architecture is introduced incrementally.
+Extend the existing production application into an internal **SEO Operating System** that supports the full SEO Specialist lifecycle while preserving the existing backlink/domain/keyword foundation.
 
-Before making changes:
+Target product flow:
 
-1. Inspect the existing GitHub repository.
-2. Inspect the current Supabase schema and migrations.
-3. Inspect existing routes, components, server functions, API integrations, authentication, RLS policies, and environment variables.
-4. Identify existing functions/components that can be reused.
-5. Provide a short implementation plan before modifying the architecture.
+```text
+Project / Prospect
+      ↓
+Discovery + Evidence
+      ↓
+AI Client Intelligence
+      ↓
+Comprehensive Site Audit
+      ↓
+Competitive Analysis
+      ↓
+Keyword & SERP Research
+      ↓
+SEO Plan
+      ↓
+Proposal + Manual Budget
+      ↓
+Active Delivery Plan
+      ↓
+Tasks + Backlink Execution
+      ↓
+Monitoring
+      ↓
+Reporting + Continuous Optimization
+```
+
+This is **not a greenfield rebuild**.
+
+Before every implementation phase:
+
+1. inspect the relevant current GitHub code;
+2. inspect the current Supabase schema, data, RLS, and migrations;
+3. inspect current Lovable-managed configuration;
+4. reuse current routes/components/services where appropriate;
+5. make additive changes only;
+6. preserve production data and rollback ability;
+7. verify build + relevant production behavior before declaring completion.
 
 Do not:
 
-- recreate the repository
-- migrate the application to another framework
-- delete existing production data
-- destructively replace existing tables
-- remove existing functionality before the replacement has been validated
-- expose API credentials to frontend/browser code
+- recreate the repository;
+- migrate to another framework;
+- move hosting away from Lovable unless explicitly requested;
+- delete existing production records;
+- drop/rename production tables destructively;
+- weaken security to make UI work;
+- expose privileged credentials in browser code;
+- remove a legacy provider before replacement parity is validated;
+- redesign unrelated product areas while implementing one wave.
 
 ---
 
 # 1. Existing Tech Stack — Preserve
 
-Preserve the current project stack:
+Preserve:
 
-- **Frontend / Full-stack:** TanStack Start + React
-- **Build system:** Vite
-- **UI:** Tailwind CSS + existing component system
-- **Database / Authentication:** Supabase
-- **Repository:** Existing connected GitHub repository
-- **Builder:** Existing Lovable project
-- **Local development:** Compatible with Git / Cursor workflow
+- **Frontend / full-stack:** TanStack Start + React;
+- **Build:** Vite;
+- **UI:** Tailwind CSS + existing component system;
+- **Database/Auth:** Lovable Cloud managed Supabase;
+- **Hosting:** Lovable Cloud;
+- **Repository:** existing connected GitHub repository;
+- **Custom domain:** existing production custom domain;
+- **Auth flow:** existing managed Supabase authentication;
+- **Git history:** existing published history.
 
-Do not migrate the project to Next.js.
-
-Hosting is handled by Lovable (published app + custom domain). Do not add external hosting providers.
-
----
-
-# 2. Final External Intelligence Architecture
-
-The final system should have only **two external intelligence dependencies**:
-
-## SEO Data Engine
-
-Apify Actor:
-
-```text
-pro100chok/ahrefs-seo-tools
-```
-
-## AI Reasoning Engine
-
-OpenAI API.
-
-Supabase is responsible for:
-
-- application database
-- authentication
-- caching SEO data
-- placements
-- projects
-- backlinks
-- API/research run logs
-
-Frontend must never call Apify or OpenAI directly.
-
-All external calls must run through server-side functions.
-
-Final mental model:
-
-```text
-Supabase Cache
-      │
-      │ cache miss
-      ▼
-Apify / Ahrefs All-in-One
-      │
-      │ structured SEO facts
-      ▼
-OpenAI
-      │
-      │ semantic reasoning
-      ▼
-Keyword / Target Page / Backlink Decision
-```
-
-- **Ahrefs/Apify = factual SEO data**
-- **OpenAI = reasoning**
-- **Supabase = source of application state + cache**
-- **Frontend = workflow + user control**
-
-Do not add additional SEO providers unless a required capability is proven unavailable from the primary Ahrefs actor.
+Do not migrate to Next.js or another framework as part of this expansion.
 
 ---
 
-# 3. Legacy Provider Migration
+# 2. Product Architecture Mental Model
 
-The existing project may currently contain:
-
-- OpenSEO
-- `radeance/ahrefs-scraper`
-- `burbn/ahrefs-keyword-explorer`
-
-Do not delete these integrations immediately.
-
-Treat them as **legacy providers** during migration.
-
-Migration strategy:
+The system consists of six logical layers.
 
 ```text
-CURRENT
-OpenSEO
-radeance/ahrefs-scraper
-burbn/ahrefs-keyword-explorer
-        │
-        ▼
-PHASE 1
-Add pro100chok/ahrefs-seo-tools
-        │
-        ▼
-PHASE 2
-Run parity tests
-        │
-        ▼
-PHASE 3
-SEO_PROVIDER=ahrefs_all_in_one
-        │
-        ▼
-PHASE 4
-Monitor production behaviour and cost
-        │
-        ▼
-PHASE 5
-Deprecate legacy providers after validation
+┌──────────────────────────────────────────────────────┐
+│ 1. PROJECT / WORKFLOW LAYER                          │
+│ Client context, lifecycle, plan, tasks, reports      │
+├──────────────────────────────────────────────────────┤
+│ 2. SOURCE / EVIDENCE LAYER                           │
+│ Connections, uploads, links, manual input, crawl     │
+├──────────────────────────────────────────────────────┤
+│ 3. NORMALIZATION LAYER                               │
+│ Extraction, mapping, validation, normalized types    │
+├──────────────────────────────────────────────────────┤
+│ 4. FACTUAL INTELLIGENCE LAYER                        │
+│ SEO metrics, SERP, audit facts, analytics, ads       │
+├──────────────────────────────────────────────────────┤
+│ 5. AI REASONING LAYER                                │
+│ Analysis, recommendation, drafting, explanation      │
+├──────────────────────────────────────────────────────┤
+│ 6. HUMAN DECISION / EXECUTION LAYER                  │
+│ Final plan, budget, Buy/Skip, tasks, report edits    │
+└──────────────────────────────────────────────────────┘
 ```
 
-Parity tests should cover:
+Core rule:
 
-- DR
-- Organic Traffic
-- Search Volume
-- Keyword Difficulty
-- SERP Position
-- Ranking URL
-- Keyword Research
-- Backlinks
+```text
+FACTS → AI REASONING → HUMAN DECISION
+```
 
-There must always be a safe rollback path during migration.
+AI never becomes the source of factual SEO/analytics metrics.
 
 ---
 
-# 4. Terminology
+# 3. Project Model
 
-Use these terms consistently.
-
-## Source Domain
-
-Website where the backlink will be purchased or placed.
-
-Example:
+Product rule:
 
 ```text
-ruangberita.com
+1 Project = 1 Client = 1 primary Website
 ```
 
-## Target Domain
+A Project exists from prospect stage and survives conversion to Active.
 
-Client website receiving the backlink.
+Do not create a separate Client object for MVP unless future requirements explicitly change this rule.
 
-Example:
+Recommended lifecycle:
 
-```text
-arsjadrasjid.com
-```
+- Prospect;
+- Assessment;
+- Proposal;
+- Active;
+- Lost;
+- Archived.
 
-## Target URL
-
-Specific page on the Target Domain receiving the backlink.
-
-Example:
-
-```text
-https://arsjadrasjid.com/ai-generatif-di-dunia/
-```
-
-## Keyword / Anchor
-
-Keyword or anchor text recommended for the backlink.
-
-Never mix:
-
-- Source Domain
-- Target Domain
-- Target URL
+Everything important must be linkable to `project_id`.
 
 ---
 
-# 5. SEO Provider Layer
+# 4. Existing Production Tables — Preserve
 
-Create one generic SEO provider wrapper.
+Current production includes legacy/operational data such as:
+
+- `sudah_dibeli`;
+- `traffic_nol`;
+- `domain_sudah_pernah`;
+- `check_logs`;
+- `search_history`.
+
+Current additive SEO/backlink foundation includes:
+
+- `projects`;
+- `placement_orders`;
+- `backlinks`;
+- `global_domain_cache`;
+- `keyword_metrics_cache`;
+- `keyword_rank_cache`;
+- `seo_research_runs`.
+
+These tables must not be destructively replaced.
+
+At the current baseline, historical legacy records and SEO cache/research logs contain real production data. Preserve them.
+
+Existing `projects`, `placement_orders`, and `backlinks` remain the base for broader Project/off-page architecture rather than being recreated under new names.
+
+---
+
+# 5. Shared Internal Access Architecture
+
+Target product requirement:
+
+> All authorized internal SEO users can see all Projects and shared operational data.
+
+Current production uses ownership-oriented `user_id = auth.uid()` RLS for several operational tables.
+
+Do not solve the new requirement by disabling RLS or creating unrestricted authenticated policies.
+
+## Recommended safe model
+
+Add workspace/team authorization:
+
+```text
+app_workspaces
+app_workspace_members
+```
+
+Suggested fields:
+
+### `app_workspaces`
+
+- `id`;
+- `name`;
+- `created_at`;
+- `updated_at`.
+
+### `app_workspace_members`
+
+- `workspace_id`;
+- `user_id`;
+- `role`;
+- `status`;
+- `created_at`.
+
+For MVP, role can remain simple because all authorized internal members have broad visibility.
+
+Add nullable/additive `workspace_id` to new Project-scoped tables and, where appropriate, existing shared operational tables.
+
+Existing `user_id` should remain available as creator/owner/audit metadata rather than being removed.
+
+RLS should authorize based on active workspace membership.
+
+Any backfill of existing rows into a workspace requires explicit migration verification and must preserve original `user_id`.
+
+---
+
+# 6. External Data & Intelligence Architecture
+
+The goal is not to maximize integrations. The goal is to use the minimum reliable source for each factual need while still supporting the broader SEO workflow.
+
+## 6.1 Primary SEO metric engine
+
+Primary provider remains:
+
+```text
+Apify Actor: pro100chok/ahrefs-seo-tools
+```
+
+Use for supported factual SEO metrics such as:
+
+- DR / authority;
+- Organic Traffic;
+- backlinks;
+- referring domains;
+- keyword ideas;
+- keyword metrics;
+- keyword difficulty;
+- CPC;
+- Traffic Potential;
+- keyword rank;
+- SERP overview;
+- top keywords/pages;
+- backlink overview/list;
+- broken links where supported.
+
+The application must not depend on raw Actor response shapes outside the provider normalization layer.
+
+## 6.2 Site Audit / crawl sources
+
+Comprehensive on-page/technical audit needs page-level crawl/check data that may not be fully covered by the primary Ahrefs actor.
+
+Allowed source strategy:
+
+1. reuse existing OpenSEO capability where it provides required checks;
+2. use public website crawl/data collection through supported server-side tooling;
+3. use Apify actors/capabilities where suitable;
+4. use connected Search Console/Analytics/CMS data for enrichment;
+5. do not deprecate OpenSEO until required Site Audit parity exists elsewhere.
+
+OpenSEO is therefore **legacy but still operationally permitted** for audit coverage during migration.
+
+## 6.3 Connected sources
+
+Connected systems are factual data sources, not generative reasoning providers.
+
+Target sources may include:
+
+- Google Search Console;
+- Google Analytics / GA4;
+- Google Ads;
+- Shopify;
+- WooCommerce;
+- WordPress/CMS;
+- supported ecommerce/conversion systems;
+- supported paid-media sources.
+
+Use Lovable-supported connectors when technically appropriate.
+
+Do not claim a connector is implemented merely because it exists in the Lovable catalog. Each integration must have its own implementation/authorization/verification phase.
+
+## 6.4 Manual sources
+
+Manual data is always supported as fallback/primary input where relevant:
+
+- form;
+- paste;
+- CSV/XLSX;
+- JSON/TXT;
+- PDF/DOCX;
+- screenshot/image;
+- URL/link;
+- other supported media.
+
+---
+
+# 7. AI Architecture
+
+## 7.1 Provider abstraction
+
+All new AI workflows must go through an application-level AI abstraction.
+
+Conceptual interface:
+
+```ts
+analyzeProjectContext();
+analyzeAudit();
+analyzeCompetitors();
+prioritizeKeywords();
+recommendTargetPages();
+analyzeBacklinkPlan();
+generateProposalSection();
+generateReport();
+runProjectPrompt();
+```
+
+UI must not import provider-specific SDKs or keys.
+
+## 7.2 Target provider strategy
+
+For new general reasoning/document-analysis workflows, prefer **Lovable managed AI / AI Gateway** where supported and economically appropriate.
+
+Target motivation:
+
+- reduce separate AI integration overhead;
+- reuse Lovable-managed capability;
+- support document/analysis/drafting workflows.
+
+Do not assume unlimited free usage. Actual model support, quotas, and billing behavior must be validated during implementation.
+
+## 7.3 Existing OpenAI compatibility
+
+Current code includes server-side OpenAI reasoning for backlink recommendation.
+
+Do not remove it immediately.
+
+Treat it as an existing provider behind the abstraction until:
+
+1. the managed AI path is implemented;
+2. structured output parity is tested;
+3. backlink recommendation quality is validated;
+4. rollback is available.
+
+## 7.4 AI factual integrity
+
+Generative AI must never invent:
+
+- DR;
+- Organic Traffic;
+- Search Volume;
+- KD;
+- CPC;
+- Traffic Potential;
+- SERP Position;
+- backlinks/referring domains;
+- analytics values;
+- ads values;
+- ecommerce/conversion values.
+
+AI receives factual structured data and produces reasoning.
+
+## 7.5 Human control
+
+AI output is suggestion/draft unless explicitly committed by user action.
+
+AI must not silently overwrite:
+
+- Project confirmed fields;
+- manual Keyword;
+- manual Target URL;
+- final budget;
+- final backlink quantity;
+- final backlink strategy;
+- contractual guarantees;
+- human-authored proposal/report content.
+
+---
+
+# 8. SEO Provider Layer — Preserve and Extend
+
+Existing normalized provider architecture remains valid.
 
 Recommended structure:
 
 ```text
 src/lib/seo/
 ├── ahrefs.provider.ts
-├── domain-research.service.ts
-├── keyword-research.service.ts
-├── rank.service.ts
-├── recommendation.service.ts
 ├── cache.service.ts
-└── ai.provider.ts
+├── domain-research.*
+├── keyword-research.*
+├── rank.service.ts            # when introduced
+├── recommendation.*
+├── audit/                     # additive
+│   ├── audit.types.ts
+│   ├── audit.service.ts
+│   ├── audit-normalizer.ts
+│   └── providers/
+├── competitor/                # additive
+├── project-intelligence/      # additive
+└── ai/
+    ├── ai.provider.ts
+    ├── lovable-ai.provider.ts
+    └── openai.provider.ts     # existing/compatibility
 ```
 
-Do not build separate provider integrations for domain API, keyword API, SERP API, or backlink API.
-
-All Ahrefs/Apify functionality must flow through:
-
-```text
-ahrefs.provider.ts
-```
-
-Conceptual interface:
-
-```ts
-runAhrefs({
-  searchType,
-  urls,
-  keyword,
-  country,
-  additionalOptions,
-});
-```
-
-The rest of the application must not depend on the raw Apify response format.
-
-Normalize all responses into internal application types.
+Do not force exact filenames if the current repository structure already has equivalent modules; reuse before reorganizing.
 
 ---
 
-# 6. Ahrefs Feature Mapping
+# 9. Ahrefs Feature Mapping — Preserve
 
-Primary provider:
+Primary Actor:
 
 ```text
 pro100chok/ahrefs-seo-tools
 ```
 
-## Domain Research
+Expected supported search types may include:
 
-Use the appropriate Ahrefs search types for:
+### Domain
 
-- Domain Rating / DR
-- Organic Traffic
-- Backlinks
-- Referring Domains
-- Top Keywords
-- Top Pages
-- Domain Overview
+- `website_authority`;
+- `traffic_overview`;
+- `website_details` where needed.
 
-Expected search types include:
+### Keyword
 
-- `website_authority`
-- `traffic_overview`
+- `keyword_ideas`;
+- `keyword_metrics`;
+- `keyword_difficulty`.
 
-## Keyword Research
+### Rank
 
-Use the appropriate search types for:
+- `keyword_rank`.
 
-- Keyword Ideas
-- Search Volume
-- Keyword Difficulty / KD
-- CPC
-- Traffic Potential
+### SERP
 
-Expected search types include:
+- `serp_overview`.
 
-- `keyword_ideas`
-- `keyword_metrics`
-- `keyword_difficulty`
+### Backlinks
 
-## Rank Research
+- `backlinks_overview`;
+- `backlinks_list`;
+- `broken_links`.
 
-Use rank-check functionality for:
+### Other supported capability
 
-- Current SERP Position
-- Ranking URL
-- Ranking page
-- Exact keyword/domain matching
+- `sitemap`;
+- `ai_visibility` if later relevant.
 
-Expected search type:
+Do not request every search type on every workflow.
 
-- `keyword_rank`
-
-## SERP Research
-
-Use SERP functionality for:
-
-- top ranking pages
-- competitors
-- ranking context
-- SERP analysis
-
-Expected search type:
-
-- `serp_overview`
-
-## Backlink Research
-
-Use backlink functionality for:
-
-- backlink overview
-- backlink list
-- referring domains
-- anchor distribution
-- broken links
-
-Expected search types include:
-
-- `backlinks_overview`
-- `backlinks_list`
-- `broken_links`
-
-## Advanced Features
-
-The same provider should support future modules such as:
-
-- competitor research
-- AI visibility
-- sitemap/page discovery
-- broken link opportunities
-- advanced backlink audit
-
-Expected search types may include:
-
-- `website_details`
-- `ai_visibility`
-- `sitemap`
-
-Important: one Actor does not mean every SEO metric has to be requested every time.
-
-Only call the search type required for the specific task.
+Only request the factual data needed for the current action.
 
 ---
 
-# 7. AI Provider
+# 10. Cache Architecture — Preserve
 
-Use OpenAI as the default AI reasoning provider.
+## `global_domain_cache`
 
-Environment:
+Purpose:
 
-```text
-OPENAI_API_KEY
-```
+- reuse normalized domain metrics across Projects;
+- prevent unnecessary paid research.
 
-Design the AI layer behind an abstraction so another provider can be added later without rewriting the recommendation workflow.
+Normalization:
 
-Example:
+- lowercase;
+- remove protocol;
+- remove `www.`;
+- remove path/query for domain identity;
+- remove trailing slash.
 
-```text
-AI_PROVIDER=openai
-```
-
-AI is responsible only for reasoning tasks such as:
-
-- semantic relevance
-- source-domain topical analysis
-- content-gap reasoning
-- keyword candidate generation
-- anchor recommendation
-- target-page matching
-- recommendation ranking
-- recommendation explanation
-- backlink diversity reasoning
-
-AI must never invent:
-
-- DR
-- Organic Traffic
-- Search Volume
-- Keyword Difficulty
-- CPC
-- Traffic Potential
-- SERP Position
-- Backlink count
-- Referring Domains
-
-All numerical SEO metrics must come from the Ahrefs actor or valid cached Ahrefs data.
-
----
-
-# 8. Existing Data Must Be Preserved
-
-Existing operational tables may include:
-
-- `sudah_dibeli`
-- `traffic_nol`
-- `domain_sudah_pernah`
-- `check_logs`
-
-These are existing/legacy operational records.
-
-Do not:
-
-- drop them
-- rename them
-- overwrite historical values
-- delete existing rows
-
-New architecture must be additive.
-
-Existing `sudah_dibeli` rows should eventually be mapped into the new project/placement architecture through migration utilities.
-
-Do not overwrite existing Keyword or Target Page values during migration.
-
----
-
-# 9. Projects Table
-
-Create:
+Default freshness:
 
 ```text
-projects
+DR / Authority: 30 days
+Organic Traffic: 14 days
 ```
 
-Fields:
+## `keyword_metrics_cache`
 
-- `id`
-- `owner_id`
-- `name`
-- `main_domain`
-- `created_at`
-- `updated_at`
-
-`main_domain` represents the client Target Domain.
-
-Example:
+Key should include:
 
 ```text
-Project: Arsjad Rasjid
-main_domain: arsjadrasjid.com
+normalized_keyword + country + language
 ```
-
----
-
-# 10. Placement Orders
-
-Create:
-
-```text
-placement_orders
-```
-
-Fields:
-
-- `id`
-- `project_id`
-- `owner_id`
-- `source_domain`
-- `keyword`
-- `target_url`
-- `platform`
-- `price`
-- `status`
-- `dr`
-- `traffic`
-- `search_volume`
-- `keyword_difficulty`
-- `traffic_potential`
-- `current_serp_position`
-- `recommendation_score`
-- `created_at`
-- `updated_at`
-
-`project_id` may be null.
-
-Rows where:
-
-```sql
-project_id IS NULL
-```
-
-are treated as:
-
-```text
-Uncategorized / Drafts
-```
-
-Supported statuses:
-
-- Awaiting Payment
-- Order Processing
-- Content Pending
-- User Review
-- Live & Verified
-- Cancelled
-
-SEO metric fields in `placement_orders` are snapshots.
-
-They represent the metrics used when the placement decision was made.
-
-Do not retroactively rewrite historical placement metrics whenever cache data changes.
-
----
-
-# 11. Live Backlinks
-
-Create:
-
-```text
-backlinks
-```
-
-Use this table only for actual/live backlinks.
-
-Fields:
-
-- `id`
-- `project_id`
-- `placement_order_id`
-- `source_domain`
-- `target_url`
-- `anchor_text`
-- `live_url`
-- `verified_at`
-- `created_at`
-- `updated_at`
-
-When placement status becomes:
-
-```text
-Live & Verified
-```
-
-allow creation/update of the corresponding backlink record.
-
----
-
-# 12. Global Domain Cache
-
-Create:
-
-```text
-global_domain_cache
-```
-
-Fields:
-
-- `normalized_domain`
-- `dr`
-- `traffic`
-- `backlinks`
-- `referring_domains`
-- `top_keywords` JSONB
-- `top_pages` JSONB
-- `provider`
-- `authority_checked_at`
-- `traffic_checked_at`
-- `created_at`
-- `updated_at`
-
-`normalized_domain` must be unique.
-
-Domain normalization:
-
-- lowercase
-- remove protocol
-- remove `www.`
-- remove trailing slash
-- remove path
-- remove query string
-
-Use separate freshness rules.
-
-Default:
-
-```text
-Authority / DR cache: 30 days
-Traffic cache:        14 days
-```
-
-Before any paid domain research:
-
-1. normalize domain
-2. check `global_domain_cache`
-3. use fresh cached values when available
-4. call Apify only for missing/stale metrics
-
-If cache is valid, do not call Apify.
-
----
-
-# 13. Keyword Metrics Cache
-
-Create:
-
-```text
-keyword_metrics_cache
-```
-
-Unique key:
-
-```text
-normalized_keyword + country
-```
-
-Fields:
-
-- `keyword`
-- `normalized_keyword`
-- `country`
-- `search_volume`
-- `keyword_difficulty`
-- `cpc`
-- `traffic_potential`
-- `provider`
-- `checked_at`
-- `raw_data` JSONB optional
-- `created_at`
-- `updated_at`
 
 Default freshness:
 
@@ -634,46 +499,13 @@ Default freshness:
 30 days
 ```
 
-Country default:
+## `keyword_rank_cache`
+
+Key should include:
 
 ```text
-id
+target_domain + normalized_keyword + country + language
 ```
-
-Reuse keyword metrics across Projects whenever possible.
-
----
-
-# 14. Keyword Rank Cache
-
-Create:
-
-```text
-keyword_rank_cache
-```
-
-Unique key:
-
-```text
-target_domain + normalized_keyword + country
-```
-
-Fields:
-
-- `target_domain`
-- `keyword`
-- `normalized_keyword`
-- `country`
-- `position`
-- `ranking_url`
-- `ranking_title`
-- `traffic`
-- `dr`
-- `ur`
-- `provider`
-- `checked_at`
-- `created_at`
-- `updated_at`
 
 Default freshness:
 
@@ -681,844 +513,1238 @@ Default freshness:
 7 days
 ```
 
-Rank information changes faster than keyword metrics and therefore uses a shorter cache period.
+## `seo_research_runs`
+
+Use for:
+
+- provider;
+- search type;
+- query;
+- cache hit;
+- status;
+- result count;
+- error;
+- duration;
+- cost/reliability analysis where possible.
+
+Do not store secrets.
 
 ---
 
-# 15. SEO Research Run Log
+# 11. Universal Evidence & Import Architecture
 
-Create:
+Manual input must use shared/reusable infrastructure instead of custom parsing in every module.
+
+## Recommended tables
+
+### `project_evidence`
+
+Suggested fields:
+
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `created_by`;
+- `source_type`;
+- `title`;
+- `original_filename`;
+- `mime_type`;
+- `storage_path` / managed file reference;
+- `source_url`;
+- `raw_text` where extraction is available;
+- `extracted_metadata` JSONB;
+- `processing_status`;
+- `created_at`;
+- `updated_at`.
+
+Do not store credentials in evidence records.
+
+### `data_imports`
+
+Suggested fields:
+
+- `id`;
+- `workspace_id`;
+- `project_id` nullable where global import is valid;
+- `module`;
+- `source_type`;
+- `original_filename`;
+- `mapping` JSONB;
+- `normalization_summary` JSONB;
+- `status`;
+- `created_by`;
+- `created_at`.
+
+Optional raw row staging can use:
+
+- JSONB attached to import for small imports; or
+- additive `data_import_rows` for larger/retryable imports.
+
+## Canonical import pipeline
 
 ```text
-seo_research_runs
+Input
+  ↓
+Extract / Parse
+  ↓
+Detect Fields
+  ↓
+Normalize
+  ↓
+Validate
+  ↓
+Preview
+  ↓
+Confirm
+  ↓
+Commit to target tables
 ```
 
-Fields:
+No uncertain field mapping should bypass Preview.
 
-- `id`
-- `provider`
-- `search_type`
-- `query`
-- `cache_hit`
-- `status`
-- `result_count`
-- `error`
-- `duration_ms`
-- `created_at`
+## Provenance
 
-Use this table to monitor:
+Normalized data should identify its source when practical:
 
-- API cost behaviour
-- cache effectiveness
-- failed requests
-- excessive research calls
-- provider reliability
-
-Do not store API secrets in this table.
+- Manual Entry;
+- Manual Upload;
+- Connected Source;
+- API;
+- Public Crawl;
+- AI Extracted;
+- Legacy Import.
 
 ---
 
-# 16. Server-Side Functions
+# 12. Project Data Model Expansion
 
-Frontend should interact with a small application-level service interface.
+Existing `projects` table must be extended additively.
 
-Preferred functions:
+Current production fields should remain.
 
-```ts
-researchDomain();
-generateKeywordIdeas();
-researchKeyword();
-checkKeywordRank();
-generateBacklinkSuggestions();
-refreshSeoData();
-```
+Potential additive fields:
 
-Internally these functions may call:
+- `workspace_id`;
+- `lifecycle_status` or controlled use of existing `status`;
+- `industry`;
+- `objectives` JSONB;
+- `target_market`;
+- `current_problem`;
+- `contact_person`;
+- `budget_indication`;
+- `known_competitors` JSONB;
+- `discovery_notes`;
+- `activated_at`.
 
-- `ahrefs.provider.ts`
-- `cache.service.ts`
-- `ai.provider.ts`
+Do not require every field.
 
-Frontend should never understand raw Apify API structures.
-
----
-
-# 17. Step 1 — Source Domain Input
-
-Purpose: build a Source Domain list.
-
-Support:
-
-- manual single-domain input
-- manual bulk input
-
-File import:
-
-- CSV
-- XLSX
-- TXT
-- JSON
-- HTML
-
-PDF:
-
-- best-effort extraction only
-- always require Data Preview before save
-
-Google Sheet:
-
-- support public accessible Google Sheets where technically possible
-- if authentication is required and no connector is available, show a clear unsupported/authentication message
-
-Normalize imported fields.
-
-Detect likely columns:
-
-- domain
-- DR
-- traffic
-- price
-- platform
-- keyword
-- target URL
-
-Show:
-
-```text
-DATA PREVIEW
-```
-
-Actions:
-
-```text
-[Simpan & Lanjut]
-[Proses Ulang]
-```
-
-Nothing should be permanently inserted before user confirmation.
+If schema flexibility is preferred, optional profile fields may be separated into a `project_profile` table, but do not create parallel sources of truth without reason.
 
 ---
 
-# 18. Step 2 — Source Domain Research
+# 13. Project Connections
 
-For each Source Domain:
+Recommended table:
 
-1. Normalize the domain.
-2. Check whether it has previously been used in:
-   - selected Project
-   - another accessible Project
-   - legacy existing backlink data
-3. Do not automatically block duplicates.
-4. Show a warning and allow the user to continue.
+```text
+project_connections
+```
 
-Then check `global_domain_cache`.
+Suggested fields:
 
-If cache is valid:
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `provider`;
+- `connection_type`;
+- `status`;
+- `external_account_ref` / property reference;
+- `last_synced_at`;
+- `last_error`;
+- `metadata` JSONB;
+- `created_at`;
+- `updated_at`.
 
-- return cached data
+Do not store OAuth secrets/access tokens directly unless required by the supported connector architecture and stored in an approved server-side secret mechanism.
 
-If cache is missing/stale:
-
-- run only the required Ahrefs search types
-
-Minimum output:
-
-- DR
-- Organic Traffic
-
-Optional output:
-
-- Backlinks
-- Referring Domains
-- Top Keywords
-- Top Pages
-
-Store refreshed data in `global_domain_cache`.
-
-Display KPI cards:
-
-- DR
-- Organic Traffic
-- Referring Domains
-- Last Checked
-- Data Source
-- Cache / Fresh status
+The table is a registry/status layer, not a credential vault.
 
 ---
 
-# 19. Step 3 — Keyword & Target Page Recommendation
+# 14. AI Client Intelligence
 
-This must only run when the user explicitly clicks:
+Recommended tables:
 
-```text
-[Generate Suggestions]
-```
+### `project_intelligence_runs`
 
-Never automatically call paid APIs when the page loads.
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `prompt` nullable;
+- `analysis_type`;
+- `input_refs` JSONB;
+- `output` JSONB;
+- `provider`;
+- `status`;
+- `created_by`;
+- `created_at`.
 
-## Phase A — Source Domain Profile
+### Optional `project_field_suggestions`
 
-Use Source Domain cache, including:
+Use if field-level Accept/Edit/Ignore requires persistent review state.
 
-- DR
-- Traffic
-- Top Keywords
-- Top Pages
+Suggested fields:
 
-If source data does not exist, perform Domain Research first.
+- `project_id`;
+- `field_name`;
+- `suggested_value` JSONB;
+- `evidence_refs` JSONB;
+- `confidence`;
+- `review_status`;
+- `created_at`.
 
-## Phase B — Target Domain Profile
-
-Use the selected Project's `main_domain`.
-
-Example:
-
-```text
-arsjadrasjid.com
-```
-
-Cache Target Domain analysis because the same client domain will be reused for many Source Domains.
-
-Gather useful target context:
-
-- Top Keywords
-- Top Pages
-- Traffic
-- Existing Ranking Pages
-
-## Phase C — AI Candidate Generation
-
-Pass structured Source Domain + Target Domain data into OpenAI.
-
-Ask OpenAI to generate approximately:
-
-```text
-8–12 keyword / target-page candidate combinations
-```
-
-AI should prioritize semantic relevance.
-
-At this stage AI is not allowed to invent SEO metrics.
-
-## Phase D — SEO Verification
-
-For shortlisted candidates:
-
-1. Check `keyword_metrics_cache`.
-2. Fetch missing metrics only.
-3. Check `keyword_rank_cache`.
-4. Fetch missing rank information only.
-
-Metrics:
-
-- Search Volume
-- KD
-- CPC
-- Traffic Potential
-- Current Position
-- Ranking URL
-
-Do not research hundreds of candidate keywords unnecessarily.
-
-## Phase E — Final AI Ranking
-
-Send enriched structured candidates to OpenAI.
-
-Include:
-
-- Source Domain context
-- Target Domain context
-- Keyword
-- Target URL
-- Search Volume
-- KD
-- Traffic Potential
-- Current Position
-- Previous Placements
-- Previous Anchor / Target combinations
-
-AI should rank based on:
-
-1. Source-domain topical relevance
-2. Target-domain SEO opportunity
-3. Existing ranking strength
-4. Search Volume
-5. Keyword Difficulty
-6. Anchor diversity
-7. Target-page diversity
-8. Existing backlink history
-
-Return:
-
-```text
-Top 5 recommendations
-```
+Do not mutate Project fields until user accepts.
 
 ---
 
-# 20. Recommendation Rules
+# 15. Site Audit Architecture
 
-Avoid repeatedly recommending the same:
+## 15.1 Audit run
 
-```text
-Keyword + Target URL
-```
-
-across many Source Domains unless there is strong justification.
-
-Existing manual Keyword / Target URL must not be overwritten automatically.
-
-Low-confidence AI recommendations must never overwrite human input.
-
-If no relevant existing page exists, allow recommendation:
+Recommended table:
 
 ```text
-Suggested New Page
+site_audits
 ```
 
-Clearly mark it as a recommendation, not as an existing URL.
+Suggested fields:
+
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `domain`;
+- `status`;
+- `started_at`;
+- `completed_at`;
+- `health_score` nullable;
+- `source_coverage` JSONB;
+- `summary` JSONB;
+- `created_by`;
+- `created_at`.
+
+## 15.2 Audit findings
+
+Recommended table:
+
+```text
+audit_findings
+```
+
+Suggested fields:
+
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `audit_id`;
+- `issue_type`;
+- `category`;
+- `severity`;
+- `status`;
+- `url` nullable;
+- `affected_urls` JSONB nullable;
+- `details` JSONB;
+- `evidence` JSONB;
+- `how_to_fix`;
+- `ai_analysis` JSONB nullable;
+- `task_id` nullable;
+- `created_at`;
+- `updated_at`.
+
+Supported user-facing states include:
+
+- Passed;
+- Urgent;
+- Issue;
+- Warning;
+- Not Found;
+- Unable to Verify.
+
+Do not overwrite factual raw audit output with AI reasoning.
+
+Keep provider/raw evidence available separately where useful.
+
+## 15.3 Audit behavior
+
+No normal scope selector.
+
+A user-triggered comprehensive audit runs all supported checks.
+
+Paid/expensive external calls still require cost-aware orchestration and should not repeat automatically when reopening pages.
 
 ---
 
-# 21. Suggestion UI
+# 16. Competitive Analysis Architecture
 
-Display:
+Recommended tables:
 
-- Keyword Suggestion
-- Target Page
-- Search Volume
-- KD
-- Traffic Potential
-- SERP Position
-- Recommendation Score
+### `project_competitors`
 
-If actual SERP position is greater than 30:
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `domain`;
+- `normalized_domain`;
+- `source`;
+- `competitor_type` (`organic`, `paid`, `both`);
+- `is_primary`;
+- `is_ignored`;
+- `created_at`;
+- `updated_at`.
 
-UI may display:
+### `competitor_snapshots`
 
-```text
-0
-```
+Optional normalized snapshot table for time-based analysis.
 
-but database must store the actual position.
+Can store:
 
-Actions:
+- authority;
+- traffic;
+- shared keywords;
+- paid keywords;
+- backlinks/referring domains;
+- top pages;
+- raw/normalized context;
+- checked_at.
 
-```text
-[Use Recommendation]
-[Regenerate]
-[Input Manual]
-[Next: Input Placement Data]
-```
-
-Regenerate requires explicit user action because it may consume API credits.
-
----
-
-# 22. Step 4 — Placement Order
-
-Auto-fill selected recommendation:
-
-- Source Domain
-- Keyword
-- Target URL
-
-Fields:
-
-## Platform
-
-Examples:
-
-- Rajabacklink
-- Manual Outreach
-- Other
-
-## Price
-
-Numeric / currency formatted.
-
-## Status
-
-- Awaiting Payment
-- Order Processing
-- Content Pending
-- User Review
-- Live & Verified
-- Cancelled
-
-Store SEO metric snapshots together with the order.
+Reuse `global_domain_cache` for global reusable domain facts rather than duplicating common domain metrics unnecessarily.
 
 ---
 
-# 23. Step 5 — Project Assignment
+# 17. Keyword & SERP Architecture
 
-At the end of Placement Order, show Recent Projects.
+Existing keyword cache remains global/reusable.
 
-Query latest 3–5 Projects.
+Add Project-specific decision/opportunity layer rather than duplicating all provider metrics.
 
-Display pills such as:
-
-```text
-[Arsjad Rasjid]
-[Client B]
-[Client C]
-```
-
-Clicking one assigns `project_id`.
-
-Also provide:
+Recommended table:
 
 ```text
-[+ Buat Proyek Baru]
+keyword_opportunities
 ```
 
-Required fields:
+Suggested fields:
 
-- Project Name
-- Main / Target Domain
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `keyword`;
+- `normalized_keyword`;
+- `country`;
+- `language`;
+- `intent`;
+- `opportunity_type`;
+- `target_url`;
+- `target_page_action` (`optimize_existing`, `create_new`, `manual`);
+- `opportunity_score`;
+- `reasoning` JSONB;
+- `status`;
+- `created_at`;
+- `updated_at`.
 
-Also provide:
+Factual metrics should primarily be read from cache/provider snapshots instead of being treated as AI-generated values.
 
-```text
-[Simpan ke Draft]
-```
-
-Draft means:
-
-```sql
-project_id IS NULL
-```
+When a historical decision requires immutable metrics, store a snapshot with the decision record.
 
 ---
 
-# 24. Dashboard
+# 18. SEO Plan Architecture
 
-Main navigation:
-
-- Projects
-- Uncategorized / Drafts
-- Legacy Data / Existing Domain History
-
-## Projects
-
-Each Project card shows:
-
-- Project Name
-- Main Domain
-- Placement Count
-- Active Orders
-- Live Backlinks
-- Total Spend
-
-Opening a Project displays:
-
-- Placement Orders
-- Live Backlinks
-- SEO history
-
-## Drafts
-
-Query:
-
-```sql
-project_id IS NULL
-```
-
-Search:
+Recommended table:
 
 ```text
-Cari domain atau keyword...
+seo_plan_items
 ```
 
-Actions:
+Suggested fields:
 
-```text
-[Continue]
-[Pindahkan ke Proyek]
-[Delete]
-```
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `category`;
+- `title`;
+- `description`;
+- `priority`;
+- `source_type`;
+- `source_id`;
+- `keyword`;
+- `target_url`;
+- `expected_impact`;
+- `recommendation`;
+- `status`;
+- `created_by`;
+- `created_at`;
+- `updated_at`.
 
-Moving a Draft to a Project must only update `project_id`.
+Source can be:
 
-Do not recreate the record.
+- Audit;
+- Competitor;
+- Keyword;
+- Backlink;
+- Manual;
+- AI Recommendation.
+
+Preserve source traceability.
 
 ---
 
-# 25. Stepper UX
+# 19. Proposal Architecture
 
-Persistent 5-step workflow:
+Recommended tables:
 
-1. Source Domain
-2. Metrics
-3. Suggestions
-4. Placement
-5. Project / Save
+### `proposals`
 
-Allow backwards navigation.
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `title`;
+- `status`;
+- `currency`;
+- `budget_total` nullable;
+- `version`;
+- `created_by`;
+- `created_at`;
+- `updated_at`.
 
-Do not lose entered data.
+### `proposal_sections`
 
-Do not automatically repeat API calls when navigating backwards.
+- `id`;
+- `proposal_id`;
+- `section_type`;
+- `title`;
+- `position`;
+- `content` JSONB / structured rich content;
+- `source_refs` JSONB;
+- `ai_generated`;
+- `created_at`;
+- `updated_at`.
 
----
+Budget values are user-controlled.
 
-# 26. Keyword Research Module
+AI-generated sections must not become contractual truth without user review.
 
-Create a standalone Keyword Research feature.
-
-Input:
-
-```text
-Seed Keyword
-```
-
-Example:
-
-```text
-electric vehicle indonesia
-```
-
-Flow:
-
-```text
-Seed Keyword
-    ↓
-Ahrefs Keyword Ideas
-    ↓
-Preliminary Candidates
-    ↓
-Filtering
-    ↓
-Shortlist
-    ↓
-keyword_metrics only for shortlisted keywords
-```
-
-Do not request full metrics for every raw keyword suggestion.
-
-Display:
-
-- Keyword
-- Search Volume
-- KD
-- Traffic Potential
-- CPC
-
-Allow selected keyword to be passed into:
-
-- Backlink Recommendation
-- Placement workflow
+Proposal builder must allow modular add/remove/reorder/edit.
 
 ---
 
-# 27. Domain Research Module
+# 20. Delivery Plan Architecture
 
-Create a standalone Domain Research feature.
+Recommended tables:
 
-Input:
+### `delivery_plans`
 
-- one domain
-- multiple domains
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `proposal_id` nullable;
+- `status`;
+- `start_date`;
+- `end_date`;
+- `created_at`;
+- `updated_at`.
 
-Flow:
+### `delivery_plan_items`
+
+- `id`;
+- `delivery_plan_id`;
+- `workstream`;
+- `title`;
+- `period_label` / month/phase;
+- `quantity` nullable;
+- `unit` nullable;
+- `priority`;
+- `source_refs` JSONB;
+- `status`;
+- `created_at`;
+- `updated_at`.
+
+Do not force quantity-based deliverables into hundreds of individual tasks until necessary.
+
+---
+
+# 21. Task Architecture
+
+Recommended table:
 
 ```text
-Normalize Domains
+tasks
+```
+
+Suggested fields:
+
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `delivery_plan_item_id` nullable;
+- `title`;
+- `description`;
+- `category`;
+- `priority`;
+- `status`;
+- `assigned_to` nullable;
+- `due_date` nullable;
+- `related_url` nullable;
+- `related_keyword` nullable;
+- `source_type`;
+- `source_id` nullable;
+- `ai_recommendation` JSONB nullable;
+- `before_evidence` JSONB nullable;
+- `after_evidence` JSONB nullable;
+- `result` JSONB nullable;
+- `created_by`;
+- `created_at`;
+- `updated_at`.
+
+Core workflow:
+
+```text
+To Do → In Progress → Done
+```
+
+Optional:
+
+- Blocked;
+- Cancelled.
+
+No mandatory approval states.
+
+---
+
+# 22. Backlink Architecture — Preserve and Expand
+
+The existing backlink architecture remains core.
+
+## 22.1 Terminology
+
+### Source Domain
+
+Website where backlink is purchased/placed.
+
+### Target Domain
+
+Project/client website receiving backlink.
+
+### Target URL
+
+Specific client page receiving backlink.
+
+### Live URL
+
+Actual published source page containing the backlink.
+
+Never mix these concepts.
+
+## 22.2 `placement_orders`
+
+Continue using for planned/purchased placement workflow.
+
+Existing fields remain.
+
+Potential additive fields as needed:
+
+- `workspace_id`;
+- `vendor` / platform normalization;
+- `purchase_date` / ordered timestamp alignment;
+- `live_url` only if not represented through backlink record;
+- metric snapshot fields required by final decision;
+- recommendation metadata;
+- lifecycle timestamps.
+
+Do not retroactively rewrite metric snapshots when cache changes.
+
+## 22.3 `backlinks`
+
+Continue using for actual/live backlink records.
+
+Potential additive fields:
+
+- `workspace_id`;
+- `vendor`;
+- `price_snapshot` where appropriate;
+- `verified_at`;
+- `monitoring_status`;
+- `last_checked_at`;
+- `last_error`;
+- `monitoring_details` JSONB.
+
+## 22.4 Planning
+
+Recommended table:
+
+```text
+backlink_plans
+```
+
+Suggested fields:
+
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `period`;
+- `kpi_context` JSONB;
+- `ai_recommendation` JSONB nullable;
+- `final_strategy` JSONB;
+- `final_quantity`;
+- `created_by`;
+- `created_at`;
+- `updated_at`.
+
+AI recommendation and human-final strategy must remain distinguishable.
+
+---
+
+# 23. Backlink Source Research Workflow — Preserve Core Rules
+
+Canonical flow:
+
+```text
+Manual/API Source Input
+      ↓
+Normalize Source Domain
+      ↓
+Historical Check
       ↓
 Cache Check
       ↓
-Research missing/stale only
-```
-
-Display:
-
-- Domain
-- DR
-- Organic Traffic
-- Backlinks
-- Referring Domains
-- Top Keywords
-- Top Pages
-- Last Checked
-
-Support bulk input.
-
-Use cache aggressively.
-
----
-
-# 28. Cost Control
-
-Before running bulk external operations display:
-
-- Number of Source Domains
-- Number already cached
-- Number requiring fresh research
-- Number of candidate keywords
-- Number of cached keyword metrics
-- Number requiring Ahrefs metrics
-- Number requiring rank checks
-- Estimated external SEO calls
-- Estimated AI calls
-
-Example:
-
-```text
-Source Domain:          ruangberita.com
-Target:                 arsjadrasjid.com
-Domain Cache:           Available
-Target Cache:           Available
-Candidate Keywords:     8
-Cached Metrics:         5
-New Keyword Metrics:    3
-New Rank Checks:        4
-Estimated:              7 SEO lookups / 1–2 AI calls
-```
-
-Do not hide paid API execution from the user.
-
----
-
-# 29. API Cost Protection Rules
-
-Always:
-
-- use cache first
-- deduplicate domains
-- deduplicate keywords
-- reuse Target Domain research
-- batch requests where supported
-- limit candidate count
-- only enrich shortlisted candidates
-- retry transient failures with a strict retry limit
-
-Never indefinitely retry:
-
-- authentication errors
-- insufficient-credit errors
-- invalid inputs
-
-Partial failures must preserve successful results.
-
----
-
-# 30. Security
-
-All external provider calls must be server-side.
-
-Secrets:
-
-```text
-APIFY_API_KEY
-OPENAI_API_KEY
-```
-
-Legacy during migration only:
-
-```text
-OPENSEO_API_KEY
-```
-
-Never expose any of them to browser code.
-
-Never expose Supabase service-role credentials.
-
-Implement proper Supabase RLS.
-
-Project-specific data must respect ownership/access.
-
-Do not use permissive policies solely to fix frontend errors.
-
-Inspect existing policies before changing them.
-
----
-
-# 31. Implementation Phases
-
-## Phase 1 — Foundation
-
-- inspect current repo
-- add final Ahrefs All-in-One provider
-- add cache architecture
-- add research run logging
-- keep legacy provider untouched
-
-## Phase 2 — Parity Test
-
-Compare legacy providers with Ahrefs All-in-One for:
-
-- DR
-- Traffic
-- Search Volume
-- KD
-- Rank
-- Ranking URL
-- Backlinks
-
-## Phase 3 — Project Management
-
-Add:
-
-- `projects`
-- `placement_orders`
-- `backlinks`
-- Draft / Uncategorized workflow
-
-## Phase 4 — Domain & Keyword Research
-
-Build:
-
-- Domain Research
-- Keyword Research
-- cache orchestration
-
-## Phase 5 — Backlink Recommendation
-
-Build final pipeline:
-
-```text
-Source Profile
+Research Missing/Stale Facts
       ↓
-Target Profile
+Optional AI Recommendation
+      ↓
+Human Buy / Skip / Save Decision
+      ↓
+Placement Order
+      ↓
+Live Backlink
+      ↓
+Monitoring
+```
+
+Historical duplicate does **not** automatically block purchase.
+
+Check same Project, accessible other Project/history, and legacy existing backlink data.
+
+User always retains decision control.
+
+---
+
+# 24. Backlink Keyword / Target Recommendation — Preserve Cost-Aware Pipeline
+
+Existing pipeline remains valid:
+
+```text
+Source Domain Profile
+      ↓
+Target Domain Profile
       ↓
 AI Candidate Generation
       ↓
 SEO Verification
       ↓
 Final AI Ranking
+      ↓
+Human Selection / Manual Override
 ```
 
-## Phase 6 — Migration
+Rules:
 
-Map existing `sudah_dibeli` records into the new architecture where appropriate.
+- never run paid calls automatically on page load;
+- reuse Target Domain data;
+- shortlist before enriching all metrics;
+- cache keyword metrics/rank;
+- avoid repetitive Keyword + Target URL recommendations without justification;
+- do not overwrite manual Keyword/Target URL;
+- allow `Suggested New Page` when no appropriate existing page exists;
+- preserve actual rank in database even if UI simplifies display.
 
-Preserve all original records.
+Existing direct OpenAI implementation can continue until migrated behind AI abstraction.
 
-## Phase 7 — Switch Provider
+---
 
-Only after successful validation:
+# 25. Backlink Lifecycle
+
+Target user-facing lifecycle:
 
 ```text
-SEO_PROVIDER=ahrefs_all_in_one
+Planned
+→ Purchased / Ordered
+→ Content / Processing
+→ Live
+→ Verified
 ```
 
-## Phase 8 — Legacy Deprecation
+Exception states:
 
-Only when production behaviour is confirmed stable:
+- Cancelled;
+- Failed.
 
-- remove unused OpenSEO logic
-- remove old Actor logic
-- remove obsolete provider configuration
+Existing statuses may be migrated/normalized additively. Do not destroy historical status values without a safe mapping plan.
 
----
+Monitoring target states:
 
-# 32. Verification
-
-Before declaring implementation complete, run build / TypeScript checks.
-
-Verify:
-
-- existing domain workflow still works
-- existing data still exists
-- authentication still works
-- RLS is correct
-- one Domain Research works
-- one Keyword Research works
-- one backlink recommendation works
-- one Draft workflow works
-- one Project assignment works
-- one Placement Order works
-- one Live & Verified backlink works
-- cache prevents duplicate research
-- no API keys appear client-side
+- Live;
+- Missing;
+- Redirected;
+- Nofollow Changed;
+- Target Changed;
+- Error;
+- Unable to Verify.
 
 ---
 
-# 33. Final Delivery Summary
+# 26. Reporting Architecture
 
-After implementation provide:
+Recommended tables:
 
-- Files changed
-- Migrations created
-- New tables
-- New routes/components
-- New server functions
-- Cache strategy
-- Ahrefs search types integrated
-- OpenAI usage
-- Legacy integrations still active
-- Legacy integrations deprecated
-- Manual configuration required
-- Known limitations
+### `reports`
+
+- `id`;
+- `workspace_id`;
+- `project_id`;
+- `report_type`;
+- `period_start`;
+- `period_end`;
+- `status`;
+- `prompt` nullable;
+- `source_refs` JSONB;
+- `version`;
+- `created_by`;
+- `created_at`;
+- `updated_at`.
+
+### `report_sections`
+
+- `id`;
+- `report_id`;
+- `section_type`;
+- `title`;
+- `position`;
+- `content` JSONB;
+- `source_refs` JSONB;
+- `ai_generated`;
+- `created_at`;
+- `updated_at`.
+
+Optional normalized metric snapshots can be stored when comparison/history requires immutable values.
+
+Reporting sources may be connected or manual evidence.
+
+AI must state when evidence is unavailable rather than fabricate data.
 
 ---
 
-# 34. Lovable Execution Rules
+# 27. Data Provenance & Traceability
 
-This architecture file is the source of truth for implementation direction.
-
-For future Lovable prompts, prefer:
+Important decisions/findings should be traceable through:
 
 ```text
-Follow docs/SEO_ARCHITECTURE.md and Project Knowledge.
-Implement PHASE X ONLY.
+SOURCE / EVIDENCE
+      ↓
+NORMALIZED FACT
+      ↓
+AI ANALYSIS
+      ↓
+HUMAN DECISION
+      ↓
+TASK / PLAN / PROPOSAL / REPORT
 ```
 
-Do not paste this entire architecture into every Lovable prompt.
+Where practical, records should include:
 
-Lovable should:
+- `source_type`;
+- `source_id` / refs;
+- `provider`;
+- `checked_at` / source date;
+- `created_by`;
+- AI provider/model metadata for AI outputs;
+- human review/commit status.
 
-- inspect only files relevant to the current phase and their direct dependencies
-- avoid scanning/refactoring unrelated parts of the repository
-- reuse existing components/functions before creating replacements
-- modify only files required for the current task
-- stop after the requested phase
+Do not overwrite raw source with AI-generated interpretation.
 
-Recommended stop condition for every implementation prompt:
+---
+
+# 28. File Storage
+
+Use Lovable Cloud managed Supabase Storage or the supported managed file mechanism for uploaded Project evidence.
+
+Rules:
+
+- use private storage for internal files by default;
+- authorize access through authenticated internal workspace membership;
+- store file metadata in database;
+- do not store large binary file content directly in ordinary database text fields;
+- retain original evidence where permitted;
+- extracted text may be stored separately for AI/search processing;
+- design extraction so failure does not delete the uploaded file record.
+
+---
+
+# 29. Public Crawl Architecture
+
+Public website collection must be server-side.
+
+Canonical approach:
+
+```text
+Project Website
+      ↓
+Discover sitemap / URLs
+      ↓
+Crawl with bounded limits
+      ↓
+Normalize page result
+      ↓
+Run deterministic checks
+      ↓
+Store audit findings
+      ↓
+AI analyzes findings
+```
+
+Use strict limits:
+
+- page count;
+- timeout;
+- concurrency;
+- retries;
+- allowed host/domain;
+- response size.
+
+Respect technically appropriate crawl safety and avoid uncontrolled recursive crawling.
+
+---
+
+# 30. Deterministic Audit vs AI Audit
+
+Audit must separate two steps.
+
+## Deterministic factual checks
+
+Examples:
+
+- title exists/length;
+- meta description exists/length;
+- H1 count;
+- canonical value;
+- noindex;
+- robots/sitemap availability;
+- broken/response status where known;
+- image alt presence;
+- structured-data presence;
+- response time facts.
+
+## AI reasoning
+
+Examples:
+
+- how important is the issue in this Project context?;
+- what business/SEO impact may it have?;
+- what fix is recommended?;
+- what meta description/title draft fits the page/keyword?;
+- which findings should be grouped or prioritized?
+
+AI must never change the factual check result itself.
+
+---
+
+# 31. Cost Control
+
+Always:
+
+- cache first;
+- normalize before lookup;
+- deduplicate domains;
+- deduplicate keywords;
+- reuse Project/Target Domain research;
+- batch requests where supported;
+- enrich shortlisted candidates only;
+- avoid automatic API calls on navigation/back button;
+- require explicit user action for expensive refresh/regenerate;
+- use strict retry limits;
+- preserve partial success.
+
+Before bulk external research, show useful estimates where practical:
+
+- total inputs;
+- cached inputs;
+- fresh calls required;
+- candidate count;
+- AI calls expected.
+
+Never indefinitely retry:
+
+- authentication failure;
+- insufficient credit/quota;
+- invalid input;
+- permanent provider errors.
+
+---
+
+# 32. Security
+
+All privileged external calls must be server-side.
+
+Secrets may include:
+
+```text
+APIFY_API_KEY / APIFY_TOKEN
+OPENAI_API_KEY        # existing/compatibility
+OPENSEO_API_KEY       # legacy/audit during migration
+other connector credentials handled by supported managed integration
+```
+
+Never expose:
+
+- Supabase service-role key;
+- provider secret keys;
+- OAuth refresh/access tokens in browser source;
+- privileged backend credentials.
+
+Use RLS as primary database protection for browser-accessible data.
+
+Do not use service role in browser code.
+
+Do not create permissive policies solely to silence RLS errors.
+
+---
+
+# 33. Lovable-Generated Files
+
+Do not manually modify Lovable/Supabase auto-generated integration files unless Lovable explicitly regenerates them as part of the managed integration.
+
+This includes generated files under areas such as:
+
+```text
+src/integrations/supabase/
+src/integrations/lovable/
+```
+
+Prefer supported Lovable managed runtime/build configuration.
+
+Do not hardcode secrets or backend URLs into UI source.
+
+---
+
+# 34. UI Architecture
+
+Follow:
+
+```text
+docs/UI_UX_SPEC.md
+```
+
+Product UI is Project-centered.
+
+Target global navigation:
+
+- Dashboard;
+- Projects;
+- Site Audit;
+- Competitors;
+- Keywords & SERP;
+- SEO Plan;
+- Tasks;
+- Backlinks;
+- Proposal;
+- Reporting;
+- Data Sources;
+- Files & Evidence;
+- Settings.
+
+Do not implement the entire sidebar/navigation before the corresponding wave requires it if it would create dead/non-functional routes. Progressive navigation is acceptable.
+
+Reuse existing components and routes when possible.
+
+---
+
+# 35. Implementation Waves
+
+The new roadmap supersedes the old backlink-only implementation phase numbering for future SEO Operating System work.
+
+Detailed scope:
+
+```text
+docs/IMPLEMENTATION_ROADMAP.md
+```
+
+High-level waves:
+
+## Wave 0 — Architecture & Security Foundation
+
+- team/workspace access model;
+- shared RLS design;
+- AI provider abstraction;
+- evidence/import foundation decisions;
+- no broad feature build.
+
+## Wave 1 — Project Workspace Foundation
+
+- Project lifecycle/profile;
+- Project Overview;
+- Data Sources registry;
+- Files & Evidence;
+- import/normalization foundation;
+- AI Client Intelligence foundation.
+
+## Wave 2 — Comprehensive Site Audit
+
+- crawl/audit sources;
+- deterministic checks;
+- findings;
+- AI Audit Analyst;
+- Audit → Task.
+
+## Wave 3 — Competitive + Keyword/SERP
+
+- competitor discovery/manual management;
+- gaps;
+- Project-aware keyword opportunity;
+- Target Page mapping.
+
+## Wave 4 — SEO Plan + Proposal
+
+- plan items;
+- modular proposal builder;
+- manual budget;
+- Project activation.
+
+## Wave 5 — Delivery + Tasks
+
+- Delivery Plan;
+- simple Tasks;
+- source traceability.
+
+## Wave 6 — Backlink Integration & Expansion
+
+- integrate existing backlink workflows into Project UX;
+- planning;
+- source normalization/import;
+- Buy/Skip;
+- lifecycle;
+- monitoring.
+
+## Wave 7 — Monitoring & Reporting
+
+- hybrid data sources;
+- periodic report builder;
+- AI reporting;
+- historical comparison;
+- export/share where supported.
+
+Do not continue automatically to the next wave.
+
+---
+
+# 36. Existing Backlink Foundation Compatibility
+
+Previously implemented backlink architecture remains valid inside Wave 6 and as existing production functionality before Wave 6.
+
+Preserve:
+
+- current Domain Research;
+- current Keyword Research;
+- current Ahrefs provider wrapper;
+- current cache services;
+- current backlink recommendation flow;
+- current legacy tables/data;
+- current placement/backlink tables;
+- current Draft/Project behavior until superseded by verified Project workspace UX.
+
+Do not break existing features while earlier waves are implemented.
+
+---
+
+# 37. Legacy Provider Migration
+
+Existing providers may include:
+
+- OpenSEO;
+- `radeance/ahrefs-scraper`;
+- `burbn/ahrefs-keyword-explorer`;
+- direct OpenAI helper.
+
+Migration principle:
+
+```text
+Keep existing provider
+      ↓
+Introduce normalized replacement
+      ↓
+Parity test
+      ↓
+Production test
+      ↓
+Switch via controlled config/service path
+      ↓
+Monitor
+      ↓
+Deprecate only after explicit approval
+```
+
+Parity tests should cover the exact capability being replaced.
+
+For Ahrefs migration, relevant metrics include:
+
+- DR;
+- Traffic;
+- Search Volume;
+- KD;
+- Rank;
+- Ranking URL;
+- keyword ideas;
+- backlinks.
+
+For OpenSEO/audit migration, parity must cover the maintained Site Audit checklist and actionable issue details, not merely DR/Traffic.
+
+---
+
+# 38. Verification Standard
+
+Before declaring any implementation wave complete:
+
+## Build
+
+- TypeScript/build passes;
+- relevant lint/type errors are addressed;
+- no unrelated feature breakage introduced.
+
+## Data
+
+- existing production rows still exist;
+- migrations are additive;
+- new foreign keys/constraints do not orphan legacy data;
+- no unintended mass update/delete.
+
+## Auth / Security
+
+- login remains functional;
+- intended internal shared access works only for authorized workspace members;
+- RLS remains enabled where required;
+- no service-role/provider secret appears client-side.
+
+## Functional
+
+Test the exact user flow introduced by the wave.
+
+## Existing SEO/backlink regression
+
+Until explicitly migrated/deprecated, verify that relevant existing workflows still work, including:
+
+- Domain Research;
+- Keyword Research;
+- backlink recommendation;
+- existing domain history;
+- cache behavior.
+
+## Production
+
+Do not declare production success based only on preview/build.
+
+Verify the relevant production route after publication when publication is part of the requested task.
+
+---
+
+# 39. Final Implementation Report
+
+After every implementation phase/wave report:
+
+- files changed;
+- routes/components changed;
+- migrations created;
+- tables/columns/policies changed;
+- provider/config changes;
+- AI usage/provider path;
+- build/typecheck result;
+- deployment result if deployed;
+- production verification result if deployed;
+- tests not executed;
+- known limitations;
+- rollback notes where relevant.
+
+---
+
+# 40. Lovable Execution Rules
+
+Future Lovable prompts should normally say:
+
+```text
+Follow:
+- docs/SEO_ARCHITECTURE.md
+- docs/PRD.md
+- docs/USER_STORY_PLAYBOOK.md
+- docs/KNOWLEDGE_BASE.md
+- docs/UI_UX_SPEC.md
+- docs/IMPLEMENTATION_ROADMAP.md
+
+Implement WAVE X ONLY.
+```
+
+Do not paste the entire architecture into each Lovable conversation.
+
+Lovable must:
+
+- inspect current implementation first;
+- reuse before replacing;
+- touch only relevant files/direct dependencies;
+- use additive migrations;
+- preserve existing production data;
+- preserve existing working workflows;
+- follow current Project Knowledge;
+- stop at the requested wave.
+
+Mandatory stop condition:
 
 ```text
 STOP CONDITION:
-Do not continue to the next phase.
-Do not add features not explicitly requested.
+Do not continue to another wave.
+Do not add unrelated features.
 Do not redesign unrelated pages.
-After build verification, stop and report the result.
+Do not deprecate legacy functionality unless explicitly requested.
+After build/verification/reporting, stop.
 ```
-
-Do not repeatedly ask Lovable to re-plan architecture that is already defined here.
 
 ---
 
 # Final Design Principle
 
-The system should ultimately operate with this mental model:
+The final product should operate as:
 
 ```text
-SUPABASE
-Database + Cache
+PROJECT
+Client + Website + Objective + History
       │
-      │ cache miss
-      ▼
-APIFY
-pro100chok/ahrefs-seo-tools
-      │
-      │ structured SEO facts
-      ▼
-OPENAI
-Semantic reasoning + recommendation
-      │
-      ▼
-Backlink / Keyword / Target Page Decision
+      ├───────────────┐
+      ▼               ▼
+DATA SOURCES       MANUAL EVIDENCE
+Connectors/API     Upload/Paste/Link
+      │               │
+      └───────┬───────┘
+              ▼
+       NORMALIZATION
+              ▼
+        FACTUAL DATA
+   SEO / Analytics / Audit
+              ▼
+        AI REASONING
+     Lovable AI + compatible
+      provider abstraction
+              ▼
+       HUMAN DECISION
+              ▼
+PLAN → PROPOSAL → DELIVERY → TASKS
+              ▼
+BACKLINK / IMPLEMENTATION / MONITORING
+              ▼
+REPORTING → NEXT ACTION
 ```
 
-The goal is not to maximize integrations.
-
-The goal is to minimize integrations while supporting:
-
-- Domain Research
-- Keyword Research
-- SERP Research
-- Backlink Research
-- Backlink Recommendation
-- Placement Management
-- Project Management
-- SEO Outreach Workflow
+The system should reduce tool fragmentation without sacrificing factual integrity, security, traceability, or human control.
