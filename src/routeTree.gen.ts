@@ -20,6 +20,12 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSeoPhase2TestRouteImport } from './routes/_authenticated/seo-phase2-test'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTestSearchVolumeRouteImport } from './routes/_authenticated/test-search-volume'
+import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
+import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
+import { Route as AuthenticatedProjectsPlacementsRouteImport } from './routes/_authenticated/projects.placements'
+import { Route as AuthenticatedProjectsProjectIdDataSourcesRouteImport } from './routes/_authenticated/projects.$projectId.data-sources'
+import { Route as AuthenticatedProjectsProjectIdFilesRouteImport } from './routes/_authenticated/projects.$projectId.files'
+import { Route as AuthenticatedProjectsProjectIdIntelligenceRouteImport } from './routes/_authenticated/projects.$projectId.intelligence'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -80,6 +86,42 @@ const AuthenticatedTestSearchVolumeRoute =
     path: '/test-search-volume',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProjectsIndexRoute =
+  AuthenticatedProjectsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
+const AuthenticatedProjectsProjectIdRoute =
+  AuthenticatedProjectsProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
+const AuthenticatedProjectsPlacementsRoute =
+  AuthenticatedProjectsPlacementsRouteImport.update({
+    id: '/placements',
+    path: '/placements',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
+const AuthenticatedProjectsProjectIdDataSourcesRoute =
+  AuthenticatedProjectsProjectIdDataSourcesRouteImport.update({
+    id: '/data-sources',
+    path: '/data-sources',
+    getParentRoute: () => AuthenticatedProjectsProjectIdRoute,
+  } as any)
+const AuthenticatedProjectsProjectIdFilesRoute =
+  AuthenticatedProjectsProjectIdFilesRouteImport.update({
+    id: '/files',
+    path: '/files',
+    getParentRoute: () => AuthenticatedProjectsProjectIdRoute,
+  } as any)
+const AuthenticatedProjectsProjectIdIntelligenceRoute =
+  AuthenticatedProjectsProjectIdIntelligenceRouteImport.update({
+    id: '/intelligence',
+    path: '/intelligence',
+    getParentRoute: () => AuthenticatedProjectsProjectIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -88,10 +130,16 @@ export interface FileRoutesByFullPath {
   '/domain-research': typeof AuthenticatedDomainResearchRoute
   '/domains': typeof AuthenticatedDomainsRoute
   '/keyword-research': typeof AuthenticatedKeywordResearchRoute
-  '/projects': typeof AuthenticatedProjectsRoute
+  '/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRouteWithChildren
+  '/projects/placements': typeof AuthenticatedProjectsPlacementsRoute
+  '/projects/': typeof AuthenticatedProjectsIndexRoute
+  '/projects/$projectId/data-sources': typeof AuthenticatedProjectsProjectIdDataSourcesRoute
+  '/projects/$projectId/files': typeof AuthenticatedProjectsProjectIdFilesRoute
+  '/projects/$projectId/intelligence': typeof AuthenticatedProjectsProjectIdIntelligenceRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -99,11 +147,16 @@ export interface FileRoutesByTo {
   '/domain-research': typeof AuthenticatedDomainResearchRoute
   '/domains': typeof AuthenticatedDomainsRoute
   '/keyword-research': typeof AuthenticatedKeywordResearchRoute
-  '/projects': typeof AuthenticatedProjectsRoute
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/': typeof AuthenticatedIndexRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRouteWithChildren
+  '/projects/placements': typeof AuthenticatedProjectsPlacementsRoute
+  '/projects': typeof AuthenticatedProjectsIndexRoute
+  '/projects/$projectId/data-sources': typeof AuthenticatedProjectsProjectIdDataSourcesRoute
+  '/projects/$projectId/files': typeof AuthenticatedProjectsProjectIdFilesRoute
+  '/projects/$projectId/intelligence': typeof AuthenticatedProjectsProjectIdIntelligenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,11 +166,17 @@ export interface FileRoutesById {
   '/_authenticated/domain-research': typeof AuthenticatedDomainResearchRoute
   '/_authenticated/domains': typeof AuthenticatedDomainsRoute
   '/_authenticated/keyword-research': typeof AuthenticatedKeywordResearchRoute
-  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/_authenticated/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRouteWithChildren
+  '/_authenticated/projects/placements': typeof AuthenticatedProjectsPlacementsRoute
+  '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
+  '/_authenticated/projects/$projectId/data-sources': typeof AuthenticatedProjectsProjectIdDataSourcesRoute
+  '/_authenticated/projects/$projectId/files': typeof AuthenticatedProjectsProjectIdFilesRoute
+  '/_authenticated/projects/$projectId/intelligence': typeof AuthenticatedProjectsProjectIdIntelligenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,6 +191,12 @@ export interface FileRouteTypes {
     | '/seo-phase2-test'
     | '/settings'
     | '/test-search-volume'
+    | '/projects/$projectId'
+    | '/projects/placements'
+    | '/projects/'
+    | '/projects/$projectId/data-sources'
+    | '/projects/$projectId/files'
+    | '/projects/$projectId/intelligence'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -139,11 +204,16 @@ export interface FileRouteTypes {
     | '/domain-research'
     | '/domains'
     | '/keyword-research'
-    | '/projects'
     | '/seo-phase2-test'
     | '/settings'
     | '/test-search-volume'
     | '/'
+    | '/projects/$projectId'
+    | '/projects/placements'
+    | '/projects'
+    | '/projects/$projectId/data-sources'
+    | '/projects/$projectId/files'
+    | '/projects/$projectId/intelligence'
   id:
     | '__root__'
     | '/_authenticated'
@@ -157,6 +227,12 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/test-search-volume'
     | '/_authenticated/'
+    | '/_authenticated/projects/$projectId'
+    | '/_authenticated/projects/placements'
+    | '/_authenticated/projects/'
+    | '/_authenticated/projects/$projectId/data-sources'
+    | '/_authenticated/projects/$projectId/files'
+    | '/_authenticated/projects/$projectId/intelligence'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -243,15 +319,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTestSearchVolumeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects/': {
+      id: '/_authenticated/projects/'
+      path: '/'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
+    }
+    '/_authenticated/projects/$projectId': {
+      id: '/_authenticated/projects/$projectId'
+      path: '/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
+    }
+    '/_authenticated/projects/placements': {
+      id: '/_authenticated/projects/placements'
+      path: '/placements'
+      fullPath: '/projects/placements'
+      preLoaderRoute: typeof AuthenticatedProjectsPlacementsRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
+    }
+    '/_authenticated/projects/$projectId/data-sources': {
+      id: '/_authenticated/projects/$projectId/data-sources'
+      path: '/data-sources'
+      fullPath: '/projects/$projectId/data-sources'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdDataSourcesRouteImport
+      parentRoute: typeof AuthenticatedProjectsProjectIdRoute
+    }
+    '/_authenticated/projects/$projectId/files': {
+      id: '/_authenticated/projects/$projectId/files'
+      path: '/files'
+      fullPath: '/projects/$projectId/files'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdFilesRouteImport
+      parentRoute: typeof AuthenticatedProjectsProjectIdRoute
+    }
+    '/_authenticated/projects/$projectId/intelligence': {
+      id: '/_authenticated/projects/$projectId/intelligence'
+      path: '/intelligence'
+      fullPath: '/projects/$projectId/intelligence'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdIntelligenceRouteImport
+      parentRoute: typeof AuthenticatedProjectsProjectIdRoute
+    }
   }
 }
+
+interface AuthenticatedProjectsProjectIdRouteChildren {
+  AuthenticatedProjectsProjectIdDataSourcesRoute: typeof AuthenticatedProjectsProjectIdDataSourcesRoute
+  AuthenticatedProjectsProjectIdFilesRoute: typeof AuthenticatedProjectsProjectIdFilesRoute
+  AuthenticatedProjectsProjectIdIntelligenceRoute: typeof AuthenticatedProjectsProjectIdIntelligenceRoute
+}
+
+const AuthenticatedProjectsProjectIdRouteChildren: AuthenticatedProjectsProjectIdRouteChildren =
+  {
+    AuthenticatedProjectsProjectIdDataSourcesRoute:
+      AuthenticatedProjectsProjectIdDataSourcesRoute,
+    AuthenticatedProjectsProjectIdFilesRoute:
+      AuthenticatedProjectsProjectIdFilesRoute,
+    AuthenticatedProjectsProjectIdIntelligenceRoute:
+      AuthenticatedProjectsProjectIdIntelligenceRoute,
+  }
+
+const AuthenticatedProjectsProjectIdRouteWithChildren =
+  AuthenticatedProjectsProjectIdRoute._addFileChildren(
+    AuthenticatedProjectsProjectIdRouteChildren,
+  )
+
+interface AuthenticatedProjectsRouteChildren {
+  AuthenticatedProjectsProjectIdRoute: typeof AuthenticatedProjectsProjectIdRouteWithChildren
+  AuthenticatedProjectsPlacementsRoute: typeof AuthenticatedProjectsPlacementsRoute
+  AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
+}
+
+const AuthenticatedProjectsRouteChildren: AuthenticatedProjectsRouteChildren = {
+  AuthenticatedProjectsProjectIdRoute:
+    AuthenticatedProjectsProjectIdRouteWithChildren,
+  AuthenticatedProjectsPlacementsRoute: AuthenticatedProjectsPlacementsRoute,
+  AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
+}
+
+const AuthenticatedProjectsRouteWithChildren =
+  AuthenticatedProjectsRoute._addFileChildren(
+    AuthenticatedProjectsRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBacklinkRecommendationRoute: typeof AuthenticatedBacklinkRecommendationRoute
   AuthenticatedDomainResearchRoute: typeof AuthenticatedDomainResearchRoute
   AuthenticatedDomainsRoute: typeof AuthenticatedDomainsRoute
   AuthenticatedKeywordResearchRoute: typeof AuthenticatedKeywordResearchRoute
-  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
   AuthenticatedSeoPhase2TestRoute: typeof AuthenticatedSeoPhase2TestRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTestSearchVolumeRoute: typeof AuthenticatedTestSearchVolumeRoute
@@ -264,7 +421,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDomainResearchRoute: AuthenticatedDomainResearchRoute,
   AuthenticatedDomainsRoute: AuthenticatedDomainsRoute,
   AuthenticatedKeywordResearchRoute: AuthenticatedKeywordResearchRoute,
-  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
   AuthenticatedSeoPhase2TestRoute: AuthenticatedSeoPhase2TestRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTestSearchVolumeRoute: AuthenticatedTestSearchVolumeRoute,
