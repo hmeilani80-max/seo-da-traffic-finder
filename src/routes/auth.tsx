@@ -13,18 +13,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Masuk — SEO Operating System" },
+      { title: "Masuk — Backlink Research Tool" },
       {
         name: "description",
-        content: "Masuk ke workspace internal SEO Operating System.",
+        content: "Masuk untuk mengakses dashboard riset & pembelian backlink domain.",
       },
-      { property: "og:title", content: "Masuk — SEO Operating System" },
+      { property: "og:title", content: "Masuk — Backlink Research Tool" },
       {
         property: "og:description",
-        content: "Akses internal untuk SEO Specialist dan tim operasional SEO.",
+        content: "Masuk untuk mengakses dashboard riset & pembelian backlink domain.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AuthPage,
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"masuk" | "daftar">("masuk");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,11 +53,24 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      navigate({ to: "/", replace: true });
+      if (mode === "masuk") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        navigate({ to: "/", replace: true });
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: typeof window !== "undefined" ? window.location.origin : "",
+          },
+        });
+        if (error) throw error;
+        toast.success("Akun dibuat. Silakan masuk.");
+        setMode("masuk");
+      }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal masuk");
+      toast.error(err instanceof Error ? err.message : "Gagal memproses permintaan");
     } finally {
       setLoading(false);
     }
@@ -66,21 +80,12 @@ function AuthPage() {
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="mb-2 flex items-center gap-2">
-            <span className="grid size-10 place-items-center rounded-xl bg-brand-teal text-sm font-bold text-brand-teal-foreground">
-              SO
-            </span>
-            <div>
-              <p className="text-sm font-semibold">SEO Operating System</p>
-              <p className="text-xs text-muted-foreground">Internal Workspace</p>
-            </div>
-          </div>
-          <CardTitle>Masuk</CardTitle>
+          <CardTitle>{mode === "masuk" ? "Masuk" : "Daftar"}</CardTitle>
           <CardDescription>
-            Platform ini hanya untuk SEO Specialist dan tim internal yang memiliki akun.
+            Data riset domain bersifat privat — silakan masuk untuk melanjutkan.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -88,7 +93,6 @@ function AuthPage() {
                 id="email"
                 type="email"
                 required
-                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@email.com"
@@ -101,7 +105,6 @@ function AuthPage() {
                 type="password"
                 required
                 minLength={6}
-                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -109,12 +112,16 @@ function AuthPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Masuk
+              {mode === "masuk" ? "Masuk" : "Daftar"}
             </Button>
           </form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Membutuhkan akun? Hubungi admin internal untuk provisioning akses.
-          </p>
+          <button
+            type="button"
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
+            onClick={() => setMode(mode === "masuk" ? "daftar" : "masuk")}
+          >
+            {mode === "masuk" ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk"}
+          </button>
         </CardContent>
       </Card>
     </div>
