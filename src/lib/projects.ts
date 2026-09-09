@@ -150,7 +150,9 @@ export async function updateProjectProfile(
   // The generated Supabase type file currently trails the already-applied Wave 1
   // schema. Keep this escape local until generated types are refreshed.
   const db = supabase as any;
-  const lifecycle = PROJECT_LIFECYCLES.includes(input.lifecycle_status as (typeof PROJECT_LIFECYCLES)[number])
+  const lifecycle = PROJECT_LIFECYCLES.includes(
+    input.lifecycle_status as (typeof PROJECT_LIFECYCLES)[number],
+  )
     ? input.lifecycle_status
     : "prospect";
 
@@ -169,8 +171,8 @@ export async function updateProjectProfile(
     discovery_notes: input.discovery_notes?.trim() || null,
   };
 
-  if (lifecycle === "active") payload.activated_at = new Date().toISOString();
-
+  // activated_at is intentionally not rewritten here. A later lifecycle-specific
+  // transition can set it once without changing the first activation timestamp.
   const { data, error } = await db.from("projects").update(payload).eq("id", id).select("*").single();
   if (error) throw error;
   return data as ProjectRow;
