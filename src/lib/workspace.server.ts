@@ -1,5 +1,5 @@
 /**
- * Wave 0 — layanan workspace internal (server-only).
+ * Layanan workspace internal (server-only).
  *
  * Model akses: seluruh anggota aktif workspace dapat melihat Project bersama.
  * RLS tetap aktif; akses diberikan hanya melalui keanggotaan eksplisit.
@@ -52,25 +52,67 @@ export async function listMemberships(userId: string): Promise<WorkspaceMembersh
 }
 
 /**
- * Memastikan user internal yang sudah terautentikasi terdaftar pada workspace default.
- * Idempoten; tidak pernah membuat keanggotaan untuk user yang tidak dikenal.
+ * Memastikan user yang sedang login memiliki membership workspace default.
+ *
+ * SECURITY:
+ * - Jika user sudah member, fungsi bersifat idempoten.
+ * - Jika workspace sudah memiliki member, user lain TIDAK boleh self-join.
+ * - Bootstrap member pertama hanya diberikan kepada akun Auth tertua yang sudah ada.
+ *
+ * Dengan aturan ini, public signup yang mungkin masih aktif di backend tidak otomatis
+ * memberikan akses ke seluruh data internal. Penambahan member berikutnya harus dilakukan
+ * secara eksplisit oleh admin/internal team management.
  */
 export async function ensureDefaultMembership(userId: string): Promise<WorkspaceMembership | null> {
   const workspace = await getDefaultWorkspace();
   if (!workspace) return null;
 
+  const existing = (await listMemberships(userId)).find(
+    (membership) => membership.workspaceId === workspace.id,
+  );
+  if (existing) return existing;
+
   const supabase = await admin();
-  await supabase
+  const { count, error: countError } = await supabase
     .from("app_workspace_members")
-    .upsert(
-      { workspace_id: workspace.id, user_id: userId, role: "member", status: "active" },
-      { onConflict: "workspace_id,user_id" },
-    );
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspace.id)
+    .eq("status", "active");
+
+  if (countError) throw countError;
+  if ((count ?? 0) > 0) return null;
+
+  // Safe first-member bootstrap: only the oldest existing Auth account may claim it.
+  const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  if (usersError) throw usersError;
+
+  const oldest = [...(usersData.users ?? [])].sort((a, b) => {
+    const aTime = Date.parse(a.created_at ?? "");
+    const bTime = Date.parse(b.created_at ?? "");
+    return (Number.isFinite(aTime) ? aTime : Number.MAX_SAFE_INTEGER) -
+      (Number.isFinite(bTime) ? bTime : Number.MAX_SAFE_INTEGER);
+  })[0];
+
+  if (!oldest || oldest.id !== userId) return null;
+
+  const { error: upsertError } = await supabase.from("app_workspace_members").upsert(
+    {
+      workspace_id: workspace.id,
+      user_id: userId,
+      role: "admin",
+      status: "active",
+    },
+    { onConflict: "workspace_id,user_id" },
+  );
+  if (upsertError) throw upsertError;
 
   return {
     workspaceId: workspace.id,
     workspaceName: workspace.name,
-    role: "member",
+    role: "admin",
     status: "active",
   };
 }

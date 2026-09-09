@@ -1,5 +1,5 @@
 /**
- * Wave 0 — Abstraksi provider AI (server-only).
+ * Abstraksi provider AI (server-only).
  *
  * Tujuan:
  * - Semua alur AI baru memanggil abstraksi ini, bukan SDK/kunci provider.
@@ -41,22 +41,21 @@ export const AI_FACTUAL_INTEGRITY_RULE =
 /**
  * Memilih provider AI untuk workflow baru.
  *
- * Default: Lovable managed AI bila LOVABLE_API_KEY tersedia, jika tidak fallback ke OpenAI.
- * Dapat dipaksa lewat env AI_PROVIDER=openai|lovable.
+ * Default saat ini: OpenAI. Ini sengaja dipilih agar workflow aplikasi tidak
+ * mengonsumsi kredit/token Lovable. Lovable managed AI hanya boleh dipakai bila
+ * sengaja diaktifkan melalui AI_PROVIDER=lovable atau preferred="lovable".
  */
 export async function getAiProvider(preferred?: AiProviderId): Promise<AiProvider> {
-  const [{ openAiProvider }, { lovableAiProvider }] = await Promise.all([
-    import("./openai.provider"),
-    import("./lovable-ai.provider"),
-  ]);
-
   const requested =
-    preferred ?? (process.env["AI_PROVIDER"] as AiProviderId | undefined) ?? undefined;
+    preferred ?? (process.env["AI_PROVIDER"] as AiProviderId | undefined) ?? "openai";
 
-  if (requested === "openai") return openAiProvider;
-  if (requested === "lovable") return lovableAiProvider;
+  if (requested === "lovable") {
+    const { lovableAiProvider } = await import("./lovable-ai.provider");
+    return lovableAiProvider;
+  }
 
-  return lovableAiProvider.isConfigured() ? lovableAiProvider : openAiProvider;
+  const { openAiProvider } = await import("./openai.provider");
+  return openAiProvider;
 }
 
 /** Helper ringkas untuk workflow baru. */
