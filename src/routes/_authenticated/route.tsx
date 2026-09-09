@@ -32,14 +32,6 @@ function AuthenticatedLayout() {
         setIsAuthenticated(true);
         setAuthChecked(true);
 
-        if (
-          typeof window !== "undefined" &&
-          typeof sessionStorage !== "undefined" &&
-          !sessionStorage.getItem("claimed")
-        ) {
-          sessionStorage.setItem("claimed", "1");
-          void supabase.rpc("claim_unowned_rows");
-        }
       } catch {
         if (isMounted) {
           setIsAuthenticated(false);

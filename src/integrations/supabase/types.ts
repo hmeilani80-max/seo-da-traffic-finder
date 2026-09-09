@@ -610,7 +610,7 @@ export type Database = {
       }
     }
     Functions: {
-      claim_unowned_rows: { Args: never; Returns: undefined }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
