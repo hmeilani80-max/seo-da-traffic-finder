@@ -84,7 +84,7 @@ function DashboardHome() {
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Ringkasan seluruh aktivitas riset dan pembelian backlink kamu.
+          seluruh aktivitas riset dan pembelian backlink kamu.
         </p>
       </header>
 
