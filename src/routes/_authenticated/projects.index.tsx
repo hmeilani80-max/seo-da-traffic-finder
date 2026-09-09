@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, ListChecks, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { joinDefaultWorkspace } from "@/lib/workspace.functions";
 import {
   LIFECYCLE,
   LIFECYCLE_LABEL,
@@ -224,12 +226,21 @@ function ProjectListPage() {
 
 function CreateProjectDialog() {
   const qc = useQueryClient();
+  const ensureWorkspace = useServerFn(joinDefaultWorkspace);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => createProjectMinimal({ name, client_domain: domain }),
+    mutationFn: async () => {
+      const membership = await ensureWorkspace();
+      if (!membership) {
+        throw new Error(
+          "Akun ini belum diberi akses ke workspace internal. Minta admin tim menambahkan akun Anda.",
+        );
+      }
+      return createProjectMinimal({ name, client_domain: domain });
+    },
     onSuccess: () => {
       setName("");
       setDomain("");
