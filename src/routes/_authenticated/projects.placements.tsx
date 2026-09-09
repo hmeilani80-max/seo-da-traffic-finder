@@ -31,7 +31,7 @@ import {
   type ProjectRow,
 } from "@/lib/projects";
 
-export const Route = createFileRoute("/_authenticated/projects")({
+export const Route = createFileRoute("/_authenticated/projects/placements")({
   head: () => ({
     meta: [
       { title: "Proyek & Placement Order — Manajemen Backlink" },
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_authenticated/projects")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ProjectsPage,
+  component: PlacementsPage,
 });
 
 const DRAFT_VALUE = "__draft__";
@@ -59,7 +59,7 @@ function fmtDate(value: string | null) {
   return new Date(value).toLocaleDateString("id-ID");
 }
 
-function ProjectsPage() {
+function PlacementsPage() {
   const qc = useQueryClient();
   const projects = useQuery({ queryKey: ["projects"], queryFn: fetchProjects });
   const orders = useQuery({ queryKey: ["placement_orders"], queryFn: fetchPlacementOrders });
