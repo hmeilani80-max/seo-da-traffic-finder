@@ -1,199 +1,1289 @@
-# Product Requirements Document — SEO Operating System
+# BRD / PRD — SEO Operating System MVP
 
 > Product: SEO DA & Traffic Finder / Backlink Manager evolution
-> Version: Discovery Draft v1.0
-> Baseline: 2026-09-10
-> Primary user: Internal SEO Specialist
+> Primary User: Internal SEO Specialist
+> Version: MVP Product Definition v1.0
+> Baseline: 10 September 2026
 
 ---
 
-# 1. Executive Summary
+# 1. Product Overview
 
-The existing application is a production **SEO DA & Traffic Finder / Backlink Manager** with working domain research, keyword research, backlink recommendation, project/placement foundations, SEO caches, and legacy backlink history.
+SEO Operating System adalah internal platform untuk membantu SEO Specialist menjalankan seluruh lifecycle pekerjaan SEO dalam satu workspace, mulai dari calon client hingga reporting dan continuous optimization.
 
-The product must evolve additively into an internal **SEO Operating System** that supports the complete SEO lifecycle:
+Platform ini merupakan evolusi dari aplikasi production **SEO DA & Traffic Finder / Backlink Manager** yang saat ini sudah memiliki Domain Research, Keyword Research, Backlink Recommendation, Project/Placement foundation, SEO cache, dan historical backlink data.
+
+Produk tidak dibangun ulang dari nol.
+
+Existing production application, GitHub repository, Lovable Cloud hosting, Supabase database, authentication, working routes, custom domain, existing data, cache, dan integrasi yang masih aktif harus tetap dipertahankan selama pengembangan dilakukan secara additive.
+
+Model utama produk:
 
 ```text
-Prospect
-→ Discovery & Evidence Collection
-→ AI Client Intelligence
-→ Comprehensive Site Audit
-→ Competitive Analysis
-→ Keyword & SERP Research
-→ SEO Plan
-→ Proposal + Manual Budget
-→ Deal
-→ Active Delivery Plan
-→ Tasks
-→ Backlink/Off-Page Execution
-→ Monitoring
-→ Reporting
-→ Continuous Optimization
+Calon Client / Project
+        ↓
+Discovery & Evidence Collection
+        ↓
+AI Client Intelligence
+        ↓
+Comprehensive Site Audit
+        ↓
+Competitive Analysis
+        ↓
+Keyword & SERP Research
+        ↓
+SEO Plan
+        ↓
+Proposal + Manual Budget
+        ↓
+Deal / Active Project
+        ↓
+Delivery Plan
+        ↓
+Task Execution
+        ↓
+Off-Page / Backlink Execution
+        ↓
+Monitoring
+        ↓
+Reporting & Analysis
+        ↓
+Continuous Optimization
 ```
 
-The key product problem is fragmentation. Today, an SEO Specialist may need spreadsheets, Docs, Slides, screenshots, multiple SEO tools, analytics systems, ad platforms, and manual copying between them. The target platform keeps context and decisions connected to one Project.
-
-This is **not a greenfield rebuild**. Existing production architecture, data, authentication, routes, custom domain, caches, providers, and working workflows must be preserved while the broader workflow is introduced incrementally.
-
----
-
-# 2. Product Goals
-
-## G1 — One SEO workspace from pre-sales to reporting
-
-A user can start from a prospect and retain the same Project context after the client deals and becomes active.
-
-## G2 — Accept both connected and manual data
-
-The system remains usable with or without direct integrations. Files, screenshots, spreadsheets, JSON, links, and manual input are first-class data sources.
-
-## G3 — Normalize before data becomes operational
-
-Imported data is detected, mapped, normalized, previewed, and confirmed before permanent structured save when mapping is uncertain.
-
-## G4 — AI-assisted, human-controlled decisions
-
-AI accelerates analysis and drafting, while the SEO Specialist controls final strategy, commercial values, task execution, and factual commitments.
-
-## G5 — Factual metrics remain trustworthy
-
-DR, Traffic, Search Volume, KD, CPC, SERP Position, backlink counts, and other factual metrics come from real sources/cache and are never invented by AI.
-
-## G6 — Research becomes execution
-
-Audit findings, competitor opportunities, keyword recommendations, and backlink findings can be traced into SEO Plan items, Delivery Plan, Tasks, and later reporting.
-
-## G7 — Preserve history and evidence
-
-The system retains enough provenance to explain what data was used, what AI recommended, what the SEO Specialist decided, what was implemented, and what changed afterward.
-
----
-
-# 3. Non-Goals for Initial Product Expansion
-
-The following are not required for the first expanded version:
-
-- Client Portal;
-- client login;
-- mandatory client approval workflow;
-- mandatory internal approval states in Tasks;
-- per-Project visibility restrictions between internal SEO Specialists;
-- automatic AI pricing decisions;
-- automatic AI contractual guarantees;
-- autonomous implementation of AI fixes;
-- automatic final backlink quantity/strategy;
-- replacing the current framework/hosting/repository;
-- destructive migration of existing backlink/legacy data.
-
----
-
-# 4. Primary Persona
-
-## Internal SEO Specialist
-
-Responsibilities may include:
-
-- client discovery;
-- site audit;
-- competitive analysis;
-- keyword/SERP research;
-- SEO strategy;
-- proposal creation;
-- on-page/technical/content/off-page planning;
-- backlink research and buying decisions;
-- task execution/tracking;
-- reporting and analysis.
-
-### Access model
-
-For the target initial version, all authenticated internal SEO users can see all Projects and shared operational data.
-
-PIC/Owner is an operational assignment, not an authorization boundary.
-
----
-
-# 5. Core Product Model
-
-## 5.1 Project
-
-Product rule:
+Product rule utama:
 
 ```text
-1 Project = 1 Client = 1 primary Website
+1 Project = 1 Client = 1 Primary Website
 ```
 
-The Project starts before the client has signed.
+Project dibuat sejak masih calon client. Ketika deal, Project yang sama berubah status menjadi Active sehingga seluruh history discovery, file, audit, research, proposal, dan keputusan tetap berada di satu tempat.
 
-Recommended lifecycle states:
+---
+
+# 2. Problem Statement
+
+Saat ini pekerjaan SEO Specialist tersebar di banyak tempat dan tool.
+
+Contoh kondisi kerja:
+
+- discovery client disimpan di chat, notes, Docs, atau spreadsheet;
+- website audit dilakukan di beberapa SEO tools berbeda;
+- analytics berasal dari Search Console, GA4, ecommerce, ads platform, atau screenshot;
+- competitor research dilakukan terpisah;
+- keyword research berada di tool/spreadsheet lain;
+- proposal dibuat manual di Slides/Docs;
+- budget dihitung manual;
+- implementation task tidak selalu memiliki context dari audit/research asalnya;
+- backlink source, vendor, purchase history, keyword, target URL, dan performance tersebar di spreadsheet;
+- reporting membutuhkan copy-paste data dari banyak source;
+- screenshot, PDF, DOCX, XLSX, JSON, link, dan evidence lain mudah tercecer;
+- insight yang sudah ditemukan pada fase pre-sales sering tidak terbawa secara utuh ke fase delivery.
+
+Akibatnya:
+
+- context client mudah hilang;
+- data perlu dimasukkan ulang;
+- research sering diulang;
+- keputusan sulit ditelusuri kembali ke evidence;
+- AI/tool hanya mengerjakan bagian kecil tanpa memahami keseluruhan Project;
+- reporting membutuhkan banyak pekerjaan manual;
+- SEO Specialist menggunakan terlalu banyak tools untuk satu workflow.
+
+Produk harus mengubah proses tersebut menjadi satu workflow yang terhubung.
+
+---
+
+# 3. Product Objective
+
+Membentuk satu internal SEO Operating System yang memungkinkan:
+
+1. SEO Specialist membuat Project sejak calon client dengan input minimum.
+2. Informasi discovery dapat diisi bertahap tanpa form awal yang berat.
+3. User dapat menghubungkan data source apabila tersedia.
+4. User tetap dapat bekerja tanpa connector melalui manual input, upload file, screenshot, link, dan media.
+5. Sistem menormalisasi data sebelum data dipakai oleh workflow berikutnya.
+6. AI memahami business context, objective, evidence, dan Project history.
+7. Sistem menjalankan comprehensive Site Audit tanpa user harus memilih scope audit.
+8. AI mendeteksi issue, severity, impact, dan suggested fix berdasarkan evidence yang tersedia.
+9. Sistem menemukan dan membandingkan organic maupun paid competitors.
+10. Sistem melakukan Keyword/SERP Research dan membantu menentukan keyword priority serta Target Page.
+11. Hasil Audit, Competitor, Keyword, dan Backlink analysis dapat dimasukkan ke SEO Plan.
+12. SEO Plan dapat digunakan untuk membuat proposal yang modular dan data-driven.
+13. Budget proposal tetap diinput dan ditentukan manual oleh SEO Specialist.
+14. Proposal yang deal dapat dikonversi menjadi Delivery Plan tanpa membuat ulang Project.
+15. Delivery Plan dapat dipecah menjadi task operasional.
+16. Off-Page / Backlink workflow mendukung planning, research, buying decision, placement, verification, dan monitoring.
+17. Reporting dapat memakai connected data maupun manual evidence.
+18. AI dapat membuat analysis/report berdasarkan Project context dan custom prompt.
+19. Semua data, evidence, AI recommendation, human decision, implementation, dan result tetap traceable.
+
+---
+
+# 4. MVP Principle
+
+## 4.1 Progressive, not form-heavy
+
+User tidak perlu mengisi seluruh informasi client di awal.
+
+Minimum Project creation:
+
+- Project / Client Name;
+- Website/domain apabila sudah diketahui.
+
+Informasi lain dapat ditambahkan setelah discovery call atau dari evidence yang di-upload.
+
+## 4.2 Manual data is a first-class input
+
+Platform tidak boleh bergantung pada API/connector agar workflow dapat berjalan.
+
+Data dapat berasal dari:
+
+- manual form;
+- paste text/list;
+- CSV;
+- XLS/XLSX;
+- TXT;
+- JSON;
+- PDF;
+- DOC/DOCX;
+- image/screenshot;
+- URL/link;
+- media/format lain yang secara teknis didukung.
+
+## 4.3 Normalize before operational use
+
+Canonical import flow:
+
+```text
+Upload / Paste
+      ↓
+Detect
+      ↓
+Extract
+      ↓
+Normalize
+      ↓
+Field Mapping
+      ↓
+Validate
+      ↓
+Data Preview
+      ↓
+User Confirm
+      ↓
+Save
+```
+
+Data yang belum pasti hasil parsing/mapping-nya tidak boleh langsung dimasukkan sebagai structured operational data tanpa preview.
+
+## 4.4 AI assists, human decides
+
+Mental model:
+
+```text
+Collect factual data
+      ↓
+Normalize + Structure
+      ↓
+AI Analyze / Recommend
+      ↓
+SEO Specialist Review / Edit
+      ↓
+SEO Specialist Final Decision
+```
+
+AI dapat membantu:
+
+- memahami dokumen;
+- mengekstrak structured information;
+- mendeteksi issue;
+- memberi recommendation;
+- membuat suggested fix/copy;
+- mengklasifikasikan keyword opportunity;
+- merekomendasikan target page;
+- membantu backlink planning;
+- drafting proposal;
+- drafting report;
+- menjawab custom prompt berdasarkan Project context.
+
+AI tidak menentukan secara final:
+
+- pricing;
+- commercial commitment;
+- guarantee;
+- final backlink quantity;
+- final backlink strategy;
+- final budget;
+- perubahan authoritative data tanpa user action.
+
+## 4.5 AI must not invent factual SEO metrics
+
+AI tidak boleh mengarang:
+
+- DR / authority;
+- organic traffic;
+- Search Volume;
+- Keyword Difficulty;
+- CPC;
+- Traffic Potential;
+- SERP Position;
+- backlink count;
+- referring-domain count;
+- connected analytics value;
+- connected ad-platform value;
+- ecommerce/conversion value.
+
+Jika data tidak tersedia, status harus jelas seperti:
+
+- Data Not Available;
+- Not Connected;
+- Unable to Verify;
+- Unverified.
+
+## 4.6 One Project keeps the full lifecycle
+
+Project tidak dibuat ulang setelah deal.
+
+```text
+Prospect Project → Proposal → Deal → Active Project
+```
+
+Semua evidence dan history tetap terkait pada Project yang sama.
+
+## 4.7 Internal-only MVP
+
+Platform hanya digunakan oleh internal SEO Specialist/team.
+
+Untuk MVP:
+
+- tidak ada Client Portal;
+- tidak ada client login;
+- tidak ada mandatory client approval workflow;
+- semua internal authenticated users dapat melihat semua Client/Project;
+- PIC/Owner digunakan untuk tanggung jawab operasional, bukan pembatas akses.
+
+## 4.8 Preserve current production system
+
+MVP expansion bersifat additive.
+
+Jangan:
+
+- rebuild dari nol;
+- migrate framework;
+- pindah hosting;
+- recreate GitHub repository;
+- menghapus production data;
+- menghapus legacy integration sebelum parity validation;
+- mengekspos secret/API key di browser;
+- melakukan destructive migration untuk menyesuaikan model baru.
+
+---
+
+# 5. Target Users
+
+## A. Internal SEO Specialist
+
+Hak dan kemampuan utama:
+
+- melihat seluruh Project;
+- membuat Project;
+- mengedit Project context;
+- upload evidence;
+- connect data source;
+- menjalankan Site Audit;
+- menjalankan Competitive Analysis;
+- menjalankan Keyword/SERP Research;
+- membuat SEO Plan;
+- membuat/edit Proposal;
+- mengisi Budget;
+- convert Project menjadi Active;
+- membuat/edit Delivery Plan;
+- membuat dan menyelesaikan Task;
+- melakukan Backlink Planning & Execution;
+- membuat dan menyimpan Report;
+- menggunakan AI analysis/custom prompt.
+
+## B. Internal Team Member / PIC
+
+Untuk MVP, bukan role authorization terpisah.
+
+PIC/Owner dapat digunakan pada Task/Delivery/Project untuk menunjukkan responsibility, tetapi user tetap dapat melihat seluruh Project.
+
+---
+
+# 6. Core MVP Features
+
+## 6.1 Project Workspace
+
+Project adalah root workspace untuk satu client dan satu website.
+
+### Minimum Project fields
+
+- Project / Client Name;
+- Primary Website;
+- Status;
+- optional notes.
+
+### Progressive fields
+
+- Industry;
+- Objective;
+- Target Market;
+- Current Problem / Pain Point;
+- Contact Person;
+- Budget Indication;
+- Known Competitors;
+- Access Availability;
+- Additional Notes.
+
+### Project lifecycle
+
+Recommended status:
 
 - Prospect;
-- Assessment / Research;
+- Assessment;
 - Proposal;
 - Active;
-- Lost / Not Proceeding;
+- Lost;
 - Archived.
 
-The same Project continues after Deal.
+### Project workspace contains
 
-## 5.2 Project Context
-
-Everything relevant should be linkable to the Project:
-
-- discovery fields;
-- files/evidence;
-- source connections;
-- AI Client Intelligence;
-- site audits;
-- competitors;
-- keyword research;
-- SERP results;
+- Overview;
+- Client Intelligence;
+- Data Sources;
+- Files & Evidence;
+- Site Audit;
+- Competitors;
+- Keywords & SERP;
 - SEO Plan;
-- proposal versions;
-- Delivery Plans;
+- Proposal;
+- Delivery Plan;
 - Tasks;
-- backlink plans/orders/live links;
-- periodic reports.
+- Backlinks;
+- Reports.
 
 ---
 
-# 6. Current Production State
+## 6.2 Data Sources & Connections
 
-## 6.1 Current visible product modules
+Sebelum audit/analysis, user dapat menghubungkan data source yang tersedia.
 
-The current application navigation is backlink-centric and includes:
+Target connection categories:
 
-- Dashboard;
-- Domain Saya;
-- Proyek & Placement;
-- Rekomendasi Backlink;
-- Riset Domain;
-- Riset Keyword;
-- Pengaturan.
+### Search & Analytics
 
-## 6.2 Current technical stack
+- Google Search Console;
+- Google Analytics / GA4.
 
-Preserve:
+### Advertising
+
+- Google Ads;
+- Meta Ads, apabila integrasi teknis tersedia;
+- TikTok Ads, apabila integrasi teknis tersedia.
+
+### Ecommerce / Conversion
+
+- Shopify;
+- WooCommerce;
+- source ecommerce/conversion lain yang tersedia.
+
+### Website / CMS
+
+- WordPress / CMS;
+- hosting/server access/reference bila secara teknis dapat diintegrasikan;
+- sitemap;
+- robots.txt;
+- public website crawl.
+
+### SEO Intelligence
+
+- Apify / Ahrefs All-in-One;
+- existing OpenSEO/legacy provider selama masih diperlukan;
+- public web collection/crawl.
+
+### Connection state
+
+Minimal status:
+
+- Connected;
+- Available;
+- Not Connected;
+- Error;
+- Unsupported / Needs Manual Data.
+
+Project tetap dapat diproses walaupun connector tidak tersedia.
+
+---
+
+## 6.3 Files & Evidence
+
+User dapat menyimpan evidence dalam Project.
+
+### Input
+
+- PDF;
+- DOC/DOCX;
+- XLS/XLSX;
+- CSV;
+- JSON;
+- TXT;
+- screenshot/image;
+- URL/link;
+- media lain yang didukung.
+
+### Processing flow
+
+```text
+Add Evidence
+      ↓
+Store Source
+      ↓
+Extract usable content/metadata where supported
+      ↓
+Normalize
+      ↓
+AI Understanding / Enrichment on explicit workflow
+      ↓
+Available as Project Context
+```
+
+### Required principles
+
+- original source/reference tetap dipertahankan bila memungkinkan;
+- AI analysis tidak menggantikan source data;
+- hasil AI dapat direview/edit;
+- evidence memiliki provenance/source.
+
+---
+
+## 6.4 Manual Structured Import & Normalization
+
+Digunakan pada Domain, Keyword, Backlink Source, Existing Backlink, competitor data, dan structured dataset lain.
+
+### Example input
+
+```text
+Website | Authority | Visitor | Harga Vendor
+```
+
+Sistem dapat menyarankan:
+
+```text
+Website       → Source Domain
+Authority     → DR
+Visitor       → Organic Traffic
+Harga Vendor  → Price
+```
+
+User dapat mengubah mapping sebelum save.
+
+### Domain normalization
+
+Contoh berikut harus dapat dikenali sebagai domain yang sama ketika context-nya adalah domain:
+
+```text
+https://www.example.com/article?id=1
+www.example.com/
+example.com
+```
+
+Normalized Domain:
+
+```text
+example.com
+```
+
+### Important distinction
+
+Jangan mencampur:
+
+- Source Domain;
+- Target Domain;
+- Target URL;
+- Live Backlink URL.
+
+Specific page URL harus mempertahankan path yang dibutuhkan workflow.
+
+### Data Preview
+
+Preview minimal menunjukkan:
+
+- total rows;
+- valid;
+- duplicate;
+- invalid;
+- missing required data;
+- field mapping;
+- normalized output.
+
+Actions:
+
+```text
+[Process Again]
+[Edit Mapping]
+[Save & Continue]
+```
+
+---
+
+## 6.5 AI Client Intelligence
+
+AI membaca Project context yang tersedia dari form, evidence, connection, public data, dan prompt user.
+
+### Default intelligence output
+
+- Business Understanding;
+- Client Objectives;
+- Target Market / Audience;
+- Available Data & Access;
+- Initial SEO Findings;
+- Missing Information;
+- Suggested Discovery Questions;
+- Recommended Next Actions.
+
+### Suggested structured information
+
+AI dapat menyarankan perubahan seperti:
+
+```text
+Industry      → Healthcare
+Objective     → Lead Generation
+Target Market → Indonesia
+```
+
+Actions:
+
+```text
+[Accept]
+[Edit]
+[Ignore]
+[Accept All]
+```
+
+AI tidak boleh mengubah Project authoritative fields secara silent.
+
+---
+
+## 6.6 Comprehensive Site Audit
+
+Tidak ada normal scope selector.
+
+Ketika Site Audit dijalankan, sistem menjalankan seluruh check yang didukung menggunakan seluruh data yang tersedia.
+
+### Potential inputs
+
+- public website crawl;
+- page HTML;
+- sitemap;
+- robots.txt;
+- Search Console;
+- GA4;
+- CMS/website connection;
+- uploaded evidence;
+- SEO provider data;
+- performance/technical data yang tersedia.
+
+### Audit areas
+
+Minimum categories mengikuti maintained SEO checklist dan supported engine, termasuk:
+
+- title;
+- meta description;
+- H1-H6;
+- internal/external links;
+- image/alt;
+- canonical;
+- robots;
+- sitemap;
+- indexability/noindex;
+- Open Graph;
+- hreflang;
+- duplicate signals;
+- structured data/schema;
+- page performance/response issue;
+- information architecture;
+- technical/on-page issue lain yang didukung.
+
+### Check status
+
+Setiap check harus memiliki hasil eksplisit:
+
+- Passed;
+- Urgent;
+- Issue;
+- Warning;
+- Not Found;
+- Unable to Verify.
+
+### AI Audit Analyst
+
+AI dapat:
+
+- memahami issue dari seluruh audit evidence;
+- mengelompokkan related issue;
+- menentukan priority/severity recommendation;
+- menjelaskan why it matters;
+- memberi how to fix;
+- membuat suggested fix apabila sesuai.
+
+Example:
+
+```text
+Issue: Missing Meta Description
+Affected URL: /product-a
+AI Suggested Meta Description: ...
+```
+
+### Audit → Task
+
+Setiap actionable issue dapat dikonversi menjadi Task.
+
+Task membawa:
+
+- audit run;
+- issue;
+- URL(s);
+- severity;
+- evidence;
+- recommendation;
+- AI suggested fix.
+
+---
+
+## 6.7 Competitive Analysis
+
+Tujuan utama:
+
+> Who is actually beating the client in organic and paid search, where, and why?
+
+### Competitor discovery
+
+Sistem dapat menemukan competitor secara otomatis dari available SEO/SERP/paid data.
+
+User juga dapat:
+
+- Add Competitor Manually;
+- Ignore/Remove;
+- Mark as Primary Competitor.
+
+### Organic analysis
+
+Target output dapat mencakup:
+
+- authority;
+- organic traffic;
+- shared keywords;
+- keyword gap;
+- ranking overlap;
+- top pages;
+- content gap;
+- backlink/referring-domain gap.
+
+### Paid analysis
+
+Jika source tersedia:
+
+- paid keywords;
+- CPC;
+- ad title;
+- ad description/copy;
+- landing URL;
+- paid competitor context.
+
+### AI Competitive Intelligence
+
+AI menjelaskan:
+
+- competitor yang paling relevan;
+- area yang outperform client;
+- alasan/gap utama;
+- opportunity yang layak diteruskan ke SEO Plan.
+
+---
+
+## 6.8 Keyword & SERP Research
+
+Keyword Research harus Project-aware.
+
+### Context
+
+Sistem dapat menggunakan:
+
+- business/objective Project;
+- website client;
+- Search Console apabila connected;
+- seed keyword;
+- existing keyword;
+- competitor keyword;
+- competitor gap;
+- SERP;
+- top pages;
+- current position;
+- target market.
+
+### Factual metrics
+
+Jika tersedia:
+
+- Search Volume;
+- Keyword Difficulty;
+- CPC;
+- Traffic Potential;
+- Search Intent;
+- Current Position;
+- Ranking URL;
+- SERP competitors/features.
+
+### AI opportunity grouping
+
+- Quick Wins;
+- High Business Value;
+- Content Opportunities;
+- Competitor Gaps;
+- Brand / Awareness Opportunities.
+
+### Keyword → Target Page
+
+AI dapat merekomendasikan:
+
+```text
+Optimize Existing Page
+```
+
+atau:
+
+```text
+Create New Page Recommended
+```
+
+User tetap dapat edit/override.
+
+Action:
+
+```text
+[Add to SEO Plan]
+```
+
+---
+
+## 6.9 SEO Plan
+
+SEO Plan adalah kumpulan recommendation/opportunity yang dipilih oleh SEO Specialist.
+
+Item dapat berasal dari:
+
+- Site Audit;
+- Competitive Analysis;
+- Keyword/SERP Research;
+- Backlink Analysis;
+- manual input;
+- AI recommendation.
+
+### SEO Plan item
+
+Minimal dapat menyimpan:
+
+- category;
+- title/action;
+- source finding;
+- priority;
+- related keyword;
+- related URL;
+- expected impact;
+- recommendation;
+- notes;
+- status/selected state.
+
+SEO Plan menjadi source untuk Proposal dan Delivery Plan.
+
+---
+
+## 6.10 Proposal Builder
+
+Proposal bukan fixed document template.
+
+Proposal adalah modular business case yang dibangun dari Project data dan SEO Plan.
+
+### Potential sections
+
+- Executive Summary;
+- Client Needs / Pain Point;
+- Current Performance;
+- Audit Findings;
+- Competitor Gap;
+- Keyword Opportunity;
+- Recommended Strategy;
+- Analysis & Strategy;
+- Keyword Research;
+- Content Strategy;
+- Technical SEO;
+- On-Page Optimization;
+- Off-Page Optimization;
+- Content Production Plan;
+- Backlink Plan;
+- Flow of Work;
+- Timeline;
+- Traffic Forecast;
+- KPI / Target;
+- Deliverables;
+- Budget;
+- SEO vs SEM / scenario simulation where relevant;
+- Disclaimer / assumptions.
+
+### AI Proposal Assistant
+
+AI dapat:
+
+- suggest relevant sections;
+- generate draft based on Project evidence;
+- summarize findings;
+- explain business impact;
+- draft strategy;
+- draft forecast narrative from factual/scenario input;
+- draft disclaimer.
+
+### User control
+
+User dapat:
+
+- add/remove section;
+- reorder;
+- edit content;
+- regenerate specific section;
+- use manual content.
+
+### Budget rule
+
+Budget diinput manual oleh SEO Specialist.
+
+AI tidak menentukan final price.
+
+### Commercial data safety
+
+AI tidak boleh membuat contractual guarantee, quantity commitment, budget, atau forecast assumption sebagai final tanpa user review.
+
+---
+
+## 6.11 Convert to Active Project & Delivery Plan
+
+Ketika proposal disetujui:
+
+```text
+Project Status → Active
+```
+
+Project tidak dibuat ulang.
+
+Approved Scope dan Deliverables dapat digunakan untuk membuat Draft Delivery Plan.
+
+### Flow
+
+```text
+Approved Proposal
+      ↓
+Generate Draft Delivery Plan
+      ↓
+SEO Specialist Review/Edit
+      ↓
+Activate Delivery Plan
+      ↓
+Create Tasks as needed
+```
+
+Delivery Plan dapat disusun per:
+
+- month;
+- phase;
+- workstream.
+
+Contoh activity:
+
+- Technical SEO;
+- On-Page;
+- Keyword Mapping;
+- Content Planning;
+- Content Production;
+- Backlink;
+- Monitoring;
+- Reporting.
+
+Jangan otomatis membuat ratusan Task sekaligus jika masih cukup direpresentasikan sebagai deliverable/quantity dalam Delivery Plan.
+
+---
+
+## 6.12 Task Management
+
+Task digunakan untuk execution tracking, bukan approval workflow.
+
+### Core status
+
+```text
+To Do → In Progress → Done
+```
+
+Optional operational states:
+
+- Blocked;
+- Cancelled.
+
+### Task fields
+
+- Project;
+- Title;
+- Category;
+- Priority;
+- PIC/Owner;
+- Due Date;
+- Status;
+- Related URL;
+- Related Keyword;
+- Source Type;
+- Source Record;
+- Evidence;
+- AI Recommendation;
+- Notes;
+- Attachment;
+- Before Evidence;
+- After Evidence;
+- Result / Impact.
+
+### Task sources
+
+- Audit;
+- Competitor;
+- Keyword;
+- SEO Plan;
+- Backlink;
+- Delivery Plan;
+- Manual.
+
+Tidak ada mandatory Internal Review / Client Review / Approval stage pada MVP.
+
+---
+
+## 6.13 Backlink Planning
+
+Backlink Planning mendukung dua input path.
+
+### Path A — Manual
+
+User dapat:
+
+- paste list domain;
+- upload structured file;
+- upload existing backlink data;
+- upload competitor backlink data;
+- input KPI/target manual.
+
+### Path B — Automatic
+
+Data dapat berasal dari:
+
+- Project data;
+- SEO API/provider;
+- connected source;
+- existing backlink database;
+- competitor analysis;
+- keyword/SERP analysis.
+
+### AI-assisted backlink planning
+
+Optional action:
+
+```text
+[Analyze with AI]
+```
+
+AI dapat merekomendasikan:
+
+- backlink gap;
+- estimated quantity;
+- quality criteria;
+- DR/traffic criteria;
+- topical relevance;
+- target keyword;
+- target page;
+- anchor mix;
+- monthly distribution;
+- competitor gap;
+- SERP difficulty considerations.
+
+### Final decision
+
+SEO Specialist dapat:
+
+- accept;
+- edit;
+- ignore AI;
+- input strategy manual.
+
+Final quantity dan strategy selalu ditentukan oleh SEO Specialist.
+
+---
+
+## 6.14 Backlink Source Research
+
+User dapat memasukkan calon Source Domain secara manual atau dari data source/API.
+
+### Step A — Historical Check
+
+Untuk setiap Source Domain, sistem mengecek:
+
+- pernah digunakan atau belum;
+- same Project;
+- other Project/history;
+- purchase count;
+- last used date;
+- previous keyword/anchor;
+- previous target URL;
+- vendor/platform;
+- previous price jika tersedia.
+
+Duplicate/history tidak otomatis diblokir.
+
+User tetap dapat membeli lagi.
+
+### Step B — Quality Research
+
+Potential factual/context data:
+
+- DR;
+- organic traffic;
+- backlinks;
+- referring domains;
+- top keywords/pages;
+- topical relevance;
+- language/country context;
+- risk/spam indicators apabila data tersedia.
+
+### Step C — AI recommendation
+
+AI dapat memberi classification seperti:
+
+- Recommended;
+- Consider;
+- Avoid;
+
+beserta reasoning.
+
+### Step D — Human decision
+
+```text
+Buy
+Skip
+Save for Later
+```
+
+---
+
+## 6.15 Placement Order & Backlink Lifecycle
+
+Setelah user memilih Buy, placement masuk lifecycle.
+
+Recommended status:
+
+```text
+Planned
+→ Purchased / Ordered
+→ Content / Processing
+→ Live
+→ Verified
+```
+
+Exception status:
+
+- Cancelled;
+- Failed.
+
+### Placement / Live backlink data
+
+- Source Domain;
+- Live URL;
+- Target URL;
+- Keyword;
+- Anchor;
+- Vendor/Platform;
+- Price;
+- Purchase Date;
+- Live Date;
+- DR/Traffic snapshot saat keputusan;
+- link type;
+- evidence;
+- notes.
+
+---
+
+## 6.16 Backlink Monitoring
+
+Setelah Live, sistem dapat melakukan monitoring berkala jika secara teknis tersedia.
+
+Potential monitoring states:
+
+- Live;
+- Missing;
+- Redirected;
+- Nofollow Changed;
+- Target Changed;
+- Error;
+- Unable to Verify.
+
+Problem dapat menjadi warning atau Task.
+
+---
+
+## 6.17 Reporting & Monitoring
+
+Reporting memakai hybrid data model.
+
+### Automatic data
+
+Apabila connector tersedia, sistem dapat menggunakan:
+
+- Search Console;
+- GA4;
+- keyword ranking;
+- backlink monitoring;
+- audit data;
+- Google Ads;
+- other supported paid media;
+- ecommerce/conversion data.
+
+### Manual evidence
+
+User tetap dapat:
+
+- upload screenshot;
+- upload PDF/DOCX;
+- upload spreadsheet/JSON;
+- add link;
+- add note/data manual.
+
+### AI Reporting Assistant
+
+User dapat memberikan prompt seperti:
+
+> Buat monthly SEO report untuk management. Fokus ke traffic, keyword, conversion, backlink, dan rekomendasi bulan depan.
+
+AI dapat membuat:
+
+- Executive Summary;
+- KPI Performance;
+- Traffic Analysis;
+- Conversion Analysis;
+- Keyword Performance;
+- Page Performance;
+- Technical SEO Progress;
+- Content Performance;
+- Backlink Performance;
+- Paid Media Context;
+- Task / Implementation Progress;
+- Findings;
+- Risks;
+- Recommended Next Actions.
+
+### Reporting rule
+
+Jika data tidak tersedia, AI tidak boleh mengarang angka.
+
+### Report history
+
+Report disimpan per period.
+
+User dapat:
+
+- edit;
+- save version;
+- compare with previous period;
+- ask AI about changes;
+- export/share using supported output mechanisms.
+
+Target exports dapat meliputi:
+
+- PDF;
+- DOCX;
+- PPTX;
+- XLSX;
+- shareable report link apabila diimplementasikan.
+
+---
+
+# 7. Data & AI Structure Principle
+
+## 7.1 Original / Evidence Layer
+
+Source yang dikumpulkan dari:
+
+- uploaded file;
+- connection;
+- API;
+- crawl;
+- manual input.
+
+Original/raw source tidak digantikan oleh AI summary.
+
+## 7.2 Normalized / Structured Layer
+
+Data yang sudah dipetakan ke internal product model.
+
+Contoh:
+
+- normalized domain;
+- keyword;
+- traffic;
+- DR;
+- price;
+- competitor;
+- audit issue;
+- task;
+- report metric.
+
+## 7.3 Intelligence Layer
+
+Output AI seperti:
+
+- summary;
+- recommendation;
+- issue reasoning;
+- opportunity classification;
+- suggested copy;
+- proposal narrative;
+- report narrative.
+
+AI layer tidak menggantikan factual source layer.
+
+## 7.4 Decision Layer
+
+Human-confirmed decision seperti:
+
+- selected keyword;
+- target page;
+- final SEO Plan;
+- final budget;
+- backlink Buy/Skip;
+- backlink quantity;
+- delivery scope;
+- task completion.
+
+---
+
+# 8. Current Production Compatibility
+
+Existing technical architecture tetap harus dipertahankan dan dikembangkan secara additive.
+
+Existing production stack:
 
 - TanStack Start + React;
 - Vite;
-- Tailwind CSS + current component system;
-- Lovable Cloud hosting;
+- Tailwind CSS / current components;
+- Lovable Cloud;
 - Lovable Cloud managed Supabase;
-- existing GitHub repository/history;
-- existing custom domain;
-- existing authentication flow.
+- existing GitHub repository;
+- current authentication;
+- current custom domain.
 
-## 6.3 Current production data
-
-Existing/legacy operational tables include:
-
-- `domain_sudah_pernah`;
-- `traffic_nol`;
-- `sudah_dibeli`;
-- `check_logs`;
-- `search_history`.
-
-Newer additive SEO/backlink architecture currently includes:
+Existing SEO/backlink foundation includes:
 
 - `projects`;
 - `placement_orders`;
@@ -201,1154 +1291,150 @@ Newer additive SEO/backlink architecture currently includes:
 - `global_domain_cache`;
 - `keyword_metrics_cache`;
 - `keyword_rank_cache`;
-- `seo_research_runs`.
+- `seo_research_runs`;
+- historical `sudah_dibeli`;
+- `domain_sudah_pernah`;
+- `traffic_nol`;
+- `check_logs`;
+- `search_history`.
 
-At the discovery baseline, historical legacy data and SEO caches/logs contain production records, while the newer `projects`, `placement_orders`, and `backlinks` tables do not yet contain active rows. Production data must be preserved.
+Existing provider architecture includes:
 
-## 6.4 Current SEO intelligence
+- Apify Actor `pro100chok/ahrefs-seo-tools`;
+- OpenAI server-side semantic reasoning for existing backlink flow;
+- legacy OpenSEO / older Apify paths retained until explicitly deprecated.
 
-Current architecture/code includes:
-
-- Apify Actor `pro100chok/ahrefs-seo-tools` provider wrapper;
-- domain cache;
-- keyword metrics cache;
-- keyword rank cache;
-- research-run logging;
-- direct server-side OpenAI helper for semantic backlink reasoning;
-- legacy OpenSEO/older Apify integrations retained during migration.
-
-## 6.5 Current gaps vs target product
-
-The following target modules are not represented as current production routes/data workflows:
-
-- Prospect/Discovery workspace;
-- Project evidence/file repository;
-- universal import normalization/preview;
-- AI Client Intelligence;
-- comprehensive Site Audit;
-- Competitive Analysis;
-- Project-aware SEO Plan;
-- Proposal Builder;
-- Delivery Plan;
-- Task Management;
-- hybrid Reporting workspace;
-- full backlink planning/monitoring lifecycle.
+New product requirements do not authorize destructive removal of these components.
 
 ---
 
-# 7. Critical Compatibility Requirement
+# 9. AI Provider Principle
 
-`docs/SEO_ARCHITECTURE.md` is the existing technical source of truth for backlink/SEO intelligence implementation.
+Target for new general intelligent workflows:
 
-This PRD expands product scope. Therefore:
+- prefer Lovable managed AI / AI Gateway where it can satisfy document understanding, analysis, drafting, and reasoning needs while minimizing separate external AI integration cost;
+- keep the application behind an internal AI abstraction;
+- do not couple UI components directly to one model/provider;
+- existing OpenAI backlink workflow remains functional until parity/migration is tested;
+- actual Lovable AI usage limits, supported models, and commercial usage constraints must be validated during implementation and must not be assumed unlimited.
 
-- do not rewrite or ignore the current architecture;
-- implement new modules additively;
-- create architecture deltas when needed;
-- preserve legacy data and working flows;
-- validate parity before provider deprecation;
-- preserve cache-first behavior;
-- keep privileged provider calls server-side.
+SEO factual metrics remain sourced from factual providers/cache, not from generative AI.
 
 ---
 
-# 8. Functional Requirements — Project & Discovery
+# 10. Security & Access Principle
 
-## FR-PROJ-001 — Fast Project creation
+Target MVP access behavior:
 
-User can create a Project without completing all discovery fields.
+> All authorized internal SEO users can see all Projects.
 
-Minimum start:
+Current production tables contain ownership-based RLS in parts of the existing application.
 
-- Project/Client Name;
-- Website/domain if known.
+Therefore shared internal access must be implemented through an explicit safe team/workspace authorization design.
 
-### Acceptance criteria
+Do not solve shared visibility by:
 
-- Project can be saved with minimal data.
-- Missing optional data does not block later evidence upload.
-- Project status can represent a prospect/pre-deal state.
+- disabling RLS;
+- adding public access;
+- creating unrestricted authenticated policies without a team authorization model.
 
-## FR-PROJ-002 — Progressive Project profile
+Sensitive credentials remain server-only.
 
-User can add/edit discovery information over time.
+Never expose:
 
-Examples:
-
-- Industry;
-- objective(s);
-- target market;
-- current pain point;
-- contact information;
-- budget indication;
-- known competitors;
-- notes;
-- access/connection availability.
-
-### Acceptance criteria
-
-- Fields can be incomplete.
-- User can update them later.
-- AI-generated suggestions do not silently overwrite confirmed values.
-
-## FR-PROJ-003 — Convert prospect to Active without recreation
-
-### Acceptance criteria
-
-- User can change lifecycle state to Active/Deal.
-- Existing audit/research/proposal/history remains on the same Project ID.
+- Supabase service-role key;
+- secret Supabase keys;
+- Apify secret/token;
+- OpenAI key;
+- other provider credentials.
 
 ---
 
-# 9. Functional Requirements — Evidence, Upload & Normalization
+# 11. UX Principle
 
-## FR-DATA-001 — Project Evidence Library
+The product should feel like:
 
-User can attach evidence to a Project.
+> **A modern SEO command center that already understands the Project context.**
 
-Target formats include:
+Not like:
 
-- PDF;
-- DOC/DOCX;
-- CSV;
-- XLS/XLSX;
-- TXT;
-- JSON;
-- image/screenshot;
-- URL/link;
-- other technically supported media/documents.
+> **A collection of disconnected SEO utilities and administrative forms.**
 
-### Acceptance criteria
+Primary UX rules:
 
-- Evidence is linked to one Project.
-- User can identify source/type/date.
-- Evidence can be used as context for AI workflows.
+1. Project context is always clear.
+2. Complex analysis is summarized first, detail is expandable.
+3. Tables are used for operational data; charts only when they improve understanding.
+4. Manual upload is always easy to find where relevant.
+5. AI appears contextually inside workflow, not as a generic chat-only experience.
+6. Every AI recommendation is distinguishable from factual data.
+7. User can override AI.
+8. User should not have to repeatedly select the same Project/domain in every tool.
+9. Existing data should be reused before requesting paid API calls.
+10. Import should prefer AI/automatic detection over forcing the user to clean spreadsheets first.
 
-## FR-DATA-002 — Manual structured import
-
-Modules that use structured lists/data support paste/upload/import.
-
-### Acceptance criteria
-
-- Detect likely columns.
-- Suggest field mappings.
-- Highlight invalid/missing/duplicate data.
-- Allow mapping correction before save.
-
-## FR-DATA-003 — Universal normalization
-
-### Required behavior
-
-Normalize according to field semantics.
-
-For domains:
-
-- lowercase;
-- strip protocol;
-- strip `www.`;
-- strip path/query;
-- strip trailing slash.
-
-For page URLs:
-
-- preserve the specific URL/path needed by the workflow.
-
-Other normalization may include:
-
-- dates;
-- numeric values;
-- price/currency representation;
-- keyword whitespace/case rules;
-- source/vendor labels.
-
-### Acceptance criteria
-
-- Equivalent Source Domains can be detected as duplicates.
-- Raw/original value can be retained for traceability where useful.
-
-## FR-DATA-004 — Data Preview before uncertain import save
-
-Canonical flow:
+Detailed visual/UI rules are defined in:
 
 ```text
-Upload/Paste → Detect → Normalize → Map → Validate → Preview → Confirm → Save
+docs/UI_UX_SPEC.md
 ```
 
-### Acceptance criteria
+---
 
-- User can cancel or remap before permanent insertion.
-- No uncertain parsed import is silently committed.
+# 12. MVP Success Criteria
 
-## FR-DATA-005 — Provenance
+MVP dianggap berhasil apabila:
 
-Structured data should identify source where practical:
-
-- Manual Entry;
-- Manual Upload;
-- Connected Source;
-- API;
-- Public Crawl;
-- AI Extracted;
-- Legacy Import.
+1. **Project** — SEO Specialist dapat membuat Project dengan data minimum dan melengkapinya bertahap.
+2. **Evidence** — user dapat menambahkan file/link/manual evidence ke Project.
+3. **Normalization** — structured manual upload dapat dideteksi, dipetakan, dinormalisasi, dipreview, dan disimpan setelah confirmation.
+4. **Client Intelligence** — AI dapat memahami Project context, menemukan missing information, dan memberikan recommended next actions.
+5. **Audit** — system dapat menjalankan comprehensive Site Audit dengan explicit issue/status output.
+6. **AI Audit** — AI dapat menjelaskan issue dan memberikan suggested remediation/fix tanpa mengarang factual metric.
+7. **Audit to Task** — actionable audit finding dapat dibuat menjadi Task dengan source context.
+8. **Competitor** — user dapat memperoleh competitor analysis dari automatic discovery maupun manual competitor list.
+9. **Keyword** — system dapat membuat Project-aware Keyword/SERP analysis dan Target Page recommendation.
+10. **SEO Plan** — user dapat memilih recommendation menjadi SEO Plan.
+11. **Proposal** — system dapat membuat proposal modular berdasarkan Project/SEO Plan, sementara budget tetap manual.
+12. **Deal Conversion** — Project dapat berubah Prospect → Active tanpa kehilangan data/history.
+13. **Delivery Plan** — approved scope dapat dibuat menjadi Delivery Plan yang dapat diedit.
+14. **Task** — user dapat menjalankan To Do → In Progress → Done tanpa mandatory approval workflow.
+15. **Backlink Planning** — system mendukung manual dan automatic input serta optional AI recommendation.
+16. **Backlink Decision** — final quantity, strategy, dan Buy/Skip tetap berada di tangan SEO Specialist.
+17. **Placement Lifecycle** — backlink dapat ditrack dari planned/order sampai live/verified.
+18. **Backlink Monitoring** — live backlink dapat memiliki current monitoring state apabila verification tersedia.
+19. **Reporting** — report dapat dibuat dari connected data maupun manual evidence.
+20. **AI Reporting** — AI dapat membuat analysis berdasarkan Project data dan custom prompt tanpa fabricated metric.
+21. **History** — report dan important decisions dapat ditelusuri ke period/source/history.
+22. **Internal Access** — seluruh authorized internal SEO team dapat mengakses Project sesuai secure team authorization design.
+23. **Production Safety** — existing application, existing data, authentication, cache, backlink history, dan working workflows tetap berfungsi setelah expansion.
+24. **Cost Control** — cache dan deduplication mencegah unnecessary paid SEO/API calls.
+25. **Security** — privileged keys/provider calls tetap server-side dan RLS tidak dilemahkan untuk convenience.
 
 ---
 
-# 10. Functional Requirements — Integrations
-
-## FR-INT-001 — Project connection registry
-
-Each Project can show available/connected data sources.
-
-Target sources include, subject to connector/API implementation:
-
-- Google Search Console;
-- Google Analytics / GA4;
-- Google Ads;
-- Shopify;
-- WooCommerce;
-- WordPress/CMS systems;
-- ecommerce/conversion sources;
-- paid-media/tracking sources;
-- SEO providers/crawlers.
-
-Lovable workspace currently exposes integrations for several of these services, including Google Analytics, Google Search Console, Google Ads, WooCommerce, Shopify, WordPress, Apify, and other data tools.
-
-Meta Ads and specialized TikTok Ads data are target integrations but must be validated technically before being claimed as connected functionality.
-
-### Acceptance criteria
-
-- Project works without a connector.
-- Connection states are visible.
-- Failure of one connection does not erase existing Project data.
-
----
-
-# 11. Functional Requirements — AI Platform
-
-## FR-AI-001 — AI provider abstraction
-
-For new general intelligence workflows, prefer Lovable's managed AI/AI Gateway where appropriate to minimize extra external AI cost.
-
-Existing OpenAI-based backlink reasoning must not be removed abruptly.
-
-### Acceptance criteria
-
-- Product workflow depends on a stable internal AI service interface, not provider-specific UI code.
-- Existing OpenAI backlink flow remains functional until replacement/parity is explicitly validated.
-
-## FR-AI-002 — No fabricated metrics
-
-AI must never invent factual metrics such as:
-
-- DR;
-- organic traffic;
-- Search Volume;
-- KD;
-- CPC;
-- Traffic Potential;
-- SERP Position;
-- backlink/referring-domain counts;
-- connected analytics/ads values.
-
-### Acceptance criteria
-
-- Missing factual data is marked unavailable/unverified.
-- Generated narrative does not present inferred numbers as measured facts.
-
-## FR-AI-003 — Human control
-
-AI may recommend but not silently commit authoritative decisions.
-
-### Acceptance criteria
-
-- AI-extracted Project fields support Accept/Edit/Ignore.
-- user-entered Keyword/Target URL is not overwritten automatically.
-- AI cannot finalize budget, guarantees, or final backlink strategy without user action.
-
----
-
-# 12. Functional Requirements — AI Client Intelligence
-
-## FR-CLI-001 — Analyze Project context
-
-AI can analyze Project fields, evidence, connected data, and user prompt/objective.
-
-Expected output:
-
-- Business Understanding;
-- Client Objectives;
-- Available Data & Access;
-- Initial Findings;
-- Missing Information;
-- Suggested Questions;
-- Recommended Next Actions.
-
-### Acceptance criteria
-
-- Output refreshes when user requests analysis after new evidence.
-- Factual/extracted information is distinguishable from recommendation/inference.
-- User can apply suggested structured Project fields individually or in bulk after review.
-
----
-
-# 13. Functional Requirements — Comprehensive Site Audit
-
-## FR-AUD-001 — Full audit by default
-
-There is no normal pre-audit scope selector. The system runs all supported audit checks.
-
-Data may come from:
-
-- public crawl;
-- sitemap/robots/page data;
-- connected Search Console/Analytics/etc.;
-- uploaded evidence;
-- SEO provider/API data.
-
-## FR-AUD-002 — Audit checklist coverage
-
-Audit should support the maintained on-page/technical checklist, including categories such as:
-
-- titles;
-- meta descriptions;
-- H1-H6;
-- canonical;
-- robots/sitemap;
-- index/noindex;
-- links;
-- images/alt;
-- duplicate signals;
-- Open Graph;
-- hreflang;
-- structured data;
-- performance/response indicators;
-- information architecture;
-- other supported on-page/technical checks.
-
-## FR-AUD-003 — Explicit check result
-
-Each check returns an explicit state:
-
-- Passed;
-- Issue;
-- Warning;
-- Not Found;
-- Unable to Verify.
-
-## FR-AUD-004 — AI Audit Analyst
-
-AI can:
-
-- group/deduplicate issues;
-- prioritize severity;
-- explain impact;
-- propose remediation;
-- generate suggested copy/fix examples where appropriate.
-
-Example: missing meta description can include an AI-drafted meta description based on page content, keyword intent, and Project context.
-
-## FR-AUD-005 — Audit issue to Task
-
-### Acceptance criteria
-
-- User can create a Task from an actionable issue.
-- Task retains source audit run, URL(s), severity, evidence, and recommendation.
-
----
-
-# 14. Functional Requirements — Competitive Analysis
-
-## FR-COMP-001 — Automatic competitor discovery
-
-System can identify relevant organic/paid competitors from available provider/search data.
-
-## FR-COMP-002 — Manual competitor control
-
-User can:
-
-- add manually;
-- ignore/remove;
-- mark Primary Competitor.
-
-## FR-COMP-003 — Organic comparison
-
-May include:
-
-- authority;
-- organic traffic;
-- shared keywords;
-- keyword gaps;
-- top pages;
-- ranking overlap;
-- content gaps;
-- backlink/referring-domain gap.
-
-## FR-COMP-004 — Paid comparison
-
-Where supported:
-
-- paid keywords;
-- CPC;
-- ad title/copy/description;
-- landing URL;
-- paid competitor context.
-
-## FR-COMP-005 — AI competitive reasoning
-
-AI explains:
-
-- who is winning;
-- where;
-- why;
-- which gaps matter to the client objective;
-- what should become an SEO Plan opportunity.
-
----
-
-# 15. Functional Requirements — Keyword & SERP Research
-
-## FR-KW-001 — Project-aware research
-
-Keyword Research can use:
-
-- Project/business context;
-- seed keywords;
-- Search Console;
-- competitor keywords;
-- SERP data;
-- keyword gaps;
-- current ranking pages.
-
-## FR-KW-002 — Factual keyword metrics
-
-Where available:
-
-- Search Volume;
-- KD;
-- CPC;
-- Traffic Potential;
-- Current Position;
-- Ranking URL;
-- SERP context.
-
-Reuse existing cache architecture where applicable.
-
-## FR-KW-003 — AI opportunity classification
-
-AI may classify/prioritize:
-
-- Quick Wins;
-- High Business Value;
-- Content Opportunities;
-- Competitor Gaps;
-- Brand/Awareness Opportunities.
-
-## FR-KW-004 — Keyword → Target Page
-
-AI recommends:
-
-- Optimize Existing Page; or
-- Create New Page Recommended.
-
-### Acceptance criteria
-
-- Recommendation is editable.
-- Existing human mapping is not overwritten silently.
-- User can add selected item to SEO Plan.
-
----
-
-# 16. Functional Requirements — SEO Plan
-
-## FR-PLAN-001 — Consolidate opportunities
-
-SEO Plan can contain findings/recommendations from:
-
-- Audit;
-- Competitive Analysis;
-- Keyword Research;
-- Content opportunity;
-- Backlink analysis;
-- manual strategy.
-
-Each Plan item should support:
-
-- title/action;
-- rationale;
-- priority;
-- source/evidence;
-- related objective/KPI;
-- URL/keyword when relevant;
-- expected impact type.
-
-## FR-PLAN-002 — Strategic, not merely Tasks
-
-SEO Plan is a strategic layer. It should not be identical to the executable Task list.
-
----
-
-# 17. Functional Requirements — Proposal Builder
-
-## FR-PROP-001 — Generate proposal draft from Project evidence
-
-AI can draft a Proposal based on available Project analysis.
-
-## FR-PROP-002 — Modular proposal sections
-
-Potential sections:
-
-- Executive Summary;
-- Client Needs & Pain Point;
-- Current Performance;
-- Competitor Gap;
-- Audit Findings;
-- Keyword Opportunity;
-- Content Strategy;
-- Technical SEO;
-- On-Page SEO;
-- Off-Page SEO;
-- Tracking/Analytics;
-- Scope of Work;
-- Deliverables;
-- Workflow;
-- Timeline;
-- KPI/Targets;
-- Traffic/Impact Forecast;
-- Budget;
-- ROI / SEO-vs-SEM simulation;
-- assumptions/disclaimer.
-
-User can add/remove/reorder/edit sections.
-
-## FR-PROP-003 — Manual budget
-
-Budget values are entered/finalized manually.
-
-AI may structure or calculate presentation from user values but may not independently set final pricing.
-
-## FR-PROP-004 — Forecast vs commitment
-
-AI/system must distinguish forecast/estimate from contractual commitment.
-
-### Acceptance criteria
-
-- Forecast sections can show assumptions/disclaimer.
-- Final quantities, guarantees, duration, budget, and committed KPI remain user-controlled.
-
-## FR-PROP-005 — Proposal history
-
-Store proposal version/history within Project.
-
----
-
-# 18. Functional Requirements — Deal & Delivery Plan
-
-## FR-DEL-001 — Mark Project as Deal/Active
-
-Changing lifecycle state must preserve all pre-sales history.
-
-## FR-DEL-002 — Convert final scope into Delivery Plan
-
-Use:
+# Final Product Mental Model
 
 ```text
-Proposal → Final Scope → Delivery Plan → Tasks
+PROJECT = CLIENT + WEBSITE + CONTEXT
+
+DATA SOURCES + FILES + PUBLIC CRAWL
+              ↓
+        NORMALIZATION
+              ↓
+      FACTUAL SEO DATA
+              ↓
+     AI INTELLIGENCE
+              ↓
+      HUMAN DECISION
+              ↓
+PLAN → PROPOSAL → DELIVERY → TASKS
+              ↓
+   BACKLINK / IMPLEMENTATION
+              ↓
+ MONITORING → REPORTING → NEXT ACTION
 ```
 
-Delivery Plan may organize work by:
+The platform's job is not to replace the SEO Specialist.
 
-- month;
-- phase;
-- category;
-- planned quantity;
-- target date.
-
-### Acceptance criteria
-
-- SEO Specialist can edit plan before activation.
-- Proposal does not automatically generate hundreds of Tasks directly.
-
----
-
-# 19. Functional Requirements — Task Management
-
-## FR-TASK-001 — Simple task status
-
-Required baseline:
-
-```text
-To Do → In Progress → Done
-```
-
-Optional:
-
-- Blocked;
-- Cancelled.
-
-No mandatory Approval/Client Review state.
-
-## FR-TASK-002 — Task context
-
-Task may contain:
-
-- Project;
-- PIC/Owner;
-- due date;
-- priority;
-- category;
-- related URL;
-- related Keyword;
-- source type/reference;
-- AI recommendation;
-- notes;
-- attachments;
-- before evidence;
-- after evidence;
-- result/impact.
-
-## FR-TASK-003 — Multiple task sources
-
-Task may originate from:
-
-- Audit;
-- Competitive finding;
-- Keyword opportunity;
-- SEO Plan;
-- Backlink issue;
-- Reporting recommendation;
-- Manual entry.
-
----
-
-# 20. Functional Requirements — Backlink Planning
-
-This section extends the existing backlink architecture rather than replacing it.
-
-## FR-BLP-001 — Two input routes
-
-Backlink baseline/strategy data can come from:
-
-### Manual
-
-- paste;
-- manual form;
-- CSV/XLSX/TXT/JSON/document upload.
-
-### Automatic
-
-- provider/API;
-- existing Project data;
-- connected sources;
-- public research.
-
-Manual data uses the universal normalization/preview flow.
-
-## FR-BLP-002 — AI-assisted backlink strategy
-
-AI may recommend:
-
-- backlink gap;
-- estimated quantity/range;
-- quality criteria;
-- DR/traffic criteria;
-- target keyword/page;
-- anchor strategy;
-- monthly distribution;
-- competitor gap;
-- diversity considerations.
-
-### Acceptance criteria
-
-- User can bypass AI.
-- User can edit AI output.
-- final quantity and final strategy are explicitly saved by SEO Specialist.
-
----
-
-# 21. Functional Requirements — Source Domain & Buying Workflow
-
-## FR-BUY-001 — Source import
-
-Source Domains can come from:
-
-- seller/vendor list;
-- marketplace;
-- outreach;
-- manual upload/paste;
-- API.
-
-## FR-BUY-002 — Duplicate/history check
-
-For normalized Source Domain, show available history:
-
-- used in current Project;
-- used elsewhere;
-- usage count;
-- last used date;
-- previous keyword/anchor;
-- target URL;
-- vendor/platform;
-- historical price.
-
-Duplicate use must be a warning, not an automatic block.
-
-## FR-BUY-003 — Quality research
-
-Reuse cache/API architecture to obtain supported quality data such as:
-
-- DR;
-- traffic;
-- backlinks;
-- referring domains;
-- top keywords/pages;
-- context relevant to topical/quality assessment.
-
-## FR-BUY-004 — AI candidate recommendation
-
-AI can label:
-
-- Recommended;
-- Consider;
-- Avoid;
-
-with explanation.
-
-## FR-BUY-005 — Human buying decision
-
-User chooses:
-
-```text
-Buy / Skip / Save for Later
-```
-
-If Buy, capture:
-
-- source domain;
-- vendor/seller/platform;
-- price;
-- keyword/anchor;
-- target URL;
-- date;
-- notes;
-- metric snapshots used for decision.
-
----
-
-# 22. Functional Requirements — Placement & Backlink Monitoring
-
-## FR-BL-001 — Placement lifecycle
-
-Target lifecycle:
-
-```text
-Planned
-→ Ordered/Purchased
-→ Content/Processing
-→ Live
-→ Verified
-```
-
-Exceptions:
-
-- Cancelled;
-- Failed.
-
-Existing placement statuses may be migrated/mapped additively rather than destructively replaced.
-
-## FR-BL-002 — Live backlink record
-
-Store relevant live state:
-
-- source domain;
-- live/source URL;
-- target URL;
-- keyword/anchor;
-- vendor;
-- price;
-- date live;
-- link type;
-- decision-time metric snapshot;
-- evidence;
-- verification timestamps.
-
-## FR-BL-003 — Monitoring
-
-Where technically possible, periodically detect:
-
-- still live;
-- removed/lost;
-- redirect;
-- HTTP error;
-- target URL change;
-- dofollow/nofollow/link attribute change.
-
-Monitoring issues may create warnings or Tasks.
-
----
-
-# 23. Functional Requirements — Reporting
-
-## FR-REP-001 — Hybrid input
-
-Reports can use connected data and manually supplied evidence.
-
-## FR-REP-002 — User prompt/objective
-
-User can provide a reporting prompt/objective.
-
-Example:
-
-```text
-Create a monthly SEO report for management focused on traffic, keyword movement, conversions, backlink progress, implementation, risks, and next actions.
-```
-
-## FR-REP-003 — AI Report Builder
-
-Possible modules:
-
-- Executive Summary;
-- KPI Performance;
-- Traffic/Conversion;
-- Keyword Performance;
-- Page/Content Performance;
-- Technical SEO;
-- Backlink Performance;
-- Paid-media context;
-- Delivery/Task progress;
-- Key Findings;
-- Risks;
-- Recommendations/Next Actions.
-
-## FR-REP-004 — Reporting integrity
-
-### Acceptance criteria
-
-- no invented numbers;
-- missing data explicitly identified;
-- source/provenance retained where possible;
-- manual evidence can be used when a connector is unavailable.
-
-## FR-REP-005 — Period/history
-
-Support:
-
-- Weekly;
-- Monthly;
-- Custom Range;
-- saved report history;
-- editing;
-- versioning;
-- prior-period comparison.
-
-## FR-REP-006 — Export/share
-
-Target output:
-
-- PDF;
-- DOCX;
-- PPTX;
-- XLSX where applicable;
-- optional shareable link.
-
-Shareable report does not imply Client Portal access.
-
----
-
-# 24. Data Model Direction — Additive Only
-
-This section describes product-level entities, not final SQL. Exact schema requires a dedicated architecture/migration design phase.
-
-Existing tables must be preserved.
-
-Potential additive entities/structures include:
-
-- extended `projects` profile/lifecycle fields;
-- `project_evidence` / file metadata;
-- `project_connections`;
-- `ai_analysis_runs` / analysis snapshots;
-- `site_audit_runs`;
-- `site_audit_findings`;
-- `project_competitors`;
-- Project keyword/opportunity records;
-- `seo_plan_items`;
-- `proposals` + proposal versions/sections;
-- `delivery_plans` + plan items;
-- `tasks`;
-- `reports` + report versions;
-- backlink plan/strategy records;
-- vendor/source metadata where needed;
-- backlink monitoring checks/events.
-
-Do not introduce all tables at once solely because they appear here. Implement each expansion wave with the minimum schema needed and additive migrations.
-
----
-
-# 25. Authorization & RLS Requirement
-
-## Current state
-
-Several current operational tables enforce row ownership with patterns equivalent to:
-
-```text
-user_id = auth.uid()
-```
-
-## Target product behavior
-
-All authenticated internal SEO users should see all internal Projects/shared records in the first expanded version.
-
-## Requirement
-
-A dedicated security design must reconcile this difference.
-
-Do not simply disable RLS or create public/permissive policies.
-
-Target security should still:
-
-- require authenticated internal access;
-- keep public/anonymous access blocked;
-- protect server-only caches/secrets;
-- support future role expansion if needed.
-
-This is a **P0 architecture/security dependency** before team-shared Project data is implemented.
-
----
-
-# 26. Non-Functional Requirements
-
-## NFR-001 — Production preservation
-
-No destructive replacement of existing data/tables/routes.
-
-## NFR-002 — Additive migrations
-
-Schema changes must be additive with rollback path.
-
-## NFR-003 — Cache-first paid SEO calls
-
-Reuse current caching and cost-control principles.
-
-## NFR-004 — Server-side secrets
-
-Never expose privileged provider credentials in browser code.
-
-## NFR-005 — Partial failure resilience
-
-One failed data source/API should not destroy successful results from other sources.
-
-## NFR-006 — Provenance
-
-Users should be able to tell whether important information came from upload, connector, API, crawl, AI extraction, or manual entry.
-
-## NFR-007 — Performance
-
-Do not automatically trigger costly API/AI operations on page load unless the workflow explicitly requires automatic collection and cost is controlled.
-
-## NFR-008 — Traceability
-
-Recommendations should retain links to source data/findings wherever practical.
-
----
-
-# 27. Current-to-Target Gap Summary
-
-| Capability | Current State | Target |
-|---|---|---|
-| Domain Research | Exists | Reuse + Project context |
-| Keyword Research | Exists standalone | Expand to Project-aware research |
-| Backlink Recommendation | Exists | Expand into full planning/buying lifecycle |
-| Projects | Basic table/UI exists | Become full Prospect→Active workspace |
-| Placement Orders | Basic exists | Expand lifecycle/vendor/history |
-| Backlinks | Table exists | Add full live verification/monitoring |
-| SEO Cache | Exists | Reuse |
-| Research Logs | Exists | Reuse/extend |
-| Manual import normalization | Partial/backlink architecture concept | Universal capability |
-| Evidence/files | Not productized | Required |
-| AI Client Intelligence | Not present | Required |
-| Comprehensive Site Audit | Not present | Required |
-| Competitive Analysis | Not present | Required |
-| SEO Plan | Not present | Required |
-| Proposal Builder | Not present | Required |
-| Delivery Plan | Not present | Required |
-| Task Management | Not present | Required |
-| Hybrid Reporting | Not present | Required |
-| Shared internal visibility | Current RLS is per-user on many tables | Required with secure authenticated team model |
-
----
-
-# 28. Product Expansion Waves
-
-These are **product expansion waves**, not replacements for the implementation phases already defined in `SEO_ARCHITECTURE.md`.
-
-## Wave 0 — Architecture & Security Delta
-
-Before broad feature coding:
-
-- map existing architecture to this PRD;
-- define safe shared-internal RLS model;
-- define Project lifecycle extension;
-- define evidence/storage pattern;
-- define universal normalization service;
-- define AI provider abstraction using Lovable managed AI for new general reasoning while preserving existing OpenAI flow;
-- define connector registry/state model.
-
-**Stop after architecture/security design and migration plan.**
-
-## Wave 1 — Project Discovery & Evidence
-
-Build:
-
-- Prospect lifecycle;
-- progressive Project profile;
-- Project evidence library;
-- upload/link/manual input;
-- normalization + Data Preview;
-- AI Client Intelligence.
-
-## Wave 2 — Comprehensive Site Audit
-
-Build:
-
-- crawl/data collection orchestration;
-- audit checklist engine;
-- findings/severity;
-- AI Audit Analyst;
-- suggested fixes;
-- finding → Task action foundation.
-
-## Wave 3 — Competitive + Keyword + SEO Plan
-
-Build:
-
-- competitor discovery/manage;
-- organic/paid comparison where supported;
-- Project-aware keyword/SERP workflow;
-- target-page mapping;
-- SEO Plan.
-
-## Wave 4 — Proposal
-
-Build:
-
-- modular Proposal Builder;
-- AI drafting;
-- manual budget;
-- forecast vs commitment semantics;
-- proposal versions;
-- export foundation.
-
-## Wave 5 — Active Delivery & Tasks
-
-Build:
-
-- Deal/Active conversion;
-- Delivery Plan;
-- Task Management;
-- source traceability;
-- before/after evidence.
-
-## Wave 6 — Backlink Workflow Expansion
-
-Reuse and extend current architecture:
-
-- backlink baseline/planning;
-- manual/automatic source data;
-- duplicate/history view;
-- AI-assisted requirement/candidate analysis;
-- vendor/buy decisions;
-- placement lifecycle;
-- live monitoring.
-
-## Wave 7 — Reporting
-
-Build:
-
-- connected + manual evidence reporting;
-- period comparison;
-- AI report generation;
-- report history/versioning;
-- export/share formats.
-
----
-
-# 29. Product-Level Acceptance Test
-
-A full workflow is considered successful when an internal SEO Specialist can perform this scenario without moving core context to another system:
-
-1. Create Project `ABC` as Prospect.
-2. Enter only minimal Project data.
-3. Upload company profile, spreadsheet, screenshot, and URL evidence.
-4. Normalize a manually uploaded structured dataset and confirm Data Preview.
-5. Connect any available Search Console/Analytics source or continue without it.
-6. Run AI Client Intelligence and review suggested Project fields/missing questions.
-7. Run comprehensive Site Audit.
-8. Receive Passed/Issue/Warning/Not Found/Unable to Verify results.
-9. Receive AI remediation suggestion for an issue.
-10. Create a Task from an audit finding.
-11. Discover and manage competitors.
-12. Run Project-aware keyword/SERP research.
-13. Select keyword opportunity and target page recommendation.
-14. Add selected opportunities to SEO Plan.
-15. Generate an editable Proposal draft.
-16. Enter budget manually.
-17. Finalize scope/quantities/forecast assumptions manually.
-18. Mark Project as Deal/Active without losing history.
-19. Generate/edit Delivery Plan.
-20. Create and complete Tasks.
-21. For off-page work, import/source candidate domains manually or automatically.
-22. Normalize Source Domains and check usage history.
-23. Run AI-assisted backlink strategy/candidate analysis or enter strategy manually.
-24. Save final human-decided backlink quantity/strategy.
-25. Record Buy/Skip/Save Later decisions.
-26. Track Purchased → Processing → Live → Verified.
-27. Monitor live backlink health.
-28. Add automatic or manual performance evidence.
-29. Generate a monthly report using a user prompt.
-30. Compare with previous period and export/share the report.
-
----
-
-# 30. Decisions Already Locked From Discovery
-
-The following should not be reopened during implementation unless the product owner explicitly changes them:
-
-1. **1 Project = 1 Client = 1 Website.**
-2. Project begins while the client is still a Prospect.
-3. Data collection is progressive, not a mandatory large discovery form.
-4. Manual uploads/files/links/media are first-class inputs.
-5. Imported data must be normalized and previewed before uncertain structured save.
-6. AI analyzes/recommends; SEO Specialist retains final control.
-7. Comprehensive Site Audit has no normal scope selector.
-8. Audit should record both successful checks and missing/problem checks.
-9. Audit issues can become Tasks.
-10. Competitors can be discovered automatically and managed manually.
-11. Keyword Research includes AI priority and Keyword→Target Page mapping.
-12. Proposal is modular and AI-assisted.
-13. **Budget is finalized manually.**
-14. Proposal → Final Scope → Delivery Plan → Tasks.
-15. Task flow does not require Approval stages.
-16. Reporting can use connected data or manually uploaded evidence.
-17. Backlink data can be manual or automatic.
-18. AI may recommend backlink needs, but **final quantity and strategy are set by the SEO Specialist**.
-19. Duplicate Source Domain is a warning, not an automatic block.
-20. Live backlinks should be monitored after placement.
-21. Platform is internal-only for this version.
-22. All internal SEO Specialists should ultimately see all Client/Project data.
-
----
-
-# 31. Implementation Guardrail
-
-Do not use this PRD as permission to implement every module at once.
-
-For each Wave:
-
-1. inspect relevant current code/schema;
-2. confirm architecture compatibility;
-3. create only the additive migration/components required for that Wave;
-4. preserve existing working behavior;
-5. build/typecheck;
-6. verify production behavior when implementation is requested;
-7. stop before the next Wave.
-
-Use the existing Lovable Project Knowledge stop-condition discipline.
+The platform's job is to give the SEO Specialist **one connected system for facts, analysis, decisions, execution, and learning**.
