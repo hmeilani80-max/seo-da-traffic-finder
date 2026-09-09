@@ -1,71 +1,90 @@
-# Wave 0 — Manual Foundation Implementation
+# Wave 0 / Wave 1 — Manual Reconciliation
 
 Branch: `wave0-manual-foundation`
 
-This implementation is intentionally additive and does not change navigation or feature pages.
+## What we discovered
 
-## Added
+The Lovable production database was already ahead of the GitHub migration folder. Four migrations had been applied directly to production on 2026-09-09 but were missing from source control:
 
-### Workspace authorization foundation
+- `20260909200729` — Wave 0 workspace/security/evidence/import foundation
+- `20260909200912` — automatic workspace assignment trigger
+- `20260909200958` — project evidence Storage policies
+- `20260909201303` — Wave 1 project profile, AI intelligence, field suggestions, and project data-source registry
+
+Those applied migrations are now mirrored into `supabase/migrations/` so the repository reflects the production schema.
+
+## Current production foundation
+
+Production already has:
 
 - `app_workspaces`
 - `app_workspace_members`
-- membership/admin helper functions
-- one personal `SEO Workspace` per existing operational owner
-- additive `workspace_id` on `projects`, `placement_orders`, and `backlinks`
-- automatic workspace assignment for new rows so existing client code can continue to insert records unchanged
-- shared workspace **read** policies on Projects, Placement Orders, and Backlinks
-
-The original owner-based RLS policies are intentionally preserved during Wave 0. Shared write access is not enabled yet.
-
-### Evidence/import foundation
-
-- `project_connections`
+- `workspace_id` on `projects`, `placement_orders`, and `backlinks`
+- project lifecycle/profile fields
 - `project_evidence`
 - `data_imports`
-- project/workspace-consistent foreign keys
-- workspace-member RLS
+- `project_intelligence_runs`
+- `project_field_suggestions`
+- `project_data_sources`
+- `project-evidence` Storage bucket and RLS policies
+- automatic workspace assignment for new project-scoped rows
 
-No storage bucket or file parser is provisioned in this wave. Those are Wave 1 implementation concerns.
+The existing owner-based RLS policies remain in place. Workspace-member policies are also active on project-scoped data.
 
-### AI abstraction foundation
+## Membership repair
+
+Manual validation found:
+
+- 2 existing authenticated users
+- 1 internal workspace (`internal-seo-team`)
+- 0 active workspace memberships
+
+This made the Wave 1 workspace-scoped tables unusable even though their schema existed.
+
+The two accounts that existed before the repair cutoff were added as active members of the internal workspace. The matching idempotent repair SQL is tracked in:
+
+`20260909233000_seed_existing_workspace_members.sql`
+
+Future public signups are intentionally **not** auto-added to the internal workspace.
+
+## Verification completed
+
+- GitHub Actions clean build: PASS
+- existing production row counts before repair:
+  - projects: 0
+  - placement_orders: 0
+  - backlinks: 0
+- active workspace members after repair: 2/2 existing auth users
+- transaction/rollback RLS test:
+  - project insert automatically received a workspace: PASS
+  - project data-source insert under workspace RLS: PASS
+  - second workspace member can read the shared project: PASS
+  - non-member cannot read the shared project: PASS
+- test rows were rolled back; no operational test data remains
+
+## AI abstraction in this branch
 
 - `src/lib/ai/types.ts`
 - `src/lib/ai/provider.server.ts`
 - `AI_PROVIDER=openai` default
 
-Existing OpenAI backlink recommendation is intentionally not refactored in this wave. New AI workflows can use the provider-neutral entry point; the existing path remains unchanged to minimize regression risk.
+Existing Backlink Recommendation continues using the current OpenAI helper unchanged. New SEO OS workflows can migrate to the provider-neutral entry point incrementally.
 
-`lovable` is reserved as a provider name but fails closed until a verified managed-AI adapter is implemented. No undocumented Lovable AI endpoint is assumed.
+## Explicitly unchanged
 
-## Explicitly not changed
-
-- existing routes and sidebar
-- authentication flow
+- authentication UI/flow
+- production navigation/sidebar
+- current Projects page
 - Domain Research
 - Keyword Research
 - Backlink Recommendation
-- existing provider/cache code
-- generated Supabase integration files/types
-- existing production records
+- current Ahrefs/Apify cache/provider implementation
+- existing operational data
 
-## Migration behavior
+## Important security note
 
-The migration backfills existing operational rows into a personal workspace based on their existing `user_id`; it does not alter `user_id`.
+Public account registration currently exists in `src/routes/auth.tsx`. Because this is an internal workspace model, new accounts must not automatically receive membership in `internal-seo-team`. Workspace onboarding/invitation should be implemented deliberately in a later access-management step.
 
-For new rows, a database trigger assigns the selected Project workspace where applicable, otherwise the owner's personal workspace. This keeps the current application insert calls compatible.
+## Recommended next implementation
 
-## Before merging to main
-
-1. Run a clean application build/typecheck.
-2. Review the SQL migration against the current production schema.
-3. Apply the migration in a controlled environment.
-4. Verify existing row counts before/after.
-5. Verify login.
-6. Verify Projects, Placement Orders, Domain Research, Keyword Research, and Backlink Recommendation.
-7. Verify an authorized second workspace member can read a shared Project, while a non-member cannot.
-8. Do not enable shared writes until Wave 1 UI/service behavior is tested.
-
-## Rollback note
-
-Do not destructively roll back by dropping existing operational data. If the workspace layer must be disabled, first remove the additive workspace read policies/triggers, then leave the new columns/tables in place until data dependencies are audited.
+Proceed to the Project Workspace UI using the schema already present in production. Adapt the donor `origin-wave-01-rebuild-github` only for UX/information hierarchy; do not port Firebase, React Router, Drizzle, or Express.
