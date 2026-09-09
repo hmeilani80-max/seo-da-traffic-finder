@@ -41,7 +41,7 @@ Preserve the current project stack:
 
 Do not migrate the project to Next.js.
 
-If a Vercel deployment already exists, preserve compatibility, but do not redesign the architecture around Vercel.
+Hosting is handled by Lovable (published app + custom domain). Do not add external hosting providers.
 
 ---
 
