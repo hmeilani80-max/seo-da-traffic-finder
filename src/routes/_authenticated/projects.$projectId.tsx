@@ -43,12 +43,12 @@ export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   component: ProjectWorkspaceLayout,
 });
 
-const TABS = [
+const TABS: { to: string; label: string; exact?: boolean }[] = [
   { to: "/projects/$projectId", label: "Overview", exact: true },
   { to: "/projects/$projectId/intelligence", label: "Intelligence" },
   { to: "/projects/$projectId/data-sources", label: "Sumber Data" },
   { to: "/projects/$projectId/files", label: "File & Evidence" },
-] as const;
+];
 
 function ProjectWorkspaceLayout() {
   const { projectId } = useParams({ from: "/_authenticated/projects/$projectId" });

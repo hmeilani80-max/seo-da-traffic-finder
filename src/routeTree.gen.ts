@@ -21,6 +21,7 @@ import { Route as AuthenticatedSeoPhase2TestRouteImport } from './routes/_authen
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedTestSearchVolumeRouteImport } from './routes/_authenticated/test-search-volume'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
+import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
 import { Route as AuthenticatedProjectsPlacementsRouteImport } from './routes/_authenticated/projects.placements'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -88,6 +89,12 @@ const AuthenticatedProjectsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedProjectsRoute,
   } as any)
+const AuthenticatedProjectsProjectIdRoute =
+  AuthenticatedProjectsProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
 const AuthenticatedProjectsPlacementsRoute =
   AuthenticatedProjectsPlacementsRouteImport.update({
     id: '/placements',
@@ -106,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/seo-phase2-test': typeof AuthenticatedSeoPhase2TestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/projects/placements': typeof AuthenticatedProjectsPlacementsRoute
   '/projects/': typeof AuthenticatedProjectsIndexRoute
 }
@@ -119,6 +127,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/': typeof AuthenticatedIndexRoute
+  '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/projects/placements': typeof AuthenticatedProjectsPlacementsRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
 }
@@ -135,6 +144,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/test-search-volume': typeof AuthenticatedTestSearchVolumeRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/projects/placements': typeof AuthenticatedProjectsPlacementsRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
 }
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/seo-phase2-test'
     | '/settings'
     | '/test-search-volume'
+    | '/projects/$projectId'
     | '/projects/placements'
     | '/projects/'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/test-search-volume'
     | '/'
+    | '/projects/$projectId'
     | '/projects/placements'
     | '/projects'
   id:
@@ -179,6 +191,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/test-search-volume'
     | '/_authenticated/'
+    | '/_authenticated/projects/$projectId'
     | '/_authenticated/projects/placements'
     | '/_authenticated/projects/'
   fileRoutesById: FileRoutesById
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
       parentRoute: typeof AuthenticatedProjectsRoute
     }
+    '/_authenticated/projects/$projectId': {
+      id: '/_authenticated/projects/$projectId'
+      path: '/$projectId'
+      fullPath: '/projects/$projectId'
+      preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
+    }
     '/_authenticated/projects/placements': {
       id: '/_authenticated/projects/placements'
       path: '/placements'
@@ -285,11 +305,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedProjectsRouteChildren {
+  AuthenticatedProjectsProjectIdRoute: typeof AuthenticatedProjectsProjectIdRoute
   AuthenticatedProjectsPlacementsRoute: typeof AuthenticatedProjectsPlacementsRoute
   AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
 }
 
 const AuthenticatedProjectsRouteChildren: AuthenticatedProjectsRouteChildren = {
+  AuthenticatedProjectsProjectIdRoute: AuthenticatedProjectsProjectIdRoute,
   AuthenticatedProjectsPlacementsRoute: AuthenticatedProjectsPlacementsRoute,
   AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
 }
