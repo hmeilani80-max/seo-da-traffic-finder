@@ -6,7 +6,7 @@ import {
   Sparkles,
   Globe,
   KeyRound,
-  Settings,
+  ClipboardCheck,
   LogOut,
   Menu,
   X,
@@ -34,6 +34,7 @@ const MENU_SECTIONS: MenuSection[] = [
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { to: "/projects", label: "Projects", icon: FolderKanban },
+      { to: "/site-audit", label: "Site Audit", icon: ClipboardCheck },
     ],
   },
   {
