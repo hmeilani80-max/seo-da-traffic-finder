@@ -144,7 +144,11 @@ function ProjectWorkspacePage() {
         </TabsList>
 
         <TabsContent value="overview">
-          <ProjectOverviewPanel project={row} summary={stats} onSaved={refreshWorkspace} />
+          <ProjectOverviewPanel
+            project={row}
+            {...(stats === undefined ? {} : { summary: stats })}
+            onSaved={refreshWorkspace}
+          />
         </TabsContent>
         <TabsContent value="sources">
           <ProjectDataSourcesPanel
