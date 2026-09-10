@@ -25,17 +25,22 @@ export const generateProjectIntelligenceFn = createServerFn({ method: "POST" })
 export const decideProjectFieldSuggestionFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { suggestionId: string; decision: "accept" | "ignore"; editedValue?: string }) => ({
-      suggestionId: String(input?.suggestionId ?? "").trim(),
-      decision: input?.decision === "accept" ? ("accept" as const) : ("ignore" as const),
-      editedValue: input?.editedValue === undefined ? undefined : String(input.editedValue),
-    }),
+    (input: { suggestionId: string; decision: "accept" | "ignore"; editedValue?: string }) => {
+      const editedValue = input?.editedValue === undefined ? undefined : String(input.editedValue);
+      return {
+        suggestionId: String(input?.suggestionId ?? "").trim(),
+        decision: input?.decision === "accept" ? ("accept" as const) : ("ignore" as const),
+        ...(editedValue === undefined ? {} : { editedValue }),
+      };
+    },
   )
   .handler(async ({ data, context }) => {
     if (!data.suggestionId) return { projectId: null, error: "Suggestion ID wajib diisi." };
     const { decideProjectFieldSuggestion } = await import("./project-intelligence.server");
     return decideProjectFieldSuggestion({
-      ...data,
+      suggestionId: data.suggestionId,
+      decision: data.decision,
+      ...(data.editedValue === undefined ? {} : { editedValue: data.editedValue }),
       userId: context.userId,
       supabase: context.supabase,
     });
