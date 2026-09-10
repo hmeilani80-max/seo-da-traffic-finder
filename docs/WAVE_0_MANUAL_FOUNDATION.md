@@ -1,6 +1,6 @@
 # Wave 0 — Architecture & Security Foundation
 
-Status: **COMPLETE**
+Status: **CLOSED / COMPLETE**
 
 Completion date: **10 September 2026**
 
@@ -103,6 +103,8 @@ orphan_placement_orders: 0
 orphan_backlinks: 0
 ```
 
+A final post-merge production verification returned the same healthy state.
+
 ### 6. RLS behavior validation
 
 The earlier manual transaction/rollback validation remains applicable because the subsequent PRD implementation commit did not modify authentication or the Wave 0 database policies/migrations.
@@ -149,12 +151,14 @@ Wave 0 does not rebuild or remove the existing application. The following remain
 | Provider-neutral AI abstraction exists | PASS |
 | Evidence/import foundation exists | PASS |
 | Production-safe repeatable verification exists | PASS |
-| Build verification | PASS — PR #7, GitHub Actions `PR Build` run #37 |
+| Build verification | PASS — PR #7, final GitHub Actions `PR Build` run #38 |
 | Existing core SEO/backlink routes preserved | PASS |
+| Merge to `main` | PASS — PR #7 merged |
+| Post-merge production verification | PASS |
 
 ## Next wave
 
-All Wave 0 gates have passed. **Wave 0 is closed when PR #7 is merged into `main`.**
+**Wave 0 is closed.**
 
 The next implementation target is:
 
