@@ -98,8 +98,11 @@ export function parseStructuredText(text: string): ParsedStructuredFile {
   const lines = normalizedText.split(/\r?\n/).filter((line) => line.trim().length > 0);
   if (lines.length < 2) throw new Error("File harus memiliki header dan minimal satu baris data.");
 
-  const delimiter = detectDelimiter(lines[0]);
-  const headers = parseDelimitedLine(lines[0], delimiter).map((header, index) =>
+  const firstLine = lines[0];
+  if (!firstLine) throw new Error("Header file tidak ditemukan.");
+
+  const delimiter = detectDelimiter(firstLine);
+  const headers = parseDelimitedLine(firstLine, delimiter).map((header, index) =>
     header || `column_${index + 1}`,
   );
   const rows = lines.slice(1, 51).map((line) => {
