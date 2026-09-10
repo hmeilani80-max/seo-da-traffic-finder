@@ -170,7 +170,7 @@ export function ProjectIntelligencePanel({ project }: { project: ProjectRow }) {
                       data: {
                         suggestionId: suggestion.id,
                         decision,
-                        editedValue,
+                        ...(editedValue === undefined ? {} : { editedValue }),
                       },
                     });
                     if (result.error) throw new Error(result.error);
@@ -200,7 +200,8 @@ function SuggestionCard({
   async function decide(decision: "accept" | "ignore") {
     setPending(decision);
     try {
-      await onDecision(decision, decision === "accept" ? value : undefined);
+      if (decision === "accept") await onDecision(decision, value);
+      else await onDecision(decision);
       toast.success(decision === "accept" ? "Suggestion diterapkan ke Project" : "Suggestion diabaikan");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal menyimpan keputusan");
