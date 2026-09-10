@@ -39,16 +39,6 @@ export type SiteAudit = {
   created_at: string;
 };
 
-export type AuditAiAnalysis = {
-  id: string;
-  audit_id: string;
-  provider: string;
-  status: "ok" | "error";
-  output: AuditAnalysisOutput | Record<string, unknown>;
-  error: string | null;
-  created_at: string;
-};
-
 export type AuditAnalysisOutput = {
   executiveSummary: string;
   priorityOrder: string[];
@@ -62,6 +52,16 @@ export type AuditAnalysisOutput = {
   nextActions: string[];
 };
 
+export type AuditAiAnalysis = {
+  id: string;
+  audit_id: string;
+  provider: string;
+  status: "ok" | "error";
+  output: AuditAnalysisOutput | Record<string, unknown>;
+  error: string | null;
+  created_at: string;
+};
+
 type NewFinding = Omit<AuditFinding, "id" | "audit_id" | "created_at">;
 
 type PageSnapshot = {
@@ -73,28 +73,40 @@ type PageSnapshot = {
 };
 
 const MAX_PAGES = 20;
+const MAX_SITEMAP_CANDIDATES = 100;
 const MAX_HTML_BYTES = 2_000_000;
 const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_REDIRECTS = 5;
 const USER_AGENT = "OptimasiSEOAudit/1.0 (+internal-seo-audit)";
 
 function dbClient(value: unknown): SupabaseClient {
   return value as SupabaseClient;
 }
 
-function publicTarget(raw: string): URL {
+function normalizedHostname(hostname: string): string {
+  return hostname.toLowerCase().replace(/\.$/, "").replace(/^www\./, "");
+}
+
+function validatePublicUrl(raw: string): URL {
   const candidate = /^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`;
   const url = new URL(candidate);
-  if (!['http:', 'https:'].includes(url.protocol)) throw new Error("Website harus menggunakan HTTP atau HTTPS.");
-  if (url.username || url.password) throw new Error("URL dengan credential tidak didukung.");
+
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new Error("Website harus menggunakan HTTP atau HTTPS.");
+  }
+  if (url.username || url.password) {
+    throw new Error("URL dengan credential tidak didukung.");
+  }
 
   const host = url.hostname.toLowerCase().replace(/\.$/, "");
   const ipv4 = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host);
   const ipv6 = host.includes(":");
+  const localSuffix = /\.(?:localhost|local|internal|lan|home|localdomain)$/i.test(host);
+
   if (
     !host.includes(".") ||
     host === "localhost" ||
-    host.endsWith(".localhost") ||
-    host.endsWith(".local") ||
+    localSuffix ||
     ipv4 ||
     ipv6
   ) {
@@ -105,12 +117,18 @@ function publicTarget(raw: string): URL {
   return url;
 }
 
+function sameAuditSite(left: URL, right: URL): boolean {
+  return normalizedHostname(left.hostname) === normalizedHostname(right.hostname);
+}
+
 async function readTextLimited(response: Response, maxBytes = MAX_HTML_BYTES): Promise<string> {
   if (!response.body) return (await response.text()).slice(0, maxBytes);
+
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let bytes = 0;
   let text = "";
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -129,24 +147,48 @@ async function readTextLimited(response: Response, maxBytes = MAX_HTML_BYTES): P
   }
 }
 
-async function fetchText(url: string, timeout = REQUEST_TIMEOUT_MS): Promise<PageSnapshot> {
+async function fetchText(rawUrl: string, timeout = REQUEST_TIMEOUT_MS): Promise<PageSnapshot> {
+  const requested = validatePublicUrl(rawUrl);
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  let current = requested;
+
   try {
-    const response = await fetch(url, {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: { "User-Agent": USER_AGENT, Accept: "text/html,application/xhtml+xml,text/plain,application/xml;q=0.9,*/*;q=0.5" },
-    });
-    const contentType = response.headers.get("content-type") ?? "";
-    const html = await readTextLimited(response);
-    return {
-      requestedUrl: url,
-      finalUrl: response.url || url,
-      status: response.status,
-      contentType,
-      html,
-    };
+    for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+      const response = await fetch(current.toString(), {
+        redirect: "manual",
+        signal: controller.signal,
+        headers: {
+          "User-Agent": USER_AGENT,
+          Accept: "text/html,application/xhtml+xml,text/plain,application/xml;q=0.9,*/*;q=0.5",
+        },
+      });
+
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        if (redirects >= MAX_REDIRECTS) throw new Error("Terlalu banyak redirect saat crawl.");
+        const location = response.headers.get("location");
+        if (!location) throw new Error(`HTTP ${response.status} tanpa Location header.`);
+
+        const next = validatePublicUrl(new URL(location, current).toString());
+        if (!sameAuditSite(requested, next)) {
+          throw new Error("Redirect ke domain lain diblokir untuk keamanan audit.");
+        }
+        current = next;
+        continue;
+      }
+
+      const contentType = response.headers.get("content-type") ?? "";
+      const html = await readTextLimited(response);
+      return {
+        requestedUrl: requested.toString(),
+        finalUrl: current.toString(),
+        status: response.status,
+        contentType,
+        html,
+      };
+    }
+
+    throw new Error("Redirect crawl tidak dapat diselesaikan.");
   } finally {
     clearTimeout(timeoutId);
   }
@@ -157,7 +199,8 @@ function firstMatch(html: string, pattern: RegExp): string | null {
 }
 
 function stripTags(value: string): string {
-  return value.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+  return value
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
@@ -197,67 +240,80 @@ function htmlLang(html: string): string | null {
 
 function extractLinks(html: string, base: URL): string[] {
   const links = new Set<string>();
+
   for (const match of html.matchAll(/<a\b[^>]*href=["']([^"'#]+)["'][^>]*>/gi)) {
     const raw = match[1]?.trim();
     if (!raw || /^(mailto:|tel:|javascript:)/i.test(raw)) continue;
+
     try {
-      const url = new URL(raw, base);
-      if (!['http:', 'https:'].includes(url.protocol) || url.hostname !== base.hostname) continue;
+      const url = validatePublicUrl(new URL(raw, base).toString());
+      if (!sameAuditSite(base, url)) continue;
       if (/\.(?:jpg|jpeg|png|gif|webp|svg|pdf|zip|mp4|mp3|woff2?|ttf|css|js)(?:$|\?)/i.test(url.pathname)) continue;
-      url.hash = "";
       links.add(url.toString());
     } catch {
-      // Ignore malformed links; a malformed href is not enough to fail the crawl.
+      // Invalid/untrusted links are excluded from the crawl queue.
     }
   }
+
   return [...links];
 }
 
 function sitemapUrls(xml: string, origin: URL): string[] {
   const out = new Set<string>();
+
   for (const match of xml.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)) {
-    const value = match[1]?.replace(/&amp;/g, "&").trim();
-    if (!value) continue;
+    const raw = match[1]?.replace(/&amp;/g, "&").trim();
+    if (!raw) continue;
+
     try {
-      const url = new URL(value);
-      if (url.hostname !== origin.hostname || !['http:', 'https:'].includes(url.protocol)) continue;
-      url.hash = "";
+      const url = validatePublicUrl(raw);
+      if (!sameAuditSite(origin, url)) continue;
       out.add(url.toString());
+      if (out.size >= MAX_SITEMAP_CANDIDATES) break;
     } catch {
-      // Ignore invalid sitemap entries.
+      // Invalid/untrusted sitemap entries are excluded.
     }
   }
+
   return [...out];
 }
 
 function robotsDisallows(text: string): string[] {
   const rules: string[] = [];
   let applies = false;
+
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.replace(/#.*$/, "").trim();
     if (!line) continue;
     const [rawKey, ...rest] = line.split(":");
     const key = rawKey?.trim().toLowerCase();
     const value = rest.join(":").trim();
+
     if (key === "user-agent") {
       applies = value === "*" || value.toLowerCase().includes("optimasi");
     } else if (applies && key === "disallow" && value) {
       rules.push(value);
     }
   }
+
   return rules;
 }
 
 function allowedByRobots(url: string, disallows: string[]): boolean {
   const pathname = new URL(url).pathname || "/";
-  return !disallows.some((rule) => rule !== "/" && pathname.startsWith(rule)) && !disallows.includes("/");
+  if (disallows.includes("/")) return false;
+  return !disallows.some((rule) => rule !== "/" && pathname.startsWith(rule));
 }
 
-function finding(
+function makeFinding(
   index: number | string,
-  input: Omit<NewFinding, "check_key"> & { check: string },
+  check: string,
+  data: Omit<NewFinding, "check_key">,
 ): NewFinding {
-  return { ...input, check_key: `${input.check}:${index}` };
+  return {
+    ...data,
+    check_key: `${check}:${index}`,
+  };
 }
 
 function inspectPage(page: PageSnapshot, index: number): NewFinding[] {
@@ -267,138 +323,104 @@ function inspectPage(page: PageSnapshot, index: number): NewFinding[] {
   const description = metaContent(html, "description");
   const robots = metaContent(html, "robots") ?? "";
   const canonical = canonicalHref(html);
-  const h1Matches = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)];
-  const h1Text = h1Matches.map((item) => stripTags(item[1] ?? "")).filter(Boolean);
+  const h1s = [...html.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)]
+    .map((match) => stripTags(match[1] ?? ""))
+    .filter(Boolean);
   const lang = htmlLang(html);
   const viewport = metaContent(html, "viewport");
-  const images = [...html.matchAll(/<img\b[^>]*>/gi)].map((item) => item[0]);
+  const images = [...html.matchAll(/<img\b[^>]*>/gi)].map((match) => match[0]);
   const missingAlt = images.filter((tag) => !/\balt\s*=\s*["'][^"']*["']/i.test(tag)).length;
   const jsonLdCount = (html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>/gi) ?? []).length;
   const bodyText = stripTags(html);
   const wordCount = bodyText ? bodyText.split(/\s+/).length : 0;
+  const source = { source_type: "public_crawl", source_ref: url, url };
 
-  const out: NewFinding[] = [];
-  out.push(finding(index, {
-    check: "http_status",
-    category: "Crawlability",
-    title: "HTTP status halaman dapat diakses",
-    status: page.status >= 200 && page.status < 400 ? "passed" : page.status >= 400 ? "urgent" : "warning",
-    url,
-    evidence: { http_status: page.status, requested_url: page.requestedUrl, final_url: page.finalUrl },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "https",
-    category: "Technical",
-    title: "Halaman menggunakan HTTPS",
-    status: new URL(url).protocol === "https:" ? "passed" : "warning",
-    url,
-    evidence: { protocol: new URL(url).protocol },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "title",
-    category: "Metadata",
-    title: "Title tag tersedia",
-    status: title ? (title.length >= 15 && title.length <= 65 ? "passed" : "warning") : "issue",
-    url,
-    evidence: { title, length: title?.length ?? 0 },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "meta_description",
-    category: "Metadata",
-    title: "Meta description tersedia",
-    status: description ? (description.length >= 70 && description.length <= 170 ? "passed" : "warning") : "warning",
-    url,
-    evidence: { meta_description: description, length: description?.length ?? 0 },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "canonical",
-    category: "Technical",
-    title: "Canonical URL tersedia",
-    status: canonical ? "passed" : "warning",
-    url,
-    evidence: { canonical },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "indexability",
-    category: "Crawlability",
-    title: "Halaman tidak memiliki noindex",
-    status: /(?:^|[,\s])noindex(?:$|[,\s])/i.test(robots) ? "urgent" : "passed",
-    url,
-    evidence: { meta_robots: robots || null },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "h1",
-    category: "Content",
-    title: "Struktur H1 terdeteksi",
-    status: h1Text.length === 1 ? "passed" : h1Text.length === 0 ? "issue" : "warning",
-    url,
-    evidence: { h1_count: h1Text.length, h1: h1Text.slice(0, 3) },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "html_lang",
-    category: "Technical",
-    title: "Atribut bahasa HTML tersedia",
-    status: lang ? "passed" : "warning",
-    url,
-    evidence: { lang },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "viewport",
-    category: "Technical",
-    title: "Viewport mobile tersedia",
-    status: viewport ? "passed" : "warning",
-    url,
-    evidence: { viewport },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "image_alt",
-    category: "Accessibility",
-    title: "Image alt coverage",
-    status: missingAlt === 0 ? "passed" : "warning",
-    url,
-    evidence: { image_count: images.length, missing_alt_count: missingAlt },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "structured_data",
-    category: "Technical",
-    title: "Structured data JSON-LD terdeteksi",
-    status: jsonLdCount > 0 ? "passed" : "not_found",
-    url,
-    evidence: { json_ld_blocks: jsonLdCount },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  out.push(finding(index, {
-    check: "content_presence",
-    category: "Content",
-    title: "Konten teks dapat dibaca crawler",
-    status: wordCount >= 100 ? "passed" : "warning",
-    url,
-    evidence: { approximate_word_count: wordCount },
-    source_type: "public_crawl",
-    source_ref: url,
-  }));
-  return out;
+  return [
+    makeFinding(index, "http_status", {
+      ...source,
+      category: "Crawlability",
+      title: "HTTP status halaman dapat diakses",
+      status: page.status >= 200 && page.status < 400 ? "passed" : page.status >= 400 ? "urgent" : "warning",
+      evidence: { http_status: page.status, requested_url: page.requestedUrl, final_url: page.finalUrl },
+    }),
+    makeFinding(index, "https", {
+      ...source,
+      category: "Technical",
+      title: "Halaman menggunakan HTTPS",
+      status: new URL(url).protocol === "https:" ? "passed" : "warning",
+      evidence: { protocol: new URL(url).protocol },
+    }),
+    makeFinding(index, "title", {
+      ...source,
+      category: "Metadata",
+      title: "Title tag tersedia",
+      status: title ? (title.length >= 15 && title.length <= 65 ? "passed" : "warning") : "issue",
+      evidence: { title, length: title?.length ?? 0 },
+    }),
+    makeFinding(index, "meta_description", {
+      ...source,
+      category: "Metadata",
+      title: "Meta description tersedia",
+      status: description ? (description.length >= 70 && description.length <= 170 ? "passed" : "warning") : "warning",
+      evidence: { meta_description: description, length: description?.length ?? 0 },
+    }),
+    makeFinding(index, "canonical", {
+      ...source,
+      category: "Technical",
+      title: "Canonical URL tersedia",
+      status: canonical ? "passed" : "warning",
+      evidence: { canonical },
+    }),
+    makeFinding(index, "indexability", {
+      ...source,
+      category: "Crawlability",
+      title: "Halaman tidak memiliki noindex",
+      status: /(?:^|[,\s])noindex(?:$|[,\s])/i.test(robots) ? "urgent" : "passed",
+      evidence: { meta_robots: robots || null },
+    }),
+    makeFinding(index, "h1", {
+      ...source,
+      category: "Content",
+      title: "Struktur H1 terdeteksi",
+      status: h1s.length === 1 ? "passed" : h1s.length === 0 ? "issue" : "warning",
+      evidence: { h1_count: h1s.length, h1: h1s.slice(0, 3) },
+    }),
+    makeFinding(index, "html_lang", {
+      ...source,
+      category: "Technical",
+      title: "Atribut bahasa HTML tersedia",
+      status: lang ? "passed" : "warning",
+      evidence: { lang },
+    }),
+    makeFinding(index, "viewport", {
+      ...source,
+      category: "Technical",
+      title: "Viewport mobile tersedia",
+      status: viewport ? "passed" : "warning",
+      evidence: { viewport },
+    }),
+    makeFinding(index, "image_alt", {
+      ...source,
+      category: "Accessibility",
+      title: "Image alt coverage",
+      status: missingAlt === 0 ? "passed" : "warning",
+      evidence: { image_count: images.length, missing_alt_count: missingAlt },
+    }),
+    makeFinding(index, "structured_data", {
+      ...source,
+      category: "Technical",
+      title: "Structured data JSON-LD terdeteksi",
+      status: jsonLdCount > 0 ? "passed" : "not_found",
+      evidence: { json_ld_blocks: jsonLdCount },
+    }),
+    makeFinding(index, "content_presence", {
+      ...source,
+      category: "Content",
+      title: "Konten teks dapat dibaca crawler",
+      status: wordCount >= 100 ? "passed" : "warning",
+      evidence: { approximate_word_count: wordCount },
+    }),
+  ];
 }
 
 function summarize(findings: NewFinding[]) {
@@ -410,6 +432,7 @@ function summarize(findings: NewFinding[]) {
     not_found: 0,
     unable_to_verify: 0,
   };
+
   for (const item of findings) counts[item.status] += 1;
   return { total_findings: findings.length, ...counts };
 }
@@ -426,68 +449,83 @@ async function crawlSite(target: URL): Promise<{
   const findings: NewFinding[] = [];
   const partialErrors: string[] = [];
 
-  let robotsText = "";
-  let sitemapText = "";
-  let homepage: PageSnapshot | null = null;
-
   const [robotsResult, sitemapResult, homepageResult] = await Promise.allSettled([
     fetchText(robotsUrl),
     fetchText(sitemapUrl),
     fetchText(homepageUrl),
   ]);
 
+  let robotsText = "";
+  let sitemapText = "";
+  let homepage: PageSnapshot | null = null;
+
   if (robotsResult.status === "fulfilled") {
     robotsText = robotsResult.value.html;
-    findings.push(finding("site", {
-      check: "robots_txt",
-      category: "Crawlability",
-      title: "robots.txt tersedia",
-      status: robotsResult.value.status >= 200 && robotsResult.value.status < 400 ? "passed" : robotsResult.value.status === 404 ? "not_found" : "warning",
-      url: robotsUrl,
-      evidence: { http_status: robotsResult.value.status },
-      source_type: "robots",
-      source_ref: robotsUrl,
-    }));
+    findings.push(
+      makeFinding("site", "robots_txt", {
+        category: "Crawlability",
+        title: "robots.txt tersedia",
+        status:
+          robotsResult.value.status >= 200 && robotsResult.value.status < 400
+            ? "passed"
+            : robotsResult.value.status === 404
+              ? "not_found"
+              : "warning",
+        url: robotsUrl,
+        evidence: { http_status: robotsResult.value.status },
+        source_type: "robots",
+        source_ref: robotsUrl,
+      }),
+    );
   } else {
     const message = robotsResult.reason instanceof Error ? robotsResult.reason.message : String(robotsResult.reason);
     partialErrors.push(`robots.txt: ${message}`);
-    findings.push(finding("site", {
-      check: "robots_txt",
-      category: "Crawlability",
-      title: "robots.txt dapat diverifikasi",
-      status: "unable_to_verify",
-      url: robotsUrl,
-      evidence: { error: message },
-      source_type: "robots",
-      source_ref: robotsUrl,
-    }));
+    findings.push(
+      makeFinding("site", "robots_txt", {
+        category: "Crawlability",
+        title: "robots.txt dapat diverifikasi",
+        status: "unable_to_verify",
+        url: robotsUrl,
+        evidence: { error: message },
+        source_type: "robots",
+        source_ref: robotsUrl,
+      }),
+    );
   }
 
   if (sitemapResult.status === "fulfilled") {
     sitemapText = sitemapResult.value.html;
-    findings.push(finding("site", {
-      check: "sitemap_xml",
-      category: "Crawlability",
-      title: "sitemap.xml tersedia",
-      status: sitemapResult.value.status >= 200 && sitemapResult.value.status < 400 ? "passed" : sitemapResult.value.status === 404 ? "not_found" : "warning",
-      url: sitemapUrl,
-      evidence: { http_status: sitemapResult.value.status, url_count: sitemapUrls(sitemapText, origin).length },
-      source_type: "sitemap",
-      source_ref: sitemapUrl,
-    }));
+    const sitemapCount = sitemapUrls(sitemapText, origin).length;
+    findings.push(
+      makeFinding("site", "sitemap_xml", {
+        category: "Crawlability",
+        title: "sitemap.xml tersedia",
+        status:
+          sitemapResult.value.status >= 200 && sitemapResult.value.status < 400
+            ? "passed"
+            : sitemapResult.value.status === 404
+              ? "not_found"
+              : "warning",
+        url: sitemapUrl,
+        evidence: { http_status: sitemapResult.value.status, url_count: sitemapCount },
+        source_type: "sitemap",
+        source_ref: sitemapUrl,
+      }),
+    );
   } else {
     const message = sitemapResult.reason instanceof Error ? sitemapResult.reason.message : String(sitemapResult.reason);
     partialErrors.push(`sitemap.xml: ${message}`);
-    findings.push(finding("site", {
-      check: "sitemap_xml",
-      category: "Crawlability",
-      title: "sitemap.xml dapat diverifikasi",
-      status: "unable_to_verify",
-      url: sitemapUrl,
-      evidence: { error: message },
-      source_type: "sitemap",
-      source_ref: sitemapUrl,
-    }));
+    findings.push(
+      makeFinding("site", "sitemap_xml", {
+        category: "Crawlability",
+        title: "sitemap.xml dapat diverifikasi",
+        status: "unable_to_verify",
+        url: sitemapUrl,
+        evidence: { error: message },
+        source_type: "sitemap",
+        source_ref: sitemapUrl,
+      }),
+    );
   }
 
   if (homepageResult.status === "fulfilled") {
@@ -495,16 +533,17 @@ async function crawlSite(target: URL): Promise<{
   } else {
     const message = homepageResult.reason instanceof Error ? homepageResult.reason.message : String(homepageResult.reason);
     partialErrors.push(`homepage: ${message}`);
-    findings.push(finding(0, {
-      check: "page_fetch",
-      category: "Crawlability",
-      title: "Homepage dapat di-crawl",
-      status: "unable_to_verify",
-      url: homepageUrl,
-      evidence: { error: message },
-      source_type: "public_crawl",
-      source_ref: homepageUrl,
-    }));
+    findings.push(
+      makeFinding(0, "page_fetch", {
+        category: "Crawlability",
+        title: "Homepage dapat di-crawl",
+        status: "unable_to_verify",
+        url: homepageUrl,
+        evidence: { error: message },
+        source_type: "public_crawl",
+        source_ref: homepageUrl,
+      }),
+    );
   }
 
   const disallows = robotsDisallows(robotsText);
@@ -524,43 +563,49 @@ async function crawlSite(target: URL): Promise<{
     const results = await Promise.allSettled(
       batch.map((url) => (homepage && url === homepageUrl ? Promise.resolve(homepage) : fetchText(url))),
     );
+
     results.forEach((result, offset) => {
-      const url = batch[offset] ?? homepageUrl;
+      const candidateUrl = batch[offset] ?? homepageUrl;
       if (result.status === "fulfilled") {
         pages.push(result.value);
-      } else {
-        pages.push(null);
-        const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
-        partialErrors.push(`${url}: ${message}`);
-        findings.push(finding(i + offset, {
-          check: "page_fetch",
+        return;
+      }
+
+      pages.push(null);
+      const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
+      partialErrors.push(`${candidateUrl}: ${message}`);
+      findings.push(
+        makeFinding(i + offset, "page_fetch", {
           category: "Crawlability",
           title: "Halaman dapat di-crawl",
           status: "unable_to_verify",
-          url,
+          url: candidateUrl,
           evidence: { error: message },
           source_type: "public_crawl",
-          source_ref: url,
-        }));
-      }
+          source_ref: candidateUrl,
+        }),
+      );
     });
   }
 
   pages.forEach((page, index) => {
     if (!page) return;
+
     if (!/text\/html|application\/xhtml\+xml/i.test(page.contentType) && !/<html\b/i.test(page.html)) {
-      findings.push(finding(index, {
-        check: "html_content",
-        category: "Crawlability",
-        title: "Response berisi dokumen HTML",
-        status: "unable_to_verify",
-        url: page.finalUrl,
-        evidence: { content_type: page.contentType, http_status: page.status },
-        source_type: "public_crawl",
-        source_ref: page.finalUrl,
-      }));
+      findings.push(
+        makeFinding(index, "html_content", {
+          category: "Crawlability",
+          title: "Response berisi dokumen HTML",
+          status: "unable_to_verify",
+          url: page.finalUrl,
+          evidence: { content_type: page.contentType, http_status: page.status },
+          source_type: "public_crawl",
+          source_ref: page.finalUrl,
+        }),
+      );
       return;
     }
+
     findings.push(...inspectPage(page, index));
   });
 
@@ -576,9 +621,10 @@ async function crawlSite(target: URL): Promise<{
       robots_disallow_rules: disallows.length,
       robots_checked: true,
       sitemap_checked: true,
+      redirect_policy: "same public hostname or www alias only",
       openseo_configured: Boolean(process.env["OPENSEO_API_KEY"]),
       openseo_used: false,
-      note: "OpenSEO credential availability is recorded, but Wave 2 factual crawl does not claim OpenSEO data until a verified adapter exists.",
+      note: "OpenSEO availability is recorded, but no OpenSEO facts are claimed until a verified adapter exists.",
     },
   };
 }
@@ -586,17 +632,19 @@ async function crawlSite(target: URL): Promise<{
 function normalizeAnalysis(value: unknown, findingIds: Set<string>): AuditAnalysisOutput {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const stringArray = (input: unknown) =>
-    Array.isArray(input) ? input.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 20) : [];
+    Array.isArray(input)
+      ? input.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 20)
+      : [];
+
   const issueAnalyses = (Array.isArray(raw["issueAnalyses"]) ? raw["issueAnalyses"] : [])
     .map((item) => {
       const row = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
       const findingId = String(row["findingId"] ?? "");
       const priorityRaw = String(row["priority"] ?? "medium");
-      const priority = (["urgent", "high", "medium", "low"].includes(priorityRaw) ? priorityRaw : "medium") as
-        | "urgent"
-        | "high"
-        | "medium"
-        | "low";
+      const priority = (["urgent", "high", "medium", "low"].includes(priorityRaw)
+        ? priorityRaw
+        : "medium") as "urgent" | "high" | "medium" | "low";
+
       return {
         findingId,
         priority,
@@ -618,7 +666,9 @@ function normalizeAnalysis(value: unknown, findingIds: Set<string>): AuditAnalys
 
 export const listProjectAuditsFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { projectId: string }) => ({ projectId: String(input?.projectId ?? "").trim() }))
+  .inputValidator((input: { projectId: string }) => ({
+    projectId: String(input?.projectId ?? "").trim(),
+  }))
   .handler(async ({ data, context }): Promise<SiteAudit[]> => {
     if (!data.projectId) return [];
     const db = dbClient(context.supabase);
@@ -628,47 +678,70 @@ export const listProjectAuditsFn = createServerFn({ method: "POST" })
       .eq("project_id", data.projectId)
       .order("created_at", { ascending: false })
       .limit(20);
+
     if (error) throw error;
     return (rows ?? []) as SiteAudit[];
   });
 
 export const getAuditDetailFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { auditId: string }) => ({ auditId: String(input?.auditId ?? "").trim() }))
+  .inputValidator((input: { auditId: string }) => ({
+    auditId: String(input?.auditId ?? "").trim(),
+  }))
   .handler(async ({ data, context }) => {
+    if (!data.auditId) throw new Error("Audit wajib dipilih.");
     const db = dbClient(context.supabase);
-    const [{ data: audit, error: auditError }, { data: findings, error: findingError }, { data: analyses, error: analysisError }] =
-      await Promise.all([
-        db.from("site_audits").select("id,project_id,target_url,status,source_summary,summary,error,started_at,completed_at,created_at").eq("id", data.auditId).single(),
-        db.from("audit_findings").select("id,audit_id,category,check_key,title,status,url,evidence,source_type,source_ref,created_at").eq("audit_id", data.auditId).order("created_at"),
-        db.from("audit_ai_analyses").select("id,audit_id,provider,status,output,error,created_at").eq("audit_id", data.auditId).order("created_at", { ascending: false }).limit(5),
-      ]);
-    if (auditError) throw auditError;
-    if (findingError) throw findingError;
-    if (analysisError) throw analysisError;
+
+    const [auditResult, findingResult, analysisResult] = await Promise.all([
+      db
+        .from("site_audits")
+        .select("id,project_id,target_url,status,source_summary,summary,error,started_at,completed_at,created_at")
+        .eq("id", data.auditId)
+        .single(),
+      db
+        .from("audit_findings")
+        .select("id,audit_id,category,check_key,title,status,url,evidence,source_type,source_ref,created_at")
+        .eq("audit_id", data.auditId)
+        .order("created_at"),
+      db
+        .from("audit_ai_analyses")
+        .select("id,audit_id,provider,status,output,error,created_at")
+        .eq("audit_id", data.auditId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    if (auditResult.error) throw auditResult.error;
+    if (findingResult.error) throw findingResult.error;
+    if (analysisResult.error) throw analysisResult.error;
+
     return {
-      audit: audit as SiteAudit,
-      findings: (findings ?? []) as AuditFinding[],
-      analyses: (analyses ?? []) as AuditAiAnalysis[],
+      audit: auditResult.data as SiteAudit,
+      findings: (findingResult.data ?? []) as AuditFinding[],
+      analyses: (analysisResult.data ?? []) as AuditAiAnalysis[],
     };
   });
 
 export const runSiteAuditFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { projectId: string }) => ({ projectId: String(input?.projectId ?? "").trim() }))
+  .inputValidator((input: { projectId: string }) => ({
+    projectId: String(input?.projectId ?? "").trim(),
+  }))
   .handler(async ({ data, context }) => {
     if (!data.projectId) throw new Error("Project wajib dipilih.");
     const db = dbClient(context.supabase);
+
     const { data: project, error: projectError } = await db
       .from("projects")
       .select("id,name,client_domain,workspace_id")
       .eq("id", data.projectId)
       .single();
+
     if (projectError || !project) throw projectError ?? new Error("Project tidak ditemukan.");
     if (!project.workspace_id) throw new Error("Project belum memiliki workspace.");
     if (!project.client_domain) throw new Error("Project belum memiliki website/domain untuk diaudit.");
 
-    const target = publicTarget(String(project.client_domain));
+    const target = validatePublicUrl(String(project.client_domain));
     const { data: audit, error: auditError } = await db
       .from("site_audits")
       .insert({
@@ -680,16 +753,25 @@ export const runSiteAuditFn = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+
     if (auditError || !audit) throw auditError ?? new Error("Gagal membuat audit run.");
 
     try {
       const result = await crawlSite(target);
       const rows = result.findings.map((item) => ({
-        ...item,
         workspace_id: project.workspace_id,
         project_id: project.id,
         audit_id: audit.id,
+        category: item.category,
+        check_key: item.check_key,
+        title: item.title,
+        status: item.status,
+        url: item.url,
+        evidence: item.evidence,
+        source_type: item.source_type,
+        source_ref: item.source_ref,
       }));
+
       if (rows.length) {
         const { error: findingError } = await db.from("audit_findings").insert(rows);
         if (findingError) throw findingError;
@@ -698,6 +780,7 @@ export const runSiteAuditFn = createServerFn({ method: "POST" })
       const summary = summarize(result.findings);
       const pageFactCount = result.findings.filter((item) => item.source_type === "public_crawl").length;
       const status = pageFactCount === 0 ? "failed" : result.partialErrors.length ? "partial" : "completed";
+
       const { error: finishError } = await db
         .from("site_audits")
         .update({
@@ -709,13 +792,19 @@ export const runSiteAuditFn = createServerFn({ method: "POST" })
           updated_at: new Date().toISOString(),
         })
         .eq("id", audit.id);
+
       if (finishError) throw finishError;
       return { auditId: String(audit.id), status, summary };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Audit gagal dijalankan.";
       await db
         .from("site_audits")
-        .update({ status: "failed", error: message, completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .update({
+          status: "failed",
+          error: message,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", audit.id);
       throw error;
     }
@@ -723,14 +812,19 @@ export const runSiteAuditFn = createServerFn({ method: "POST" })
 
 export const analyzeAuditFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { auditId: string }) => ({ auditId: String(input?.auditId ?? "").trim() }))
+  .inputValidator((input: { auditId: string }) => ({
+    auditId: String(input?.auditId ?? "").trim(),
+  }))
   .handler(async ({ data, context }) => {
+    if (!data.auditId) throw new Error("Audit wajib dipilih.");
     const db = dbClient(context.supabase);
+
     const { data: audit, error: auditError } = await db
       .from("site_audits")
       .select("id,workspace_id,project_id,target_url,summary,status")
       .eq("id", data.auditId)
       .single();
+
     if (auditError || !audit) throw auditError ?? new Error("Audit tidak ditemukan.");
 
     const { data: findings, error: findingError } = await db
@@ -739,6 +833,7 @@ export const analyzeAuditFn = createServerFn({ method: "POST" })
       .eq("audit_id", data.auditId)
       .neq("status", "passed")
       .limit(80);
+
     if (findingError) throw findingError;
 
     const factualFindings = findings ?? [];
@@ -754,7 +849,10 @@ export const analyzeAuditFn = createServerFn({ method: "POST" })
         "issueAnalyses items: {findingId, priority, whyItMatters, howToFix, suggestedFix?}. priority must be urgent/high/medium/low.",
         "Write concise professional Indonesian.",
       ].join("\n"),
-      user: JSON.stringify({ audit: { target_url: audit.target_url, status: audit.status, summary: audit.summary }, findings: factualFindings }),
+      user: JSON.stringify({
+        audit: { target_url: audit.target_url, status: audit.status, summary: audit.summary },
+        findings: factualFindings,
+      }),
     });
 
     const output = normalizeAnalysis(ai.data, findingIds);
@@ -773,20 +871,26 @@ export const analyzeAuditFn = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
+
     if (saveError || !saved) throw saveError ?? new Error("Gagal menyimpan AI Audit Analysis.");
     return { analysisId: String(saved.id), provider: ai.provider, error: ai.error, output };
   });
 
 export const createTaskFromFindingFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { findingId: string }) => ({ findingId: String(input?.findingId ?? "").trim() }))
+  .inputValidator((input: { findingId: string }) => ({
+    findingId: String(input?.findingId ?? "").trim(),
+  }))
   .handler(async ({ data, context }) => {
+    if (!data.findingId) throw new Error("Finding wajib dipilih.");
     const db = dbClient(context.supabase);
+
     const { data: item, error } = await db
       .from("audit_findings")
-      .select("id,audit_id,workspace_id,project_id,title,status,url,check_key,evidence")
+      .select("id,audit_id,workspace_id,project_id,title,status,url,check_key")
       .eq("id", data.findingId)
       .single();
+
     if (error || !item) throw error ?? new Error("Finding tidak ditemukan.");
     if (item.status === "passed") throw new Error("Finding Passed tidak perlu dibuat menjadi task.");
 
@@ -802,11 +906,20 @@ export const createTaskFromFindingFn = createServerFn({ method: "POST" })
         priority,
         source_type: "audit_finding",
         source_id: item.id,
-        source_refs: [{ type: "audit_finding", id: item.id, audit_id: item.audit_id, check_key: item.check_key, url: item.url }],
+        source_refs: [
+          {
+            type: "audit_finding",
+            id: item.id,
+            audit_id: item.audit_id,
+            check_key: item.check_key,
+            url: item.url,
+          },
+        ],
         created_by: context.userId,
       })
       .select("id")
       .single();
+
     if (taskError) {
       if (taskError.code === "23505") {
         const { data: existing } = await db
@@ -820,5 +933,7 @@ export const createTaskFromFindingFn = createServerFn({ method: "POST" })
       }
       throw taskError;
     }
+
+    if (!task) throw new Error("Task tidak berhasil dibuat.");
     return { taskId: String(task.id), alreadyExists: false };
   });
