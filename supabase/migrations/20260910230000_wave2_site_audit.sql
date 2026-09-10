@@ -1,5 +1,6 @@
 -- Wave 2 — Comprehensive Site Audit
--- Additive schema only. Existing SEO/backlink data is untouched.
+-- Additive and reconciliation-safe. Existing SEO/backlink data is untouched.
+-- Policy DROP/CREATE is intentional: production may already have this schema from direct rollout.
 
 CREATE TABLE IF NOT EXISTS public.site_audits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -112,6 +113,10 @@ GRANT ALL ON TABLE public.audit_ai_analyses TO service_role;
 GRANT ALL ON TABLE public.tasks TO service_role;
 
 -- Separate policies make intended operations explicit and testable.
+DROP POLICY IF EXISTS "site_audits_workspace_select" ON public.site_audits;
+DROP POLICY IF EXISTS "site_audits_workspace_insert" ON public.site_audits;
+DROP POLICY IF EXISTS "site_audits_workspace_update" ON public.site_audits;
+DROP POLICY IF EXISTS "site_audits_workspace_delete" ON public.site_audits;
 CREATE POLICY "site_audits_workspace_select" ON public.site_audits
   FOR SELECT TO authenticated
   USING (public.is_workspace_member(workspace_id));
@@ -126,6 +131,10 @@ CREATE POLICY "site_audits_workspace_delete" ON public.site_audits
   FOR DELETE TO authenticated
   USING (public.is_workspace_member(workspace_id));
 
+DROP POLICY IF EXISTS "audit_findings_workspace_select" ON public.audit_findings;
+DROP POLICY IF EXISTS "audit_findings_workspace_insert" ON public.audit_findings;
+DROP POLICY IF EXISTS "audit_findings_workspace_update" ON public.audit_findings;
+DROP POLICY IF EXISTS "audit_findings_workspace_delete" ON public.audit_findings;
 CREATE POLICY "audit_findings_workspace_select" ON public.audit_findings
   FOR SELECT TO authenticated
   USING (public.is_workspace_member(workspace_id));
@@ -140,6 +149,10 @@ CREATE POLICY "audit_findings_workspace_delete" ON public.audit_findings
   FOR DELETE TO authenticated
   USING (public.is_workspace_member(workspace_id));
 
+DROP POLICY IF EXISTS "audit_ai_analyses_workspace_select" ON public.audit_ai_analyses;
+DROP POLICY IF EXISTS "audit_ai_analyses_workspace_insert" ON public.audit_ai_analyses;
+DROP POLICY IF EXISTS "audit_ai_analyses_workspace_update" ON public.audit_ai_analyses;
+DROP POLICY IF EXISTS "audit_ai_analyses_workspace_delete" ON public.audit_ai_analyses;
 CREATE POLICY "audit_ai_analyses_workspace_select" ON public.audit_ai_analyses
   FOR SELECT TO authenticated
   USING (public.is_workspace_member(workspace_id));
@@ -154,6 +167,10 @@ CREATE POLICY "audit_ai_analyses_workspace_delete" ON public.audit_ai_analyses
   FOR DELETE TO authenticated
   USING (public.is_workspace_member(workspace_id));
 
+DROP POLICY IF EXISTS "tasks_workspace_select" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_workspace_insert" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_workspace_update" ON public.tasks;
+DROP POLICY IF EXISTS "tasks_workspace_delete" ON public.tasks;
 CREATE POLICY "tasks_workspace_select" ON public.tasks
   FOR SELECT TO authenticated
   USING (public.is_workspace_member(workspace_id));
