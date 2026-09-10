@@ -29,39 +29,18 @@ export const Route = createFileRoute("/_authenticated/")({
 
 const FEATURES = [
   {
-    to: "/domains",
-    icon: Database,
-    title: "Domain Saya",
-    description:
-      "Cek domain massal, riset DR & traffic otomatis via Apify, dan kelola tabel sudah dibeli / sudah pernah / traffic 0.",
-  },
-  {
     to: "/projects",
     icon: FolderKanban,
-    title: "Proyek & Placement",
+    title: "Projects",
     description:
-      "Kelola proyek client, buat placement order, dan pantau status draft, dipesan, tayang, atau batal.",
+      "Kelola proyek, tambahkan context klien, kumpulkan evidence, dan gunakan AI Client Intelligence.",
   },
   {
-    to: "/backlink-recommendation",
-    icon: Sparkles,
-    title: "Rekomendasi Backlink",
+    to: "/domains",
+    icon: Database,
+    title: "Domain Saya (Legacy)",
     description:
-      "Pipeline AI: profil domain → kandidat keyword → metrik & rank Ahrefs → Top 5 rekomendasi placement.",
-  },
-  {
-    to: "/domain-research",
-    icon: Globe,
-    title: "Riset Domain",
-    description:
-      "Riset satu atau banyak domain: DR, organic traffic, backlink, dan referring domains dengan cache 30 hari.",
-  },
-  {
-    to: "/keyword-research",
-    icon: KeyRound,
-    title: "Riset Keyword",
-    description:
-      "Generate ide keyword dari seed, lalu ambil search volume, KD, traffic potential, dan CPC untuk shortlist.",
+      "Cek domain massal, riset DR & traffic otomatis via Apify, dan kelola tabel sudah dibeli / sudah pernah.",
   },
 ] as const;
 

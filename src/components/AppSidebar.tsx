@@ -17,58 +17,75 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 type MenuItem = {
-  to:
-    | "/"
-    | "/domains"
-    | "/projects"
-    | "/backlink-recommendation"
-    | "/domain-research"
-    | "/keyword-research"
-    | "/settings";
+  to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
 };
 
-const MENU: MenuItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/domains", label: "Domain Saya", icon: Database },
-  { to: "/projects", label: "Proyek & Placement", icon: FolderKanban },
+type MenuSection = {
+  label: string;
+  items: MenuItem[];
+};
+
+const MENU_SECTIONS: MenuSection[] = [
   {
-    to: "/backlink-recommendation",
-    label: "Rekomendasi Backlink",
-    icon: Sparkles,
+    label: "Main",
+    items: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { to: "/projects", label: "Projects", icon: FolderKanban },
+    ],
   },
-  { to: "/domain-research", label: "Riset Domain", icon: Globe },
-  { to: "/keyword-research", label: "Riset Keyword", icon: KeyRound },
-  { to: "/settings", label: "Pengaturan", icon: Settings },
+  {
+    label: "Legacy",
+    items: [
+      { to: "/domains", label: "Domain Saya", icon: Database },
+      {
+        to: "/backlink-recommendation",
+        label: "Rekomendasi Backlink",
+        icon: Sparkles,
+      },
+      { to: "/domain-research", label: "Riset Domain", icon: Globe },
+      { to: "/keyword-research", label: "Riset Keyword", icon: KeyRound },
+    ],
+  },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <nav className="flex flex-1 flex-col gap-1">
-      {MENU.map((item) => {
-        const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-sidebar-accent text-sidebar-foreground"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-            )}
-          >
-            <Icon className="size-4 shrink-0" />
-            {item.label}
-          </Link>
-        );
-      })}
+    <nav className="flex flex-1 flex-col gap-6">
+      {MENU_SECTIONS.map((section) => (
+        <div key={section.label} className="flex flex-col gap-1">
+          <span className="px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+            {section.label}
+          </span>
+          <div className="flex flex-col gap-1">
+            {section.items.map((item) => {
+              const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                  )}
+                >
+                  <Icon className="size-4 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </nav>
   );
 }

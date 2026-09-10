@@ -6,6 +6,13 @@ export type ProjectRow = {
   client_domain: string | null;
   description: string | null;
   status: string;
+  lifecycle_status?: string;
+  industry?: string | null;
+  objectives?: string[] | null;
+  target_market?: string | null;
+  current_problem?: string | null;
+  budget_indication?: string | null;
+  contact_person?: string | null;
   created_at: string;
   updated_at: string;
 };
