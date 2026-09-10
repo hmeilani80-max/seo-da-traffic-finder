@@ -63,7 +63,7 @@ function DataSourceCard({
 }: {
   project: ProjectRow;
   source: (typeof PROJECT_DATA_SOURCE_CATALOG)[number];
-  row?: ProjectDataSourceRow;
+  row: ProjectDataSourceRow | undefined;
   onSaved: () => void;
 }) {
   const [status, setStatus] = useState(row?.status ?? "not_connected");
