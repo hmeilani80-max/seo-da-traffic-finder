@@ -165,10 +165,12 @@ export async function uploadProjectEvidence(
   if (file.size > 50 * 1024 * 1024) throw new Error("Ukuran file maksimal 50 MB.");
 
   const storagePath = `${auth.user.id}/${project.id}/${crypto.randomUUID()}-${safeFileName(file.name)}`;
-  const { error: uploadError } = await supabase.storage.from("project-evidence").upload(storagePath, file, {
-    upsert: false,
-    contentType: file.type || undefined,
-  });
+  const uploadOptions = file.type
+    ? { upsert: false, contentType: file.type }
+    : { upsert: false };
+  const { error: uploadError } = await supabase.storage
+    .from("project-evidence")
+    .upload(storagePath, file, uploadOptions);
   if (uploadError) throw uploadError;
 
   const { data, error } = await db()
