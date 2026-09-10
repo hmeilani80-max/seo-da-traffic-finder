@@ -149,12 +149,12 @@ Wave 0 does not rebuild or remove the existing application. The following remain
 | Provider-neutral AI abstraction exists | PASS |
 | Evidence/import foundation exists | PASS |
 | Production-safe repeatable verification exists | PASS |
-| Build verification | Must pass on the Wave 0 finalization PR before merge |
+| Build verification | PASS — PR #7, GitHub Actions `PR Build` run #37 |
 | Existing core SEO/backlink routes preserved | PASS |
 
 ## Next wave
 
-After the finalization PR build passes and is merged, **Wave 0 is closed**.
+All Wave 0 gates have passed. **Wave 0 is closed when PR #7 is merged into `main`.**
 
 The next implementation target is:
 
