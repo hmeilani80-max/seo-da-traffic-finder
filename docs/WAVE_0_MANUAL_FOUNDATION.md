@@ -1,90 +1,165 @@
-# Wave 0 / Wave 1 — Manual Reconciliation
+# Wave 0 — Architecture & Security Foundation
 
-Branch: `wave0-manual-foundation`
+Status: **COMPLETE**
 
-## What we discovered
+Completion date: **10 September 2026**
 
-The Lovable production database was already ahead of the GitHub migration folder. Four migrations had been applied directly to production on 2026-09-09 but were missing from source control:
+Production project: **SEO DA & Traffic Finder / Backlink Manager**
 
-- `20260909200729` — Wave 0 workspace/security/evidence/import foundation
-- `20260909200912` — automatic workspace assignment trigger
-- `20260909200958` — project evidence Storage policies
-- `20260909201303` — Wave 1 project profile, AI intelligence, field suggestions, and project data-source registry
+## Scope completed
 
-Those applied migrations are now mirrored into `supabase/migrations/` so the repository reflects the production schema.
+Wave 0 establishes the minimum safe foundation required for the Project-centered SEO Operating System without rebuilding or destructively changing the existing production application.
 
-## Current production foundation
+### 1. Team/workspace authorization
 
-Production already has:
+Implemented:
 
 - `app_workspaces`
 - `app_workspace_members`
-- `workspace_id` on `projects`, `placement_orders`, and `backlinks`
-- project lifecycle/profile fields
+- additive `workspace_id` on `projects`, `placement_orders`, and `backlinks`
+- membership-based RLS policies
+- existing `user_id` retained as creator/ownership metadata
+- automatic workspace assignment for new Project/Placement/Backlink rows
+- existing authenticated users provisioned into the internal workspace
+
+Current production validation on 10 September 2026:
+
+- internal workspaces: **1**
+- authenticated users: **2**
+- active workspace members: **2**
+- projects without `workspace_id`: **0**
+- placement orders without `workspace_id`: **0**
+- backlinks without `workspace_id`: **0**
+
+Public signup does **not** automatically grant access to the internal workspace. Future membership onboarding must remain deliberate.
+
+### 2. AI abstraction foundation
+
+Implemented:
+
+- provider-neutral entry point in `src/lib/ai/provider.server.ts`
+- shared AI request/result types in `src/lib/ai/types.ts`
+- default provider explicitly documented as `AI_PROVIDER=openai`
+- existing OpenAI Backlink Recommendation kept intact
+- factual SEO metrics remain outside the generative AI layer
+- unsupported provider configuration fails explicitly instead of silently falling back to fabricated output
+
+This satisfies the Wave 0 abstraction requirement. Provider-specific adapters can be added incrementally in later waves without coupling feature UI directly to one AI provider.
+
+### 3. Evidence/import foundation
+
+Implemented:
+
+- private `project-evidence` Storage bucket
 - `project_evidence`
 - `data_imports`
-- `project_intelligence_runs`
-- `project_field_suggestions`
-- `project_data_sources`
-- `project-evidence` Storage bucket and RLS policies
-- automatic workspace assignment for new project-scoped rows
+- extraction/processing status fields
+- structured mapping and normalization summary fields
+- source/provenance fields
+- Storage RLS policies for authenticated upload/update/delete and workspace-member reads
 
-The existing owner-based RLS policies remain in place. Workspace-member policies are also active on project-scoped data.
+The Wave 0 layer intentionally provides infrastructure only. The user-facing Evidence and Import workflows belong to Wave 1.
 
-## Membership repair
+### 4. Production schema reconciliation
 
-Manual validation found:
+The Lovable production database had Wave 0/1 migrations that were previously ahead of GitHub source control. The production-applied migrations are mirrored in `supabase/migrations/`:
 
-- 2 existing authenticated users
-- 1 internal workspace (`internal-seo-team`)
-- 0 active workspace memberships
+- `20260909200729_35d67f14-73bf-4e6d-840a-00c1f7e021e7.sql`
+- `20260909200912_df1c0a32-f32b-43b2-b3e9-662c48c47a5b.sql`
+- `20260909200958_eba0a4f3-ef81-4ff4-bfd9-f16a66d06d61.sql`
+- `20260909201303_6868370a-cc6c-412e-9b01-f5c205f88e2f.sql`
+- `20260909233000_seed_existing_workspace_members.sql`
+- `20260909233100_project_evidence_bucket.sql`
 
-This made the Wave 1 workspace-scoped tables unusable even though their schema existed.
+No destructive migration was required.
 
-The two accounts that existed before the repair cutoff were added as active members of the internal workspace. The matching idempotent repair SQL is tracked in:
+### 5. Repeatable verification
 
-`20260909233000_seed_existing_workspace_members.sql`
+A production-safe verification script is tracked at:
 
-Future public signups are intentionally **not** auto-added to the internal workspace.
+`supabase/tests/wave0_foundation.sql`
 
-## Verification completed
+It verifies:
 
-- GitHub Actions clean build: PASS
-- existing production row counts before repair:
-  - projects: 0
-  - placement_orders: 0
-  - backlinks: 0
-- active workspace members after repair: 2/2 existing auth users
-- transaction/rollback RLS test:
-  - project insert automatically received a workspace: PASS
-  - project data-source insert under workspace RLS: PASS
-  - second workspace member can read the shared project: PASS
-  - non-member cannot read the shared project: PASS
-- test rows were rolled back; no operational test data remains
+- required Wave 0 tables exist
+- RLS is enabled on the workspace/project foundation tables
+- internal workspace and active membership exist
+- no existing Project/Placement/Backlink row is orphaned from a workspace
+- the Evidence bucket exists and remains private
+- automatic workspace assignment triggers exist
+- required Storage policies exist
+- anonymous users cannot execute the membership authorization helper
+- authenticated users can execute the membership authorization helper
 
-## AI abstraction in this branch
+The script was executed against the Lovable production database on 10 September 2026 and returned:
 
-- `src/lib/ai/types.ts`
-- `src/lib/ai/provider.server.ts`
-- `AI_PROVIDER=openai` default
+```text
+wave0_foundation: PASS
+workspaces: 1
+auth_users: 2
+active_members: 2
+orphan_projects: 0
+orphan_placement_orders: 0
+orphan_backlinks: 0
+```
 
-Existing Backlink Recommendation continues using the current OpenAI helper unchanged. New SEO OS workflows can migrate to the provider-neutral entry point incrementally.
+### 6. RLS behavior validation
 
-## Explicitly unchanged
+The earlier manual transaction/rollback validation remains applicable because the subsequent PRD implementation commit did not modify authentication or the Wave 0 database policies/migrations.
 
-- authentication UI/flow
-- production navigation/sidebar
-- current Projects page
-- Domain Research
-- Keyword Research
-- Backlink Recommendation
-- current Ahrefs/Apify cache/provider implementation
-- existing operational data
+Previously verified:
 
-## Important security note
+- project insert automatically receives workspace assignment: **PASS**
+- project data-source insert under workspace RLS: **PASS**
+- another member of the same workspace can read a shared Project: **PASS**
+- non-member cannot read the shared Project: **PASS**
+- test rows rolled back: **PASS**
 
-Public account registration currently exists in `src/routes/auth.tsx`. Because this is an internal workspace model, new accounts must not automatically receive membership in `internal-seo-team`. Workspace onboarding/invitation should be implemented deliberately in a later access-management step.
+### 7. Supabase type safety
 
-## Recommended next implementation
+The PRD implementation commit temporarily replaced generated Supabase types with `Database = any`. Wave 0 finalization removes that regression and restores an explicit schema-derived `Database` type based on the current production schema.
 
-Proceed to the Project Workspace UI using the schema already present in production. Adapt the donor `origin-wave-01-rebuild-github` only for UX/information hierarchy; do not port Firebase, React Router, Drizzle, or Express.
+This keeps the new workspace/evidence fields visible to TypeScript while preserving legacy tables used by the production application.
+
+## Explicitly preserved
+
+Wave 0 does not rebuild or remove the existing application. The following remain preserved:
+
+- TanStack Start + React
+- Vite
+- Tailwind/current components
+- Lovable Cloud hosting
+- current authentication flow
+- custom domain/runtime configuration
+- existing GitHub repository
+- existing Domain Research workflow
+- existing Keyword Research workflow
+- existing Backlink Recommendation workflow
+- existing Ahrefs/Apify cache/provider implementation
+- historical backlink/domain data
+
+## Wave 0 exit criteria
+
+| Exit criterion | Result |
+| --- | --- |
+| Secure team/workspace membership model | PASS |
+| Existing authentication preserved | PASS |
+| Existing production data preserved | PASS |
+| Shared Project access architecture validated | PASS |
+| Provider-neutral AI abstraction exists | PASS |
+| Evidence/import foundation exists | PASS |
+| Production-safe repeatable verification exists | PASS |
+| Build verification | Must pass on the Wave 0 finalization PR before merge |
+| Existing core SEO/backlink routes preserved | PASS |
+
+## Next wave
+
+After the finalization PR build passes and is merged, **Wave 0 is closed**.
+
+The next implementation target is:
+
+```text
+WAVE 1 — Project Workspace Foundation
+```
+
+Wave 1 should complete the user-facing workflows that already have backend foundations: Evidence, Import Wizard, Data Source Registry, AI Client Intelligence, progressive Project fields, and lifecycle controls.
