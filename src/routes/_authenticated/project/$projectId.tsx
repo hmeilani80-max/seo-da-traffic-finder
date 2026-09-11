@@ -750,7 +750,7 @@ function ProjectWorkspace() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <LifecycleControl project={project} />
-            <Button variant="secondary" disabled title="Site Audit dimulai pada Wave 2">Site Audit · Wave 2</Button>
+            <Button variant="secondary" asChild><a href={`/site-audit?projectId=${encodeURIComponent(project.id)}`}>Site Audit</a></Button>
           </div>
         </div>
       </header>
