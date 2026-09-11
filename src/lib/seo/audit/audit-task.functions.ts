@@ -12,45 +12,61 @@ function dbClient(value: unknown): SupabaseClient {
 
 export const createReviewedTaskFromFindingFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { findingId: string; title?: string; priority?: string }) => {
+  .inputValidator((input: { findingIds?: string[]; findingId?: string; title?: string; priority?: string }) => {
+    const findingIds = Array.isArray(input?.findingIds)
+      ? [...new Set(input.findingIds.map((id) => String(id).trim()).filter(Boolean))].slice(0, 100)
+      : [];
+    const fallbackId = String(input?.findingId ?? "").trim();
     const priority = TASK_PRIORITIES.includes(input?.priority as TaskPriority)
       ? (input.priority as TaskPriority)
       : undefined;
     return {
-      findingId: String(input?.findingId ?? "").trim(),
+      findingIds: findingIds.length ? findingIds : fallbackId ? [fallbackId] : [],
       title: String(input?.title ?? "").trim(),
       priority,
     };
   })
   .handler(async ({ data, context }) => {
-    if (!data.findingId) throw new Error("Finding wajib dipilih.");
+    if (!data.findingIds.length) throw new Error("Finding wajib dipilih.");
     const db = dbClient(context.supabase);
 
-    const { data: item, error } = await db
+    const { data: items, error } = await db
       .from("audit_findings")
       .select("id,audit_id,workspace_id,project_id,title,status,url,check_key,source_type,source_ref")
-      .eq("id", data.findingId)
-      .single();
+      .in("id", data.findingIds);
 
-    if (error || !item) throw error ?? new Error("Finding tidak ditemukan.");
-    if (item.status === "passed") throw new Error("Finding Passed tidak perlu dibuat menjadi task.");
+    if (error || !items?.length) throw error ?? new Error("Finding tidak ditemukan.");
+    if (items.some((item) => item.status === "passed")) {
+      throw new Error("Finding Passed tidak perlu dibuat menjadi task.");
+    }
 
-    const defaultPriority: TaskPriority =
-      item.status === "urgent" ? "urgent" : item.status === "issue" ? "high" : "medium";
+    const item = items[0];
+    const sameContext = items.every(
+      (candidate) =>
+        candidate.project_id === item.project_id &&
+        candidate.workspace_id === item.workspace_id &&
+        candidate.audit_id === item.audit_id,
+    );
+    if (!sameContext) throw new Error("Finding yang dipilih harus berasal dari audit dan Project yang sama.");
+
+    const defaultPriority: TaskPriority = items.some((candidate) => candidate.status === "urgent")
+      ? "urgent"
+      : items.some((candidate) => candidate.status === "issue")
+        ? "high"
+        : "medium";
     const priority = data.priority ?? defaultPriority;
     const title = data.title || item.title;
+    const urls = items.map((candidate) => candidate.url).filter(Boolean) as string[];
 
-    const sourceRefs = [
-      {
-        type: "audit_finding",
-        id: item.id,
-        audit_id: item.audit_id,
-        check_key: item.check_key,
-        url: item.url,
-        source_type: item.source_type,
-        source_ref: item.source_ref,
-      },
-    ];
+    const sourceRefs = items.map((candidate) => ({
+      type: "audit_finding",
+      id: candidate.id,
+      audit_id: candidate.audit_id,
+      check_key: candidate.check_key,
+      url: candidate.url,
+      source_type: candidate.source_type,
+      source_ref: candidate.source_ref,
+    }));
 
     const { data: task, error: taskError } = await db
       .from("tasks")
@@ -58,7 +74,13 @@ export const createReviewedTaskFromFindingFn = createServerFn({ method: "POST" }
         workspace_id: item.workspace_id,
         project_id: item.project_id,
         title,
-        description: `Audit finding: ${item.check_key}${item.url ? `\nURL: ${item.url}` : ""}`,
+        description: [
+          `Audit finding: ${item.title}`,
+          `Affected findings: ${items.length}`,
+          urls.length ? `Affected URLs:\n${urls.slice(0, 25).join("\n")}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
         status: "todo",
         priority,
         source_type: "audit_finding",
