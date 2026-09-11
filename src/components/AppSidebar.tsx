@@ -6,7 +6,7 @@ import {
   Sparkles,
   Globe,
   KeyRound,
-  Settings,
+  ClipboardCheck,
   LogOut,
   Menu,
   X,
@@ -34,6 +34,7 @@ const MENU_SECTIONS: MenuSection[] = [
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { to: "/projects", label: "Projects", icon: FolderKanban },
+      { to: "/site-audit", label: "Site Audit", icon: ClipboardCheck },
     ],
   },
   {
@@ -53,6 +54,7 @@ const MENU_SECTIONS: MenuSection[] = [
 
 function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const activeProjectId = pathname.match(/^\/project\/([^/]+)/)?.[1];
 
   return (
     <nav className="flex flex-1 flex-col gap-6">
@@ -65,19 +67,30 @@ function NavLinks({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
             {section.items.map((item) => {
               const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
               const Icon = item.icon;
+              const className = cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              );
+
+              if (item.to === "/site-audit") {
+                return (
+                  <Link
+                    key={item.to}
+                    to="/site-audit"
+                    search={activeProjectId ? { projectId: decodeURIComponent(activeProjectId) } : {}}
+                    onClick={onNavigate}
+                    className={className}
+                  >
+                    <Icon className="size-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              }
 
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={onNavigate}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                  )}
-                >
+                <Link key={item.to} to={item.to} onClick={onNavigate} className={className}>
                   <Icon className="size-4 shrink-0" />
                   {item.label}
                 </Link>
@@ -122,12 +135,10 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-sidebar-border bg-sidebar md:block">
         <SidebarBody />
       </aside>
 
-      {/* Sidebar mobile (drawer) */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-background/80" onClick={() => setOpen(false)} />
@@ -146,7 +157,6 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col md:pl-64">
-        {/* Topbar mobile */}
         <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-sidebar-border bg-sidebar px-4 py-3 md:hidden">
           <button
             type="button"
