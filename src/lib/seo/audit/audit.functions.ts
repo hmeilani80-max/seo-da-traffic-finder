@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { runAiJson } from "@/lib/ai/provider.server";
+import { fetchPublicAuditText } from "@/lib/seo/audit/audit-network.server";
 
 export type AuditFindingStatus =
   | "passed"
@@ -91,7 +92,7 @@ function validatePublicUrl(raw: string): URL {
   const candidate = /^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`;
   const url = new URL(candidate);
 
-  if (!['http:', 'https:'].includes(url.protocol)) {
+  if (!["http:", "https:"].includes(url.protocol)) {
     throw new Error("Website harus menggunakan HTTP atau HTTPS.");
   }
   if (url.username || url.password) {
@@ -121,77 +122,14 @@ function sameAuditSite(left: URL, right: URL): boolean {
   return normalizedHostname(left.hostname) === normalizedHostname(right.hostname);
 }
 
-async function readTextLimited(response: Response, maxBytes = MAX_HTML_BYTES): Promise<string> {
-  if (!response.body) return (await response.text()).slice(0, maxBytes);
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let bytes = 0;
-  let text = "";
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      bytes += value.byteLength;
-      if (bytes > maxBytes) {
-        await reader.cancel();
-        break;
-      }
-      text += decoder.decode(value, { stream: true });
-    }
-    text += decoder.decode();
-    return text;
-  } finally {
-    reader.releaseLock();
-  }
-}
-
 async function fetchText(rawUrl: string, timeout = REQUEST_TIMEOUT_MS): Promise<PageSnapshot> {
   const requested = validatePublicUrl(rawUrl);
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-  let current = requested;
-
-  try {
-    for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
-      const response = await fetch(current.toString(), {
-        redirect: "manual",
-        signal: controller.signal,
-        headers: {
-          "User-Agent": USER_AGENT,
-          Accept: "text/html,application/xhtml+xml,text/plain,application/xml;q=0.9,*/*;q=0.5",
-        },
-      });
-
-      if ([301, 302, 303, 307, 308].includes(response.status)) {
-        if (redirects >= MAX_REDIRECTS) throw new Error("Terlalu banyak redirect saat crawl.");
-        const location = response.headers.get("location");
-        if (!location) throw new Error(`HTTP ${response.status} tanpa Location header.`);
-
-        const next = validatePublicUrl(new URL(location, current).toString());
-        if (!sameAuditSite(requested, next)) {
-          throw new Error("Redirect ke domain lain diblokir untuk keamanan audit.");
-        }
-        current = next;
-        continue;
-      }
-
-      const contentType = response.headers.get("content-type") ?? "";
-      const html = await readTextLimited(response);
-      return {
-        requestedUrl: requested.toString(),
-        finalUrl: current.toString(),
-        status: response.status,
-        contentType,
-        html,
-      };
-    }
-
-    throw new Error("Redirect crawl tidak dapat diselesaikan.");
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return fetchPublicAuditText(requested.toString(), {
+    timeoutMs: timeout,
+    maxBytes: MAX_HTML_BYTES,
+    maxRedirects: MAX_REDIRECTS,
+    userAgent: USER_AGENT,
+  });
 }
 
 function firstMatch(html: string, pattern: RegExp): string | null {
@@ -622,6 +560,7 @@ async function crawlSite(target: URL): Promise<{
       robots_checked: true,
       sitemap_checked: true,
       redirect_policy: "same public hostname or www alias only",
+      dns_policy: "resolve all addresses, reject private/reserved ranges, pin request to verified address",
       openseo_configured: Boolean(process.env["OPENSEO_API_KEY"]),
       openseo_used: false,
       note: "OpenSEO availability is recorded, but no OpenSEO facts are claimed until a verified adapter exists.",
