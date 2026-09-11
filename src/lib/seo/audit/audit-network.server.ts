@@ -59,15 +59,15 @@ function isUnsafeIpv6(address: string): boolean {
   if (isIP(value) !== 6) return true;
 
   if (value === "::" || value === "::1") return true;
-  if (value.startsWith("fc") || value.startsWith("fd")) return true;
-
-  const first = Number.parseInt(value.split(":")[0] || "0", 16);
-  if (first >= 0xfe80 && first <= 0xfebf) return true; // fe80::/10 link-local
-  if (first >= 0xff00 && first <= 0xffff) return true; // multicast
-  if (value.startsWith("2001:db8:")) return true; // documentation
 
   const mapped = value.match(/::ffff:(\d+\.\d+\.\d+\.\d+)$/);
   if (mapped?.[1]) return isUnsafeIpv4(mapped[1]);
+
+  const first = Number.parseInt(value.split(":")[0] || "0", 16);
+  // Restrict direct IPv6 targets to global unicast 2000::/3. This excludes
+  // link-local, ULA, multicast, documentation, transition, and unspecified ranges.
+  if (first < 0x2000 || first > 0x3fff) return true;
+  if (value.startsWith("2001:db8:")) return true; // documentation
 
   return false;
 }
@@ -122,14 +122,21 @@ async function requestOnce(
     let settled = false;
     const chunks: Buffer[] = [];
     let bytes = 0;
+    let request: http.ClientRequest;
+
+    const totalTimer = setTimeout(() => {
+      if (settled) return;
+      request?.destroy(new Error("Request audit melewati batas waktu."));
+    }, options.timeoutMs);
 
     const finishReject = (error: Error) => {
       if (settled) return;
       settled = true;
+      clearTimeout(totalTimer);
       reject(error);
     };
 
-    const request = transport.request(
+    request = transport.request(
       {
         protocol: url.protocol,
         hostname: url.hostname,
@@ -151,31 +158,43 @@ async function requestOnce(
         const contentType = String(response.headers["content-type"] ?? "");
         const location = typeof response.headers.location === "string" ? response.headers.location : null;
 
-        response.on("data", (chunk: Buffer | string) => {
-          if (settled) return;
-          const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-          const remaining = options.maxBytes - bytes;
-          if (remaining <= 0) return;
-          chunks.push(buffer.length > remaining ? buffer.subarray(0, remaining) : buffer);
-          bytes += Math.min(buffer.length, remaining);
-        });
-        response.on("end", () => {
+        const finishResolve = () => {
           if (settled) return;
           settled = true;
+          clearTimeout(totalTimer);
           resolve({
             status,
             contentType,
             location,
             body: Buffer.concat(chunks).toString("utf8"),
           });
+        };
+
+        response.on("data", (chunk: Buffer | string) => {
+          if (settled) return;
+          const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          const remaining = options.maxBytes - bytes;
+
+          if (remaining <= 0) {
+            finishResolve();
+            response.destroy();
+            return;
+          }
+
+          const accepted = buffer.length > remaining ? buffer.subarray(0, remaining) : buffer;
+          chunks.push(accepted);
+          bytes += accepted.length;
+
+          if (bytes >= options.maxBytes) {
+            finishResolve();
+            response.destroy();
+          }
         });
+        response.on("end", finishResolve);
         response.on("error", (error) => finishReject(error instanceof Error ? error : new Error(String(error))));
       },
     );
 
-    request.setTimeout(options.timeoutMs, () => {
-      request.destroy(new Error("Request audit timeout."));
-    });
     request.on("error", (error) => finishReject(error instanceof Error ? error : new Error(String(error))));
     request.end();
   });
