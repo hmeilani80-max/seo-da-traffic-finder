@@ -22,7 +22,7 @@ export const createReviewedTaskFromFindingFn = createServerFn({ method: "POST" }
       : undefined;
     return {
       findingIds: findingIds.length ? findingIds : fallbackId ? [fallbackId] : [],
-      title: String(input?.title ?? "").trim(),
+      title: String(input?.title ?? "").trim().slice(0, 240),
       priority,
     };
   })
@@ -30,12 +30,15 @@ export const createReviewedTaskFromFindingFn = createServerFn({ method: "POST" }
     if (!data.findingIds.length) throw new Error("Finding wajib dipilih.");
     const db = dbClient(context.supabase);
 
-    const { data: items, error } = await db
+    const { data: rows, error } = await db
       .from("audit_findings")
-      .select("id,audit_id,workspace_id,project_id,title,status,url,check_key,source_type,source_ref")
+      .select("id,audit_id,workspace_id,project_id,title,category,status,url,check_key,source_type,source_ref")
       .in("id", data.findingIds);
 
-    if (error || !items?.length) throw error ?? new Error("Finding tidak ditemukan.");
+    if (error || !rows?.length) throw error ?? new Error("Finding tidak ditemukan.");
+    if (rows.length !== data.findingIds.length) throw new Error("Sebagian finding tidak tersedia atau tidak dapat diakses.");
+
+    const items = [...rows].sort((left, right) => String(left.id).localeCompare(String(right.id)));
     if (items.some((item) => item.status === "passed")) {
       throw new Error("Finding Passed tidak perlu dibuat menjadi task.");
     }
@@ -49,14 +52,19 @@ export const createReviewedTaskFromFindingFn = createServerFn({ method: "POST" }
     );
     if (!sameContext) throw new Error("Finding yang dipilih harus berasal dari audit dan Project yang sama.");
 
-    const defaultPriority: TaskPriority = items.some((candidate) => candidate.status === "urgent")
-      ? "urgent"
-      : items.some((candidate) => candidate.status === "issue")
-        ? "high"
-        : "medium";
+    const sameGroup = items.every(
+      (candidate) =>
+        candidate.title === item.title &&
+        candidate.category === item.category &&
+        candidate.status === item.status,
+    );
+    if (!sameGroup) throw new Error("Finding yang dipilih harus berasal dari grup audit yang sama.");
+
+    const defaultPriority: TaskPriority =
+      item.status === "urgent" ? "urgent" : item.status === "issue" ? "high" : "medium";
     const priority = data.priority ?? defaultPriority;
     const title = data.title || item.title;
-    const urls = items.map((candidate) => candidate.url).filter(Boolean) as string[];
+    const urls = [...new Set(items.map((candidate) => candidate.url).filter(Boolean) as string[])];
 
     const sourceRefs = items.map((candidate) => ({
       type: "audit_finding",
@@ -76,6 +84,7 @@ export const createReviewedTaskFromFindingFn = createServerFn({ method: "POST" }
         title,
         description: [
           `Audit finding: ${item.title}`,
+          `Category: ${item.category}`,
           `Affected findings: ${items.length}`,
           urls.length ? `Affected URLs:\n${urls.slice(0, 25).join("\n")}` : null,
         ]
