@@ -21,7 +21,6 @@ import {
 import {
   deleteRow,
   downloadCSV,
-  fetchDomainPriceTotal,
   fetchTable,
   TABLE_META,
   toCSV,
@@ -60,14 +59,6 @@ export function DomainTable({
     queryFn: () => fetchTable(table),
   });
 
-  const { data: priceTotal } = useQuery({
-    queryKey: ["domain-price-total", table],
-
-    queryFn: () => fetchDomainPriceTotal(table as "sudah_dibeli" | "domain_sudah_pernah"),
-
-    enabled: detail,
-  });
-
   const hapus = useMutation({
     mutationFn: (id: string) => deleteRow(table, id),
 
@@ -76,10 +67,6 @@ export function DomainTable({
 
       qc.invalidateQueries({
         queryKey: ["table", table],
-      });
-
-      qc.invalidateQueries({
-        queryKey: ["domain-price-total", table],
       });
 
       qc.invalidateQueries({
@@ -426,7 +413,7 @@ export function DomainTable({
                   TOTAL HARGA
                 </TableCell>
 
-                <TableCell>{formatCurrency(Number(priceTotal?.total_price ?? 0))}</TableCell>
+                <TableCell>{formatCurrency(rows.reduce((total, row) => total + Number(row.price ?? 0), 0))}</TableCell>
 
                 <TableCell colSpan={2} />
               </TableRow>
